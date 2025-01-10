@@ -7,7 +7,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -66,7 +65,7 @@ public class RobotContainer {
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // rezero?
-        joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        joystick.leftBumper().onTrue(drivetrain.goToZero());
 
         joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityY(-0.5)));
         
@@ -74,28 +73,6 @@ public class RobotContainer {
         drivetrain.registerTelemetry(logger::telemeterize);
    
     }
-
-    
-    // public Command zeroAndSlowCommand(){
-    //     Commands.sequence(() -> 
-    //     )
-    // }
-
-    public Command goToZero() {
-        double frontLeftOffset = TunerConstants.FrontLeft.EncoderOffset;
-        double frontRightOffset = TunerConstants.FrontRight.EncoderOffset;
-        double backLeftOffset = TunerConstants.BackLeft.EncoderOffset;
-        double backRightOffset = TunerConstants.BackRight.EncoderOffset;
-
-
-
-        return Commands.sequence(
-            Commands.print(Double.toString(frontLeftOffset)),
-            Commands.print(Double.toString(drivetrain.getModule(0).getEncoder().getPosition().getValueAsDouble()))
-        );
-    }
-
-    
 
     public Command getAutonomousCommand() {
         return Commands.print("No autonomous command configured");
