@@ -68,7 +68,7 @@ public class RobotContainer {
         // rezero?
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityY(-1)));
+        joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityY(-0.5)));
         
 
         drivetrain.registerTelemetry(logger::telemeterize);
@@ -80,6 +80,20 @@ public class RobotContainer {
     //     Commands.sequence(() -> 
     //     )
     // }
+
+    public Command goToZero() {
+        double frontLeftOffset = TunerConstants.FrontLeft.EncoderOffset;
+        double frontRightOffset = TunerConstants.FrontRight.EncoderOffset;
+        double backLeftOffset = TunerConstants.BackLeft.EncoderOffset;
+        double backRightOffset = TunerConstants.BackRight.EncoderOffset;
+
+
+
+        return Commands.sequence(
+            Commands.print(Double.toString(frontLeftOffset)),
+            Commands.print(Double.toString(drivetrain.getModule(0).getEncoder().getPosition().getValueAsDouble()))
+        );
+    }
 
     
 
