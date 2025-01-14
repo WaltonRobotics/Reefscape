@@ -1,7 +1,10 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
@@ -9,8 +12,12 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -19,16 +26,18 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-
+import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
  * Subsystem so it can easily be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Subsystem {
+public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -45,6 +54,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
+    /* wheel radius characterization schtuffs */
+    public final DoubleSupplier m_gyroYawRadsSupplier;
+    private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(1);
+
+    private double lastGyroYawRads = 0;
+    private double accumGyroYawRads = 0;
+
+    private double[] startWheelPositions = new double[4];
+    private double currentEffectiveWheelRadius = 0;
+   
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -117,7 +136,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      * @param drivetrainConstants   Drivetrain-wide constants for the swerve drive
      * @param modules               Constants for each specific module
      */
-    public CommandSwerveDrivetrain(
+    public Swerve(
         SwerveDrivetrainConstants drivetrainConstants,
         SwerveModuleConstants<?, ?, ?>... modules
     ) {
@@ -140,7 +159,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *                                CAN FD, and 100 Hz on CAN 2.0.
      * @param modules                 Constants for each specific module
      */
-    public CommandSwerveDrivetrain(
+    public Swerve(
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
         SwerveModuleConstants<?, ?, ?>... modules
@@ -170,7 +189,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      *                                  and radians
      * @param modules                   Constants for each specific module
      */
-    public CommandSwerveDrivetrain(
+    public Swerve(
         SwerveDrivetrainConstants drivetrainConstants,
         double odometryUpdateFrequency,
         Matrix<N3, N1> odometryStandardDeviation,
@@ -214,6 +233,53 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
+
+    public Command wheelRadiusCharacterization(double omegaDirection) {
+		var initialize = runOnce(() -> {
+			lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
+			accumGyroYawRads = 0;
+			currentEffectiveWheelRadius = 0;
+			for (int i = 0; i < Modules.length; i++) {
+				var pos = Modules[i].getPosition(true);
+				startWheelPositions[i] = pos.distanceMeters / kDriveRotationsPerMeter;
+			}
+			m_omegaLimiter.reset(0);
+		});
+
+		var executeEnd = runEnd(
+			() -> {
+				setControl(m_characterisationReq
+					.withRotationalRate(m_omegaLimiter.calculate(m_characterisationSpeed * omegaDirection)));
+				accumGyroYawRads += MathUtil.angleModulus(m_gyroYawRadsSupplier.getAsDouble() - lastGyroYawRads);
+				lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
+				double averageWheelPosition = 0;
+				double[] wheelPositions = new double[4];
+				for (int i = 0; i < Modules.length; i++) {
+					var pos = Modules[i].getPosition(true);
+					wheelPositions[i] = pos.distanceMeters * kDriveRotationsPerMeter;
+					averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
+				}
+				averageWheelPosition /= 4.0;
+				currentEffectiveWheelRadius = (accumGyroYawRads * kDriveRadius) / averageWheelPosition;
+				log_lastGyro.accept(lastGyroYawRads);
+				log_avgWheelPos.accept(averageWheelPosition);
+				log_accumGyro.accept(accumGyroYawRads);
+				log_curEffWheelRad.accept(currentEffectiveWheelRadius);
+			}, () -> {
+				setControl(m_characterisationReq.withRotationalRate(0));
+				if (Math.abs(accumGyroYawRads) <= Math.PI * 2.0) {
+					System.out.println("not enough data for characterization " + accumGyroYawRads);
+				} else {
+					System.out.println(
+						"effective wheel radius: "
+							+ currentEffectiveWheelRadius
+							+ " inches");
+				}
+			});
+
+		return Commands.sequence(
+			initialize, executeEnd);
+	}
 
     @Override
     public void periodic() {
