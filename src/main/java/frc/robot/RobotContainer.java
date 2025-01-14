@@ -7,7 +7,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,7 +30,6 @@ public class RobotContainer {
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
     private final Telemetry logger = new Telemetry(MaxSpeed);
-
 
     private final CommandXboxController joystick = new CommandXboxController(0);
 
@@ -65,23 +63,11 @@ public class RobotContainer {
         joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
         joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
-        // rezero?
+        // reset the field-centric heading on left bumper press
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        joystick.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityY(-1)));
-        
-
         drivetrain.registerTelemetry(logger::telemeterize);
-   
     }
-
-    
-    // public Command zeroAndSlowCommand(){
-    //     Commands.sequence(() -> 
-    //     )
-    // }
-
-    
 
     public Command getAutonomousCommand() {
         return Commands.print("No autonomous command configured");
