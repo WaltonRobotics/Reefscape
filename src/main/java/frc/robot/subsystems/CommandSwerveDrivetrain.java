@@ -2,23 +2,16 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModule;
-import com.ctre.phoenix6.swerve.SwerveModule.ModuleRequest;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -26,7 +19,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
@@ -199,35 +191,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
      */
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
         return run(() -> this.setControl(requestSupplier.get()));
-    }
-
-    /**
-     * @return A command which forces the wheels to go to their zero position (forward, bevel gears in)
-     */
-    public Command goToZero() {
-        // TODO: make constants file and move this there
-        final double kZeroTolerance = 1.0; // degrees
-        BooleanSupplier areWheelsStraight = () -> {
-            boolean straight = true;
-            SwerveModule<TalonFX, TalonFX, CANcoder>[] modules = getModules();
-            for (SwerveModule<TalonFX, TalonFX, CANcoder> module : modules) {
-                if (!MathUtil.isNear(0, module.getCurrentState().angle.getDegrees(), kZeroTolerance)) {
-                    straight = false;
-                }
-            }
-            return straight;
-        };
-
-        // going to assume that i have to apply the request every loop and the 
-        return Commands.race(
-            Commands.run(() -> {
-                SwerveModule<TalonFX, TalonFX, CANcoder>[] modules = getModules();
-                for (SwerveModule<TalonFX, TalonFX, CANcoder> module : modules) {
-                    module.apply(new ModuleRequest().withState(new SwerveModuleState()));
-                }
-            }, this),
-            Commands.waitUntil(areWheelsStraight)
-        );
     }
 
     /**
