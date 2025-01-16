@@ -88,6 +88,7 @@ public class TunerConstants {
 
     private static final int kPigeonId = 1;
 
+    // added by wrt
     public static final double kDriveRotationsPerMeter = kDriveGearRatio / (2 * Math.PI * kWheelRadius.in(Meters));
 
     // These are only used for simulation
@@ -169,6 +170,8 @@ public class TunerConstants {
 
     private static final Distance kBackRightXPos = Inches.of(-9.375);
     private static final Distance kBackRightYPos = Inches.of(-11.375);
+    // added by wrt
+    public static final double kDriveRadius = Math.hypot(kFrontLeftXPos.magnitude(), kFrontLeftYPos.magnitude());
 
 
     public static final SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> FrontLeft =

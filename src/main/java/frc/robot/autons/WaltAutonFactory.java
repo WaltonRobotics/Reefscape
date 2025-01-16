@@ -5,10 +5,10 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-public class AutonFactory {
+public class WaltAutonFactory {
     private final AutoFactory m_factory;
 
-    public AutonFactory(AutoFactory factory) {
+    public WaltAutonFactory(AutoFactory factory) {
         m_factory = factory;
     }
 
@@ -17,7 +17,7 @@ public class AutonFactory {
         final AutoRoutine routine = m_factory.newRoutine("ezTest1");
 
         //trajs
-        AutoTrajectory ezTest1Traj = routine.trajectory("ezTest1");
+        AutoTrajectory ezTest1Traj = routine.trajectory("ez_test_1");
 
         routine.active().onTrue(
             Commands.sequence(
