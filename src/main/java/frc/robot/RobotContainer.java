@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.autons.AutonFactory;
+import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 
@@ -40,17 +40,17 @@ public class RobotContainer {
     public final Swerve drivetrain = TunerConstants.createDrivetrain();
 
     private final AutoFactory autoFactory;
-    private final AutonFactory wrtAutonFactory;
+    private final WaltAutonFactory waltAutonFactory;
     private final AutoChooser autoChooser = new AutoChooser();
 
     public RobotContainer() {
         autoFactory = drivetrain.createAutoFactory();
-        wrtAutonFactory = new AutonFactory(autoFactory);
+        waltAutonFactory = new WaltAutonFactory(autoFactory);
 
         /* autossss */
-        autoChooser.addRoutine("ezTest1", wrtAutonFactory::ezTest1);
+        autoChooser.addRoutine("ezTest1", waltAutonFactory::ezTest1);
 
-        SmartDashboard.putData(autoChooser);
+        SmartDashboard.putData("Auto Chooser", autoChooser);
 
         configureBindings();
     }
@@ -82,7 +82,8 @@ public class RobotContainer {
         // reset the field-centric heading on left bumper press
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        joystick.rightBumper().onTrue(wrtAutonFactory.ezTest1().cmd());
+        joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+        joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }

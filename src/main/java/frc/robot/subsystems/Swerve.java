@@ -2,13 +2,12 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.Arrays;
 import java.util.function.DoubleSupplier;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -16,7 +15,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.trajectory.SwerveSample;
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
-import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
@@ -24,17 +22,19 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -64,8 +64,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
     /* wheel radius characterization schtuffs */
-    // public final DoubleSupplier m_gyroYawRadsSupplier;
-    private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(1);
+    public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
+    private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
+    private final SwerveRequest.RobotCentric m_characterizationReq = new SwerveRequest.RobotCentric()
+		.withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    private final double m_characterizationSpeed = 1.5;
+
+    /* loggin' */
+    private final DoubleLogger log_lastGyro = WaltLogger.logDouble("Swerve", "lastGyro");
+    private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
+    private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
+    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -294,52 +303,52 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    // public Command wheelRadiusCharacterization(double omegaDirection) {
-	// 	var initialize = runOnce(() -> {
-	// 		lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
-	// 		accumGyroYawRads = 0;
-	// 		currentEffectiveWheelRadius = 0;
-	// 		for (int i = 0; i < getModules().length; i++) {
-	// 			var pos = getModules()[i].getPosition(true);
-	// 			startWheelPositions[i] = pos.distanceMeters / TunerConstants.kDriveRotationsPerMeter;
-	// 		}
-	// 		m_omegaLimiter.reset(0);
-	// 	});
+    public Command wheelRadiusCharacterization(double omegaDirection) {
+		var initialize = runOnce(() -> {
+			lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
+			accumGyroYawRads = 0;
+			currentEffectiveWheelRadius = 0;
+			for (int i = 0; i < getModules().length; i++) {
+				var pos = getModules()[i].getPosition(true);
+				startWheelPositions[i] = pos.distanceMeters / TunerConstants.kDriveRotationsPerMeter;
+			}
+			m_omegaLimiter.reset(0);
+		});
 
-	// 	var executeEnd = runEnd(
-	// 		() -> {
-	// 			setControl(m_characterisationReq
-	// 				.withRotationalRate(m_omegaLimiter.calculate(m_characterisationSpeed * omegaDirection)));
-	// 			accumGyroYawRads += MathUtil.angleModulus(m_gyroYawRadsSupplier.getAsDouble() - lastGyroYawRads);
-	// 			lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
-	// 			double averageWheelPosition = 0;
-	// 			double[] wheelPositions = new double[4];
-	// 			for (int i = 0; i < getModules().length; i++) {
-	// 				var pos = getModules()[i].getPosition(true);
-	// 				wheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
-	// 				averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
-	// 			}
-	// 			averageWheelPosition /= 4.0;
-	// 			currentEffectiveWheelRadius = (accumGyroYawRads * kDriveRadius) / averageWheelPosition;
-	// 			log_lastGyro.accept(lastGyroYawRads);
-	// 			log_avgWheelPos.accept(averageWheelPosition);
-	// 			log_accumGyro.accept(accumGyroYawRads);
-	// 			log_curEffWheelRad.accept(currentEffectiveWheelRadius);
-	// 		}, () -> {
-	// 			setControl(m_characterisationReq.withRotationalRate(0));
-	// 			if (Math.abs(accumGyroYawRads) <= Math.PI * 2.0) {
-	// 				System.out.println("not enough data for characterization " + accumGyroYawRads);
-	// 			} else {
-	// 				System.out.println(
-	// 					"effective wheel radius: "
-	// 						+ currentEffectiveWheelRadius
-	// 						+ " inches");
-	// 			}
-	// 		});
+		var executeEnd = runEnd(
+			() -> {
+				setControl(m_characterizationReq
+					.withRotationalRate(m_omegaLimiter.calculate(m_characterizationSpeed * omegaDirection)));
+				accumGyroYawRads += MathUtil.angleModulus(m_gyroYawRadsSupplier.getAsDouble() - lastGyroYawRads);
+				lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
+				double averageWheelPosition = 0;
+				double[] wheelPositions = new double[4];
+				for (int i = 0; i < getModules().length; i++) {
+					var pos = getModules()[i].getPosition(true);
+					wheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
+					averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
+				}
+				averageWheelPosition /= 4.0;
+				currentEffectiveWheelRadius = (accumGyroYawRads * TunerConstants.kDriveRadius) / averageWheelPosition;
+				log_lastGyro.accept(lastGyroYawRads);
+				log_avgWheelPos.accept(averageWheelPosition);
+				log_accumGyro.accept(accumGyroYawRads);
+				log_currentEffectiveWheelRad.accept(currentEffectiveWheelRadius);
+			}, () -> {
+				setControl(m_characterizationReq.withRotationalRate(0));
+				if (Math.abs(accumGyroYawRads) <= Math.PI * 2.0) {
+					System.out.println("not enough data for characterization " + accumGyroYawRads);
+				} else {
+					System.out.println(
+						"effective wheel radius: "
+							+ currentEffectiveWheelRadius
+							+ " inches");
+				}
+			});
 
-	// 	return Commands.sequence(
-	// 		initialize, executeEnd);
-	// }
+		return Commands.sequence(
+			initialize, executeEnd);
+	}
 
     @Override
     public void periodic() {
