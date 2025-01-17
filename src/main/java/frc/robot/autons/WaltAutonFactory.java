@@ -28,4 +28,26 @@ public class WaltAutonFactory {
 
         return routine;
     }
+
+    public AutoRoutine middle_2pc() {
+        final AutoRoutine routine = m_factory.newRoutine("middle_2pc");
+
+        //trajs
+        AutoTrajectory middle_2pc_1 = routine.trajectory("middle_2pc_1");
+        AutoTrajectory middle_2pc_2 = routine.trajectory("middle_2pc_2");
+        AutoTrajectory middle_2pc_3 = routine.trajectory("middle_2pc_3");
+
+        routine.active().onTrue(
+            Commands.sequence(
+                middle_2pc_1.resetOdometry(),
+                middle_2pc_1.cmd(),
+                middle_2pc_2.resetOdometry(),
+                middle_2pc_2.cmd(),
+                middle_2pc_3.resetOdometry(),
+                middle_2pc_3.cmd()
+            )
+        );
+
+        return routine;
+    }
 }
