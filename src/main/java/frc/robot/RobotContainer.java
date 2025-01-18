@@ -18,8 +18,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.Elevatork;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
 
 public class RobotContainer {
@@ -38,6 +40,8 @@ public class RobotContainer {
     private final CommandXboxController joystick = new CommandXboxController(0);
 
     public final Swerve drivetrain = TunerConstants.createDrivetrain();
+
+    public final Elevator elevator = new Elevator();
 
     private final AutoFactory autoFactory;
     private final WaltAutonFactory waltAutonFactory;
@@ -85,6 +89,8 @@ public class RobotContainer {
 
         joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+
+        joystick.leftTrigger().whileTrue(elevator.setPosition(Elevator.HeightPosition.L2));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
