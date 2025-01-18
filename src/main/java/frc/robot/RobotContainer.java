@@ -90,6 +90,12 @@ public class RobotContainer {
         joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
         joystick.leftTrigger().whileTrue(elevator.setPosition(Elevator.HeightPosition.L2));
+        joystick.rightBumper().and(joystick.leftBumper())
+            .whileTrue(elevator.setPosition(Elevator.HeightPosition.L1));
+        joystick.leftTrigger().and(joystick.rightTrigger())
+            .whileTrue(elevator.setPosition(Elevator.HeightPosition.L3));
+        joystick.x().whileTrue(elevator.setPosition(Elevator.HeightPosition.L4));
+        joystick.y().whileTrue(elevator.setPosition(Elevator.HeightPosition.HOME));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
