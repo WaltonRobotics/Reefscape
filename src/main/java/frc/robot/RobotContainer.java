@@ -52,7 +52,7 @@ public class RobotContainer {
         waltAutonFactory = new WaltAutonFactory(autoFactory);
 
         /* autossss */
-        autoChooser.addRoutine("ezTest1", waltAutonFactory::ezTest1);
+        // autoChooser.addRoutine("ezTest1", waltAutonFactory::ezTest1);
 
         SmartDashboard.putData("Auto Chooser", autoChooser);
 
