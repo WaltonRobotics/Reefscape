@@ -79,16 +79,16 @@ public class RobotContainer {
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
-        joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+        //joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+        //joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+        //joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+        //joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
         joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
-        joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-        joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+        //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+        //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
         joystick.leftTrigger().whileTrue(elevator.setPosition(Elevator.HeightPosition.L2));
         joystick.rightBumper().and(joystick.leftBumper())
@@ -99,6 +99,10 @@ public class RobotContainer {
         joystick.y().whileTrue(elevator.setPosition(Elevator.HeightPosition.HOME));
 
         drivetrain.registerTelemetry(logger::telemeterize);
+    }
+
+    public void simulationPeriodic() {
+        elevator.simulationPeriodic();
     }
 
     public Command getAutonomousCommand() {
