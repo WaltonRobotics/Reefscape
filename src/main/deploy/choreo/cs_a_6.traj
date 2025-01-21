@@ -6,7 +6,7 @@
     {"x":1.4372355937957764, "y":7.199769020080566, "heading":2.2343681962918915, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":1.5817623138427734, "y":6.967731952667236, "heading":2.2343681962918915, "intervals":26, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":2.643955945968628, "y":4.6084513664245605, "heading":-0.7853986306830192, "intervals":12, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":3.04913067817688, "y":4.203276634216309, "heading":0.0, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":3.04913067817688, "y":4.203276634216309, "heading":0.0, "intervals":27, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":1.6000336408615112, "y":6.967731952667236, "heading":2.2343681962918915, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":1.4372355937957764, "y":7.199769020080566, "heading":2.2343681962918915, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
@@ -21,7 +21,7 @@
     {"x":{"exp":"1.4372355937957764 m", "val":1.4372355937957764}, "y":{"exp":"7.199769020080566 m", "val":7.199769020080566}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.5817623138427734 m", "val":1.5817623138427734}, "y":{"exp":"6.967731952667236 m", "val":6.967731952667236}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":26, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"2.643955945968628 m", "val":2.643955945968628}, "y":{"exp":"4.6084513664245605 m", "val":4.6084513664245605}, "heading":{"exp":"-0.7853986306830192 rad", "val":-0.7853986306830192}, "intervals":12, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"3.04913067817688 m", "val":3.04913067817688}, "y":{"exp":"4.203276634216309 m", "val":4.203276634216309}, "heading":{"exp":"0 rad", "val":0.0}, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"3.04913067817688 m", "val":3.04913067817688}, "y":{"exp":"4.203276634216309 m", "val":4.203276634216309}, "heading":{"exp":"0 rad", "val":0.0}, "intervals":27, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.6000336408615112 m", "val":1.6000336408615112}, "y":{"exp":"6.967731952667236 m", "val":6.967731952667236}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.4372355937957764 m", "val":1.4372355937957764}, "y":{"exp":"7.199769020080566 m", "val":7.199769020080566}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
@@ -114,7 +114,7 @@
     {"t":2.03211, "x":1.46374, "y":7.16292, "heading":2.21551, "vx":-0.77061, "vy":1.07504, "omega":0.16484, "ax":11.18027, "ay":-15.69641, "alpha":6.40828, "fx":[86.93449,87.53568,87.51976,86.91465], "fy":[-122.66869,-122.24034,-122.25017,-122.68113]},
     {"t":2.06642, "x":1.44387, "y":7.19057, "heading":2.22117, "vx":-0.38698, "vy":0.53645, "omega":0.38473, "ax":11.27798, "ay":-15.63404, "alpha":-11.21225, "fx":[87.83402,88.15203,88.14342,87.82417], "fy":[-122.08523,-121.85578,-121.86134,-122.09163]},
     {"t":2.10073, "x":1.43724, "y":7.19977, "heading":2.23437, "vx":0.0, "vy":0.0, "omega":0.0, "ax":0.0, "ay":0.0, "alpha":0.0, "fx":[0.0,0.0,0.0,0.0], "fy":[0.0,0.0,0.0,0.0]}],
-  "splits":[0]
+  "splits":[0,43]
  },
  "events":[]
 }

@@ -5,7 +5,7 @@
   "waypoints":[
     {"x":1.4958608150482178, "y":0.7816005945205688, "heading":-2.193644489286548, "intervals":21, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":5.053322792053223, "y":2.053350053, "heading":-2.193644489286548, "intervals":15, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":5.059998035430908, "y":2.5566025338, "heading":2.193644489286548, "intervals":6, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":5.059998035430908, "y":2.5566025338, "heading":2.193644489286548, "intervals":6, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":5.1629509925842285, "y":2.4005061, "heading":2.0940748806471543, "intervals":17, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":4.633081436157227, "y":1.761008344, "heading":-2.2083451018180034, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":1.4958608150482178, "y":0.7816005945205688, "heading":-2.193644489286548, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
@@ -20,7 +20,7 @@
   "waypoints":[
     {"x":{"exp":"1.4958608150482178 m", "val":1.4958608150482178}, "y":{"exp":"0.7816005945205688 m", "val":0.7816005945205688}, "heading":{"exp":"-2.193644489286548 rad", "val":-2.193644489286548}, "intervals":21, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.053322792053223 m", "val":5.053322792053223}, "y":{"exp":"2.053350053 m", "val":2.053350053}, "heading":{"exp":"-2.193644489286548 rad", "val":-2.193644489286548}, "intervals":15, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"5.059998035430908 m", "val":5.059998035430908}, "y":{"exp":"2.5566025338 m", "val":2.5566025338}, "heading":{"exp":"2.193644489286548 rad", "val":2.193644489286548}, "intervals":6, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"5.059998035430908 m", "val":5.059998035430908}, "y":{"exp":"2.5566025338 m", "val":2.5566025338}, "heading":{"exp":"2.193644489286548 rad", "val":2.193644489286548}, "intervals":6, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.1629509925842285 m", "val":5.1629509925842285}, "y":{"exp":"2.4005061 m", "val":2.4005061}, "heading":{"exp":"2.0940748806471543 rad", "val":2.0940748806471543}, "intervals":17, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"4.633081436157227 m", "val":4.633081436157227}, "y":{"exp":"1.761008344 m", "val":1.761008344}, "heading":{"exp":"-2.2083451018180034 rad", "val":-2.2083451018180034}, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.4958608150482178 m", "val":1.4958608150482178}, "y":{"exp":"0.7816005945205688 m", "val":0.7816005945205688}, "heading":{"exp":"-2.193644489286548 rad", "val":-2.193644489286548}, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
@@ -118,7 +118,7 @@
     {"t":2.33541, "x":1.55349, "y":0.79835, "heading":-2.43565, "vx":-1.4603, "vy":-0.42445, "omega":2.31724, "ax":18.49917, "ay":5.37784, "alpha":37.96082, "fx":[145.01785,142.37733,143.67983,146.23148], "fy":[39.87595,48.44992,44.39189,35.10926]},
     {"t":2.37488, "x":1.51027, "y":0.78579, "heading":-2.34421, "vx":-0.73027, "vy":-0.21223, "omega":3.81528, "ax":18.50515, "ay":5.37789, "alpha":-96.67994, "fx":[144.84931,142.49075,143.96019,146.19281], "fy":[40.60016,48.21437,43.59606,35.41821]},
     {"t":2.41434, "x":1.49586, "y":0.7816, "heading":-2.19364, "vx":0.0, "vy":0.0, "omega":0.0, "ax":0.0, "ay":0.0, "alpha":0.0, "fx":[0.0,0.0,0.0,0.0], "fy":[0.0,0.0,0.0,0.0]}],
-  "splits":[0]
+  "splits":[0,36]
  },
  "events":[]
 }

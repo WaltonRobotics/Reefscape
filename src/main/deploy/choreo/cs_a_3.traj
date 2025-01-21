@@ -5,7 +5,7 @@
   "waypoints":[
     {"x":1.4372355937957764, "y":7.199769020080566, "heading":2.2343681962918915, "intervals":30, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":5.053322792053223, "y":5.871449947357178, "heading":-1.7577756887360414, "intervals":10, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":5.059998035430908, "y":5.358774662017822, "heading":-2.107706904890039, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":5.059998035430908, "y":5.358774662017822, "heading":-2.107706904890039, "intervals":5, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":5.1629509925842285, "y":5.524293899536133, "heading":-2.0940748806471543, "intervals":17, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":4.633081436157227, "y":6.163791656494141, "heading":2.2083451018180034, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":1.4372355937957764, "y":7.199769020080566, "heading":2.2343681962918915, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
@@ -20,7 +20,7 @@
   "waypoints":[
     {"x":{"exp":"1.4372355937957764 m", "val":1.4372355937957764}, "y":{"exp":"7.199769020080566 m", "val":7.199769020080566}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":30, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.053322792053223 m", "val":5.053322792053223}, "y":{"exp":"5.871449947357178 m", "val":5.871449947357178}, "heading":{"exp":"-1.7577756887360414 rad", "val":-1.7577756887360414}, "intervals":10, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"5.059998035430908 m", "val":5.059998035430908}, "y":{"exp":"5.358774662017822 m", "val":5.358774662017822}, "heading":{"exp":"-2.107706904890039 rad", "val":-2.107706904890039}, "intervals":5, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"5.059998035430908 m", "val":5.059998035430908}, "y":{"exp":"5.358774662017822 m", "val":5.358774662017822}, "heading":{"exp":"-2.107706904890039 rad", "val":-2.107706904890039}, "intervals":5, "split":true, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.1629509925842285 m", "val":5.1629509925842285}, "y":{"exp":"5.524293899536133 m", "val":5.524293899536133}, "heading":{"exp":"-2.0940748806471543 rad", "val":-2.0940748806471543}, "intervals":17, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"4.633081436157227 m", "val":4.633081436157227}, "y":{"exp":"6.163791656494141 m", "val":6.163791656494141}, "heading":{"exp":"2.2083451018180034 rad", "val":2.2083451018180034}, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.4372355937957764 m", "val":1.4372355937957764}, "y":{"exp":"7.199769020080566 m", "val":7.199769020080566}, "heading":{"exp":"2.2343681962918915 rad", "val":2.2343681962918915}, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
@@ -121,7 +121,7 @@
     {"t":2.39094, "x":1.49681, "y":7.1817, "heading":2.383, "vx":-1.48218, "vy":0.44948, "omega":-1.74668, "ax":18.43656, "ay":-5.58968, "alpha":-5.08523, "fx":[145.89054,143.26669,141.7271,144.46828], "fy":[-36.5336,-45.74062,-50.33313,-41.83052]},
     {"t":2.43113, "x":1.45213, "y":7.19525, "heading":2.31279, "vx":-0.74114, "vy":0.22481, "omega":-1.95108, "ax":18.43896, "ay":-5.59303, "alpha":48.54143, "fx":[146.0051,143.42884,141.62096,144.37251], "fy":[-36.20518,-45.32895,-50.72666,-42.2819]},
     {"t":2.47132, "x":1.43724, "y":7.19977, "heading":2.23437, "vx":0.0, "vy":0.0, "omega":0.0, "ax":0.0, "ay":0.0, "alpha":0.0, "fx":[0.0,0.0,0.0,0.0], "fy":[0.0,0.0,0.0,0.0]}],
-  "splits":[0]
+  "splits":[0,40]
  },
  "events":[]
 }
