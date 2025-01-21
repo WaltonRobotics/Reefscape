@@ -25,8 +25,8 @@ import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
 public class Elevator extends SubsystemBase{
+    private final TalonFX m_right = new TalonFX(Elevatork.kRightCANID, TunerConstants.kCANBus);
     private final TalonFX m_left = new TalonFX(Elevatork.kLeftCANID, TunerConstants.kCANBus);
-	private final TalonFX m_right = new TalonFX(Elevatork.kRightCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
     private final MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
@@ -43,6 +43,8 @@ public class Elevator extends SubsystemBase{
             new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
         );
 
+    private final DoubleLogger log_rightMotorPosition = WaltLogger.logDouble("Elevator", "rightMotorPosition");
+    private final DoubleLogger log_leftMotorPosition = WaltLogger.logDouble("Elevator", "leftMotorPosition");
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble("Elevator", "simPosition");
 
     public Elevator(){
@@ -62,6 +64,11 @@ public class Elevator extends SubsystemBase{
         return setPosition(heightMeters.m_heightMeters);
     }
 
+    public void subsystemPerioidic() {
+        log_rightMotorPosition.accept(m_right.getPosition().getValueAsDouble());
+        log_leftMotorPosition.accept(m_left.getPosition().getValueAsDouble());
+    }
+
     public void simulationPeriodic(){
         TalonFXSimState rightSim = m_right.getSimState();
 
@@ -71,7 +78,7 @@ public class Elevator extends SubsystemBase{
 
         log_elevatorSimPosition.accept(m_elevatorSim.getPositionMeters());
 
-        m_rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * 1 / Elevatork.kSensorToMechanismRatio);
+        m_rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / Elevatork.kSensorToMechanismRatio);
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
 
