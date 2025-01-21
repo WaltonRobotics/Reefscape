@@ -1,22 +1,20 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Volt;
-import static edu.wpi.first.units.Units.Volts;
-
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -36,6 +34,14 @@ public class Elevator extends SubsystemBase{
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
         DCMotor.getKrakenX60(2), Elevatork.kGearRatio, Elevatork.kCarriageMassKg, Elevatork.kSpoolDiameter,
         0.0, Elevatork.kMaximumHeight, true, Elevatork.kStartingHeightMeters);
+    private final Mechanism2d m_mech2d =
+        new Mechanism2d(0.5, 20);
+    private final MechanismRoot2d m_mech2dRoot =
+        m_mech2d.getRoot("Elevator Root", 0.5, 0.1);
+    private final MechanismLigament2d m_elevatorMech2d =
+        m_mech2dRoot.append(
+            new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
+        );
 
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble("Elevator", "simPosition");
 
@@ -44,11 +50,12 @@ public class Elevator extends SubsystemBase{
         m_left.getConfigurator().apply(Elevatork.kLeftTalonFXConfiguration);
         m_right.getConfigurator().apply(Elevatork.kRightTalonFXConfiguration);
 
+        SmartDashboard.putData("Elevator Sim", m_mech2d);
     }
 
 
     public Command setPosition(double heightMeters){
-        return Commands.run(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters*Elevatork.kMeterstoRotations)));
+        return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters*Elevatork.kMeterstoRotations)), this);
     }
 
     public Command setPosition(HeightPosition heightMeters){
@@ -66,6 +73,8 @@ public class Elevator extends SubsystemBase{
 
         m_rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * 1 / Elevatork.kSensorToMechanismRatio);
 
+        m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
+
          RoboRioSim.setVInVoltage(
             BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
     }
@@ -73,11 +82,11 @@ public class Elevator extends SubsystemBase{
     
 
     public enum HeightPosition{
-        HOME(2),
-        L1(5),
-        L2(6),
-        L3(8),
-        L4(10);
+        HOME(0.4),
+        L1(0.8),
+        L2(1.2),
+        L3(1.6),
+        L4(2);
 
         public final double m_heightMeters;
 
