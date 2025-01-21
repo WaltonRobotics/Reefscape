@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -40,14 +41,14 @@ public class Elevator extends SubsystemBase{
 
     public Elevator(){
         m_left.setControl(m_follower);
-        m_left.getConfigurator();
-        m_right.getConfigurator();
+        m_left.getConfigurator().apply(Elevatork.kLeftTalonFXConfiguration);
+        m_right.getConfigurator().apply(Elevatork.kRightTalonFXConfiguration);
 
     }
 
 
     public Command setPosition(double heightMeters){
-        return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters*Elevatork.kMeterstoRotations)));
+        return Commands.run(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters*Elevatork.kMeterstoRotations)));
     }
 
     public Command setPosition(HeightPosition heightMeters){
