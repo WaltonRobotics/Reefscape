@@ -87,13 +87,11 @@ public class Robot extends TimedRobot {
         //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-        joystick.leftTrigger().onTrue(elevator.setPosition(Elevator.HeightPosition.L2));
-        joystick.rightBumper().and(joystick.leftBumper())
-            .onTrue(elevator.setPosition(Elevator.HeightPosition.L1));
-        joystick.leftTrigger().and(joystick.rightTrigger())
-            .onTrue(elevator.setPosition(Elevator.HeightPosition.L3));
+        joystick.povDown().onTrue(elevator.setPosition(Elevator.HeightPosition.HOME));
+        joystick.povLeft().onTrue(elevator.setPosition(Elevator.HeightPosition.L1));
+        joystick.povRight().onTrue(elevator.setPosition(Elevator.HeightPosition.L2));
+        joystick.povUp().onTrue(elevator.setPosition(Elevator.HeightPosition.L3));
         joystick.x().onTrue(elevator.setPosition(Elevator.HeightPosition.L4));
-        joystick.y().onTrue(elevator.setPosition(Elevator.HeightPosition.HOME));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
