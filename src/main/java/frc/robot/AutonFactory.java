@@ -32,7 +32,7 @@ public class AutonFactory {
         final AutoRoutine routine = m_autoFactory.newRoutine("auton");
 
         List<AutoTrajectory> trajectories = new ArrayList<AutoTrajectory>();
-        for (int i = 0; i < locations.size() - 2; i++) {
+        for (int i = 0; i < locations.size() - 1; i++) {
             trajectories.add(
                 routine.trajectory(m_trajectoryMap.get(
                     new Pair<Location, Location>(locations.get(i), locations.get(i+1))
