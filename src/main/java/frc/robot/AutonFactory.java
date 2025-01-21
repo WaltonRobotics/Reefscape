@@ -26,7 +26,7 @@ public class AutonFactory {
     public Optional<AutoRoutine> generateAutoRoutine(List<Location> locations, List<Command> parallelActions, List<Command> actions) {
         // list lengths have to match up exactly AND you must have at least 2 locations (locations should have one more element than the others)
         if (locations.size() < 2) { return Optional.empty(); }
-        if (locations.size() != parallelActions.size()) { return Optional.empty(); }
+        if (locations.size() != parallelActions.size() + 1) { return Optional.empty(); }
         if (locations.size() != actions.size() + 1) { return Optional.empty(); }
 
         final AutoRoutine routine = m_autoFactory.newRoutine("auton");
