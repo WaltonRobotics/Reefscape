@@ -24,7 +24,7 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
-public class Elevator extends SubsystemBase{
+public class Elevator extends SubsystemBase {
     private final TalonFX m_right = new TalonFX(Elevatork.kRightCANID, TunerConstants.kCANBus);
     private final TalonFX m_left = new TalonFX(Elevatork.kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
@@ -47,7 +47,7 @@ public class Elevator extends SubsystemBase{
     private final DoubleLogger log_leftMotorPosition = WaltLogger.logDouble("Elevator", "leftMotorPosition");
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble("Elevator", "simPosition");
 
-    public Elevator(){
+    public Elevator() {
         m_left.setControl(m_follower);
         m_left.getConfigurator().apply(Elevatork.kLeftTalonFXConfiguration);
         m_right.getConfigurator().apply(Elevatork.kRightTalonFXConfiguration);
@@ -56,20 +56,15 @@ public class Elevator extends SubsystemBase{
     }
 
 
-    public Command setPosition(double heightMeters){
+    public Command setPosition(double heightMeters) {
         return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters)), this);
     }
 
-    public Command setPosition(HeightPosition heightMeters){
+    public Command setPosition(HeightPosition heightMeters) {
         return setPosition(heightMeters.m_heightMeters);
     }
 
-    public void subsystemPerioidic() {
-        log_rightMotorPosition.accept(m_right.getPosition().getValueAsDouble());
-        log_leftMotorPosition.accept(m_left.getPosition().getValueAsDouble());
-    }
-
-    public void simulationPeriodic(){
+    public void simulationPeriodic() {
         TalonFXSimState rightSim = m_right.getSimState();
 
         m_elevatorSim.setInput(rightSim.getMotorVoltage());
@@ -82,13 +77,16 @@ public class Elevator extends SubsystemBase{
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
 
-         RoboRioSim.setVInVoltage(
+        RoboRioSim.setVInVoltage(
             BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
     }
 
-    
+    public void periodic() {
+        log_rightMotorPosition.accept(m_right.getPosition().getValueAsDouble());
+        log_leftMotorPosition.accept(m_left.getPosition().getValueAsDouble());
+    }
 
-    public enum HeightPosition{
+    public enum HeightPosition {
         HOME(0.4),
         L1(0.8),
         L2(1.2),
@@ -100,7 +98,5 @@ public class Elevator extends SubsystemBase{
         private HeightPosition(double heightMeters){
             m_heightMeters = heightMeters;
         }
-
     }
-
 }
