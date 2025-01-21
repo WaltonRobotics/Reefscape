@@ -27,11 +27,9 @@ public class Constants {
         public static final double kSpoolDiameter = 2; //inches
 
         public static final double kCarriageMassKg = 4;
-        public static final double kMaximumHeight = 10; //meters
+        public static final double kMaximumHeight = 2; //meters
         public static final double kStartingHeightMeters = 0; //meters
         public static final double kSensorToMechanismRatio = (kGearRatio) / (Units.inchesToMeters(kSpoolDiameter) * Math.PI);
-
-        public static final double kMeterstoRotations = 1;
 
         private static final CurrentLimitsConfigs kLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)

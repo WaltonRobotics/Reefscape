@@ -35,9 +35,9 @@ public class Elevator extends SubsystemBase{
         DCMotor.getKrakenX60(2), Elevatork.kGearRatio, Elevatork.kCarriageMassKg, Elevatork.kSpoolDiameter,
         0.0, Elevatork.kMaximumHeight, true, Elevatork.kStartingHeightMeters);
     private final Mechanism2d m_mech2d =
-        new Mechanism2d(0.5, 20);
+        new Mechanism2d(6, Elevatork.kMaximumHeight);
     private final MechanismRoot2d m_mech2dRoot =
-        m_mech2d.getRoot("Elevator Root", 0.5, 0.1);
+        m_mech2d.getRoot("Elevator Root", 3, 0.0);
     private final MechanismLigament2d m_elevatorMech2d =
         m_mech2dRoot.append(
             new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
@@ -55,7 +55,7 @@ public class Elevator extends SubsystemBase{
 
 
     public Command setPosition(double heightMeters){
-        return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters*Elevatork.kMeterstoRotations)), this);
+        return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters)), this);
     }
 
     public Command setPosition(HeightPosition heightMeters){
