@@ -23,7 +23,7 @@ public class AutonFactory {
         configureTrajectories();
     }
 
-    public Optional<AutoRoutine> generateAutoRoutine(Command resetOdometry, List<Location> locations, List<Command> parallelActions, List<Command> actions) {
+    public Optional<AutoRoutine> generateAutoRoutine(List<Location> locations, List<Command> parallelActions, List<Command> actions) {
         // list lengths have to match up exactly AND you must have at least 2 locations (locations should have one more element than the others)
         if (locations.size() < 2) { return Optional.empty(); }
         if (locations.size() != parallelActions.size()) { return Optional.empty(); }
@@ -42,7 +42,7 @@ public class AutonFactory {
 
         routine.active().onTrue(
             Commands.sequence(
-                resetOdometry,
+                m_autoFactory.resetOdometry("Trajectory 1"),
                 Commands.parallel(
                     trajectories.get(0).cmd(),
                     parallelActions.get(0)
