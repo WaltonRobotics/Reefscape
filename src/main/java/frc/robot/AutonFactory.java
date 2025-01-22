@@ -25,17 +25,34 @@ public class AutonFactory {
 
     public Optional<AutoRoutine> generateAutoRoutine(List<Location> locations, List<Command> parallelActions, List<Command> actions) {
         // list lengths have to match up exactly AND you must have at least 2 locations (locations should have one more element than the others)
-        if (locations.size() < 2) { return Optional.empty(); }
-        if (locations.size() != parallelActions.size() + 1) { return Optional.empty(); }
-        if (locations.size() != actions.size() + 1) { return Optional.empty(); }
+        if (locations.size() < 2) {
+            System.out.println("AUTON GENERATION FAILURE: Fewer than 2 locations");
+            return Optional.empty();
+        }
+        if (locations.size() != parallelActions.size() + 1) {
+            System.out.println("AUTON GENERATION FAILURE: Number of parallel actions + 1 not equal to number of locations");
+            return Optional.empty();
+        }
+        if (locations.size() != actions.size() + 1) {
+            System.out.println("AUTON GENERATION FAILURE: Number of actions + 1 not equal to number of locations");
+            return Optional.empty();
+        }
 
         final AutoRoutine routine = m_autoFactory.newRoutine("auton");
 
         List<AutoTrajectory> trajectories = new ArrayList<AutoTrajectory>();
         for (int i = 0; i < locations.size() - 1; i++) {
+            Pair<Location, Location> currentKey = new Pair<>(locations.get(i), locations.get(i+1));
+            // if there is corresponding trajectory for an entered location pair, stop the auton
+            // if this wasn't checked we'd pass null to a different place
+            if (m_trajectoryMap.get(currentKey) == null) {
+                System.out.println("AUTON GENERATION FAILURE: Trajectory not found for location pair starting at index " + i);
+                return Optional.empty();
+            }
+
             trajectories.add(
                 routine.trajectory(m_trajectoryMap.get(
-                    new Pair<Location, Location>(locations.get(i), locations.get(i+1))
+                    currentKey
                 ))
             );
         }
