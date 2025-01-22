@@ -68,7 +68,7 @@ public class AutonFactory {
         );
 
         Trigger firstPortionDone = trajectories.get(0).done().and(new Trigger(parallelActions.get(0)::isFinished));
-        routine.active().and(firstPortionDone.onTrue(actions.get(0)));
+        routine.active().and(firstPortionDone).onTrue(actions.get(0));
 
         for (int i = 1; i < trajectories.size(); i++) {
             // WAIT FOR ACTION TO FINISH
