@@ -77,8 +77,8 @@ public class Algae {
     public enum IntakeSpeed {
         // DUMMY NUMBERS
         STOP(0),
-        INTAKE(0),
-        PROCESSOR_SHOOT(0);
+        INTAKE(0.5),
+        PROCESSOR_SHOOT(-0.5);
 
         public final double m_intakeSpeed;
 
