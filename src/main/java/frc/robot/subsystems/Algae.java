@@ -41,7 +41,10 @@ public class Algae {
      * @return A Command which sets the intake to go to the specificed velocity
      */
     public Command setIntakeAction(double destinationVelocity) {
-        return Commands.runOnce(() -> m_intakeMotor.set(destinationVelocity));
+        return Commands.runEnd(
+            () -> m_intakeMotor.set(destinationVelocity),
+            () -> m_intakeMotor.set(0)
+        );
     }
 
     public Command setIntakeAction(IntakeSpeed destinationVelocity) {
