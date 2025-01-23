@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Kilograms;
+import static edu.wpi.first.units.Units.Meters;
+
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -31,10 +34,10 @@ public class Elevator extends SubsystemBase {
     private final MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
-        DCMotor.getKrakenX60(2), ElevatorK.kGearRatio, ElevatorK.kCarriageMassKg, ElevatorK.kSpoolRadius,
-        0.0, ElevatorK.kMaximumHeight, true, ElevatorK.kStartingHeightMeters);
+            DCMotor.getKrakenX60(2), ElevatorK.kGearRatio, ElevatorK.kCarriageMassKg.in(Kilograms), ElevatorK.kSpoolRadius.in(Meters),
+            ElevatorK.kMinimumHeight.in(Meters), ElevatorK.kMaximumHeight.in(Meters), true, ElevatorK.kStartingHeightMeters.in(Meters));
     private final Mechanism2d m_mech2d =
-        new Mechanism2d(6, ElevatorK.kMaximumHeight);
+        new Mechanism2d(6, ElevatorK.kMaximumHeight.in(Meters));
     private final MechanismRoot2d m_mech2dRoot =
         m_mech2d.getRoot("Elevator Root", 3, 0.0);
     private final MechanismLigament2d m_elevatorMech2d =
