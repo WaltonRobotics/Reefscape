@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Algae;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -37,8 +38,10 @@ public class Robot extends TimedRobot {
     private final Telemetry logger = new Telemetry(MaxSpeed);
 
     private final CommandXboxController joystick = new CommandXboxController(0);
+    private final CommandXboxController manipulator = new CommandXboxController(1);
 
     public final Swerve drivetrain = TunerConstants.createDrivetrain();
+    private final Algae m_algae = new Algae();
 
     private final AutoFactory autoFactory = drivetrain.createAutoFactory();
     private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
@@ -83,6 +86,19 @@ public class Robot extends TimedRobot {
 
         //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+
+        /*TODO: test to see if this actually works */
+        // wrist position controls
+        manipulator.y().onTrue(m_algae.setWristPosition(Algae.WristPosition.HOME));
+        manipulator.x().onTrue(m_algae.setWristPosition(Algae.WristPosition.INTAKE));
+        manipulator.b().onTrue(m_algae.setWristPosition(Algae.WristPosition.PROCESSOR_SHOOT));
+
+        // intake controls
+        manipulator.rightTrigger()
+            .whileTrue(m_algae.setIntakeAction(Algae.IntakeSpeed.INTAKE));
+        manipulator.leftTrigger()
+            .whileTrue(m_algae.setIntakeAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+        
 
 
 
