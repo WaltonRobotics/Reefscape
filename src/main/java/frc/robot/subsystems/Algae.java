@@ -36,7 +36,7 @@ public class Algae {
     }
 
     /**
-     * @param destinationVelocity Units in percent max velocity [-1.0, 1.0]
+     * @param destinationVelocity Percent max velocity [-1.0, 1.0]
      * @return A Command which sets the intake to go to the specificed velocity
      */
     public Command setIntakeAction(double destinationVelocity) {
@@ -46,6 +46,10 @@ public class Algae {
         );
     }
 
+    /**
+     * @param destinationVelocity Choose speed from IntakeSpeed
+     * @return A Command which sets the intake to go the specified velocity
+     */
     public Command setIntakeAction(IntakeSpeed destinationVelocity) {
         return setIntakeAction(destinationVelocity.m_intakeSpeed);
     }
@@ -74,7 +78,7 @@ public class Algae {
 
     /**
      * An enum that holds the most important speeds for intake/outake operation.
-     * Measured in percent maximum velocity. (I'm not sorry)
+     * Measured in percent maximum velocity
      */
     public enum IntakeSpeed {
         // DUMMY NUMBERS
