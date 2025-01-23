@@ -18,23 +18,23 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.Elevatork;
+import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
 public class Elevator extends SubsystemBase {
-    private final TalonFX m_right = new TalonFX(Elevatork.kRightCANID, TunerConstants.kCANBus);
-    private final TalonFX m_left = new TalonFX(Elevatork.kLeftCANID, TunerConstants.kCANBus);
+    private final TalonFX m_right = new TalonFX(ElevatorK.kRightCANID, TunerConstants.kCANBus);
+    private final TalonFX m_left = new TalonFX(ElevatorK.kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
     private final MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
-        DCMotor.getKrakenX60(2), Elevatork.kGearRatio, Elevatork.kCarriageMassKg, Elevatork.kSpoolDiameter,
-        0.0, Elevatork.kMaximumHeight, true, Elevatork.kStartingHeightMeters);
+        DCMotor.getKrakenX60(2), ElevatorK.kGearRatio, ElevatorK.kCarriageMassKg, ElevatorK.kSpoolRadius,
+        0.0, ElevatorK.kMaximumHeight, true, ElevatorK.kStartingHeightMeters);
     private final Mechanism2d m_mech2d =
-        new Mechanism2d(6, Elevatork.kMaximumHeight);
+        new Mechanism2d(6, ElevatorK.kMaximumHeight);
     private final MechanismRoot2d m_mech2dRoot =
         m_mech2d.getRoot("Elevator Root", 3, 0.0);
     private final MechanismLigament2d m_elevatorMech2d =
@@ -51,13 +51,12 @@ public class Elevator extends SubsystemBase {
 
     public Elevator() {
         m_left.setControl(m_follower);
-        m_left.getConfigurator().apply(Elevatork.kLeftTalonFXConfiguration);
-        m_right.getConfigurator().apply(Elevatork.kRightTalonFXConfiguration);
+        m_left.getConfigurator().apply(ElevatorK.kLeftTalonFXConfiguration);
+        m_right.getConfigurator().apply(ElevatorK.kRightTalonFXConfiguration);
         SmartDashboard.putData("Elevator Sim", m_mech2d);
 
         register();
     }
-
 
     public Command setPosition(double heightMeters) {
         return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters)), this);
@@ -69,14 +68,17 @@ public class Elevator extends SubsystemBase {
 
     public void simulationPeriodic() {
         TalonFXSimState rightSim = m_right.getSimState();
+        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * ElevatorK.kSensorToMechanismRatio);
+        rightSim.setRotorVelocity(m_elevatorSim.getVelocityMetersPerSecond() * ElevatorK.kSensorToMechanismRatio);
+
 
         m_elevatorSim.setInput(rightSim.getMotorVoltage());
 
         m_elevatorSim.update(0.020);
 
         log_elevatorSimPosition.accept(m_elevatorSim.getPositionMeters());
-
-        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() / Elevatork.kSensorToMechanismRatio);
+        
+        // m_right.setPosition(m_elevatorSim.getPositionMeters());
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
 
@@ -94,11 +96,14 @@ public class Elevator extends SubsystemBase {
     }
 
     public enum HeightPosition {
-        HOME(0.4),
-        L1(0.8),
-        L2(1.2),
-        L3(1.6),
-        L4(2);
+        HOME(0),
+        CORAL_STATION(1),
+        CLIMB_UP(1.5), // this height will move the robot up for climb
+        L1(2),
+        L2(3),
+        CLIMB_DOWN(3.5), //this height will move the robot back down from the cage
+        L3(4),
+        L4(5);
 
         public final double m_heightMeters;
 

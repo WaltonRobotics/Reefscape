@@ -69,10 +69,10 @@ public class Robot extends TimedRobot {
             )
         );
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
-        ));
+        // joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        // joystick.b().whileTrue(drivetrain.applyRequest(() ->
+        //     point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        // ));
 
         // Run SysId routines when holding back/start and X/Y.
         // Note that each routine should be run exactly once in a single log.
@@ -92,6 +92,10 @@ public class Robot extends TimedRobot {
         joystick.povRight().onTrue(elevator.setPosition(Elevator.HeightPosition.L2));
         joystick.povUp().onTrue(elevator.setPosition(Elevator.HeightPosition.L3));
         joystick.x().onTrue(elevator.setPosition(Elevator.HeightPosition.L4));
+        joystick.y().onTrue(elevator.setPosition(Elevator.HeightPosition.CORAL_STATION));
+
+        joystick.a().onTrue(elevator.setPosition(Elevator.HeightPosition.CLIMB_UP));
+        joystick.b().onTrue(elevator.setPosition(Elevator.HeightPosition.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
