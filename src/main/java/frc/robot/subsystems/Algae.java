@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -28,7 +27,7 @@ public class Algae {
 
     public Command setWristPosition(Angle destination) {
         return Commands.runOnce(() -> m_wristMotor.setControl(
-            m_MMEVRequest.withPosition(destination.in(Rotations))
+            m_MMEVRequest.withPosition(destination)
         ));
     }
 
