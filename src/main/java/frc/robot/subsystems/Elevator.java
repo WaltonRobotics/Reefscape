@@ -3,8 +3,10 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
@@ -31,11 +33,18 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_right = new TalonFX(ElevatorK.kRightCANID, TunerConstants.kCANBus);
     private final TalonFX m_left = new TalonFX(ElevatorK.kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
-    private final MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
+    private final PositionVoltage m_MMEVRequest = new PositionVoltage(0);
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
-            DCMotor.getKrakenX60(2), ElevatorK.kGearRatio, ElevatorK.kCarriageMassKg.in(Kilograms), ElevatorK.kSpoolRadius.in(Meters),
-            ElevatorK.kMinimumHeight.in(Meters), ElevatorK.kMaximumHeight.in(Meters), true, ElevatorK.kStartingHeightMeters.in(Meters));
+            DCMotor.getKrakenX60(2), 
+            ElevatorK.kGearRatio, 
+            ElevatorK.kCarriageMassKg.in(Kilograms), 
+            ElevatorK.kSpoolRadius.in(Meters),
+            ElevatorK.kMinimumHeight.in(Meters), 
+            ElevatorK.kMaximumHeight.in(Meters), 
+            false, 
+            ElevatorK.kStartingHeightMeters.in(Meters));
+
     private final Mechanism2d m_mech2d =
         new Mechanism2d(6, ElevatorK.kMaximumHeight.in(Meters));
     private final MechanismRoot2d m_mech2dRoot =
@@ -45,11 +54,7 @@ public class Elevator extends SubsystemBase {
             new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
         );
 
-    private final DoubleLogger log_rightMotorPosition = WaltLogger.logDouble("Elevator", "rightMotorPosition");
-    private final DoubleLogger log_leftMotorPosition = WaltLogger.logDouble("Elevator", "leftMotorPosition");
-    private final DoubleLogger log_rightMotorRealVoltage = WaltLogger.logDouble("Elevator", "rightMotorRealVoltage");
-    private final DoubleLogger log_leftMotorRealVoltage = WaltLogger.logDouble("Elevator", "leftMotorRealVoltage");
-    private final DoubleLogger log_rightMotorSimVoltage = WaltLogger.logDouble("Elevator", "rightMotorSimVoltage");
+    private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble("Elevator", "desiredPosition");
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble("Elevator", "simPosition");
 
     public Elevator() {
@@ -57,12 +62,14 @@ public class Elevator extends SubsystemBase {
         m_left.getConfigurator().apply(ElevatorK.kLeftTalonFXConfiguration);
         m_right.getConfigurator().apply(ElevatorK.kRightTalonFXConfiguration);
         SmartDashboard.putData("Elevator Sim", m_mech2d);
-
-        register();
     }
 
     public Command setPosition(double heightMeters) {
-        return Commands.runOnce(() -> m_right.setControl(m_MMEVRequest.withPosition(heightMeters)), this);
+        return runOnce(
+            () -> { 
+                log_elevatorDesiredPosition.accept(heightMeters);
+                m_right.setControl(m_MMEVRequest.withPosition(heightMeters));}
+        );
     }
 
     public Command setPosition(HeightPosition heightMeters) {
@@ -71,32 +78,23 @@ public class Elevator extends SubsystemBase {
 
     public void simulationPeriodic() {
         TalonFXSimState rightSim = m_right.getSimState();
-        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * ElevatorK.kSensorToMechanismRatio);
-        rightSim.setRotorVelocity(m_elevatorSim.getVelocityMetersPerSecond() * ElevatorK.kSensorToMechanismRatio);
-
-
         m_elevatorSim.setInput(rightSim.getMotorVoltage());
 
         m_elevatorSim.update(0.020);
 
         log_elevatorSimPosition.accept(m_elevatorSim.getPositionMeters());
-        
-        // m_right.setPosition(m_elevatorSim.getPositionMeters());
+        var elevatorVelocity = 
+            ElevatorK.metersToRotationVel(m_elevatorSim.getVelocityMetersPerSecond()* ElevatorK.kGearRatio);
+        var elevatorDistance = 
+            ElevatorK.metersToRotation(Meters.of(m_elevatorSim.getPositionMeters() * ElevatorK.kGearRatio));
+
+
+        rightSim.setRawRotorPosition(elevatorDistance);
+        rightSim.setRotorVelocity(elevatorVelocity);
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
-
-        log_rightMotorSimVoltage.accept(rightSim.getMotorVoltage());
-
-        RoboRioSim.setVInVoltage(
-            BatterySim.calculateDefaultBatteryLoadedVoltage(m_elevatorSim.getCurrentDrawAmps()));
     }
 
-    public void periodic() {
-        log_rightMotorPosition.accept(m_right.getPosition().getValueAsDouble());
-        log_leftMotorPosition.accept(m_left.getPosition().getValueAsDouble());
-        log_rightMotorRealVoltage.accept(m_right.getMotorVoltage().getValueAsDouble());
-        log_leftMotorRealVoltage.accept(m_left.getMotorVoltage().getValueAsDouble());        
-    }
 
     public enum HeightPosition {
         HOME(0),
