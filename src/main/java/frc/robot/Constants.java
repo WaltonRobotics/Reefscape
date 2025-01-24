@@ -34,7 +34,7 @@ public class Constants {
 
         public static final Mass kCarriageMassKg = Pounds.of(5);
         public static final Distance kMinimumHeight = Feet.of(0);
-        public static final Distance kMaximumHeight = Feet.of(8);
+        public static final Distance kMaximumHeight = Meters.of(8);
         public static final Distance kStartingHeightMeters = Feet.of(0);
         //SensorToMechanismRatio = kGearRatio
 
