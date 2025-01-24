@@ -1,19 +1,19 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Kilograms;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 
+import edu.wpi.first.units.AngularVelocityUnit;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 
 //numbers are dummies
@@ -25,33 +25,53 @@ public class Constants {
         public static final int kLeftCANID = 10;
         public static final int kRightCANID = 11;
 
-        public static final double kGearRatio = 27;
+        public static final double kGearRatio = 50.0/11.0;
         public static final Distance kSpoolRadius = Inches.of(1);
 
-        public static final Mass kCarriageMassKg = Kilograms.of(4);
-        public static final Distance kMinimumHeight = Meters.of(0);
-        public static final Distance kMaximumHeight = Meters.of(6);
-        public static final Distance kStartingHeightMeters = Meters.of(0);
-        public static final double kSensorToMechanismRatio = (kGearRatio) / (kSpoolRadius.in(Meters) * Math.PI);
+        public static final double kV = 0;
+        public static final double kA = 0;
+        public static final double kG = 0; 
+
+        public static final Mass kCarriageMassKg = Pounds.of(5);
+        public static final Distance kMinimumHeight = Feet.of(0);
+        public static final Distance kMaximumHeight = Feet.of(8);
+        public static final Distance kStartingHeightMeters = Feet.of(0);
+        //SensorToMechanismRatio = kGearRatio
+
+        public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
+            return kSpoolRadius.per(Second).times(rotations.in(RadiansPerSecond));
+        }
+
+        public static Angle metersToRotation(Distance meters){
+            return Radians.of(meters.in(Meters) / kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(LinearVelocity meters){
+            return RadiansPerSecond.of(meters.in(MetersPerSecond)/kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(double metersPerSecond){
+            return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
+        }
 
         private static final CurrentLimitsConfigs kLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(100)
-            .withSupplyCurrentLimit(50)
-            .withStatorCurrentLimitEnable(true);
+            .withStatorCurrentLimit(300)
+            .withStatorCurrentLimitEnable(false)
+            .withSupplyCurrentLimit(75)
+            .withSupplyCurrentLimitEnable(false);
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-            .withSensorToMechanismRatio((kGearRatio) / (kSpoolRadius.in(Meters) * Math.PI));
-        // all of these dummy values are stolen from a ctre example project
+            .withSensorToMechanismRatio(kGearRatio);
+
         private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(5/10))
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10/10))
-            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100/10));
+            .withMotionMagicCruiseVelocity(5)
+            .withMotionMagicAcceleration(15)
+            .withMotionMagicExpo_kV(3.54);
         private static final Slot0Configs kSlot0Configs = new Slot0Configs()
-            .withKS(0.25/10)
-            .withKV(0.12/10)
-            .withKA(0.01/10)
-            .withKP(60/10)
-            .withKI(0)
-            .withKD(0.5/10);
+            .withKS(0.25) 
+            .withKV(kV) 
+            .withGravityType(GravityTypeValue.Elevator_Static)
+            .withKP(10) 
+            .withKG(kG);
         
         public static final TalonFXConfiguration kRightTalonFXConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kLimitConfigs)
@@ -63,5 +83,7 @@ public class Constants {
             .withFeedback(kFeedbackConfigs)
             .withMotionMagic(kMagicConfigs)
             .withSlot0(kSlot0Configs);
+
+
     }
 }
