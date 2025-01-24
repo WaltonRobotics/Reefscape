@@ -89,7 +89,7 @@ public class Elevator extends SubsystemBase {
             ElevatorK.metersToRotation(Meters.of(m_elevatorSim.getPositionMeters() * ElevatorK.kGearRatio));
 
 
-        rightSim.setRawRotorPosition(elevatorDistance);
+        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * ElevatorK.kGearRatio);
         rightSim.setRotorVelocity(elevatorVelocity);
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
