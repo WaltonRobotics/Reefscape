@@ -97,10 +97,12 @@ public abstract class TrajsAndLocs {
 
     //TODO: fill out values frfr
     public static class Trajectories {
-        public HashMap<Pair<ScoringLocs, CS>, String> m_trajMap;
+        public HashMap<Pair<ScoringLocs, CS>, String> m_toCSTrajMap;
+        public HashMap<Pair<CS, ScoringLocs>, String> m_toRTrajMap;
 
         public Trajectories() {
-            m_trajMap = new HashMap<Pair<ScoringLocs, CS>, String>();
+            m_toCSTrajMap = new HashMap<Pair<ScoringLocs, CS>, String>();
+            m_toRTrajMap = new HashMap<Pair<CS, ScoringLocs>, String>();
         }
 
         public void configureTrajectories() {

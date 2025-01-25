@@ -44,7 +44,7 @@ public class Robot extends TimedRobot {
     public final Elevator elevator = new Elevator();
 
     private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-    private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+    private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
     private final AutoChooser autoChooser = new AutoChooser();
 
   public Robot() {
@@ -90,7 +90,7 @@ public class Robot extends TimedRobot {
         joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
         joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
         joystick.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CORAL_STATION));
+        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CS));
 
         joystick.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
         joystick.b().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
