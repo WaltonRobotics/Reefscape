@@ -49,8 +49,6 @@ public class Robot extends TimedRobot {
 
   public Robot() {
      /* autossss */
-      autoChooser.addRoutine("ezTest1", waltAutonFactory::ezTest1);
-      autoChooser.addRoutine("middle_2pc", waltAutonFactory::middle_2pc);
 
       SmartDashboard.putData("Auto Chooser", autoChooser);
 
