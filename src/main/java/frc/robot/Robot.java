@@ -87,15 +87,15 @@ public class Robot extends TimedRobot {
         //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-        joystick.povDown().onTrue(elevator.setPosition(Elevator.HeightPosition.HOME));
-        joystick.povLeft().onTrue(elevator.setPosition(Elevator.HeightPosition.L1));
-        joystick.povRight().onTrue(elevator.setPosition(Elevator.HeightPosition.L2));
-        joystick.povUp().onTrue(elevator.setPosition(Elevator.HeightPosition.L3));
-        joystick.x().onTrue(elevator.setPosition(Elevator.HeightPosition.L4));
-        joystick.y().onTrue(elevator.setPosition(Elevator.HeightPosition.CORAL_STATION));
+        joystick.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.HOME));
+        joystick.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
+        joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
+        joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
+        joystick.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
+        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CORAL_STATION));
 
-        joystick.a().onTrue(elevator.setPosition(Elevator.HeightPosition.CLIMB_UP));
-        joystick.b().onTrue(elevator.setPosition(Elevator.HeightPosition.CLIMB_DOWN));
+        joystick.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
+        joystick.b().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
