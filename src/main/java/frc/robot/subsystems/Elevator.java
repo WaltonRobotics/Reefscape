@@ -98,7 +98,7 @@ public class Elevator extends SubsystemBase {
 
     public enum EleHeights {
         HOME(0),
-        CORAL_STATION(1),
+        CS(1),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         L1(2),
         L2(3),
