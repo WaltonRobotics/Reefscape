@@ -72,7 +72,7 @@ public class Elevator extends SubsystemBase {
         );
     }
 
-    public Command setPosition(HeightPosition heightMeters) {
+    public Command setPosition(EleHeights heightMeters) {
         return setPosition(heightMeters.m_heightMeters);
     }
 
@@ -96,9 +96,9 @@ public class Elevator extends SubsystemBase {
     }
 
 
-    public enum HeightPosition {
+    public enum EleHeights {
         HOME(0),
-        CORAL_STATION(1),
+        CS(1),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         L1(2),
         L2(3),
@@ -108,7 +108,7 @@ public class Elevator extends SubsystemBase {
 
         public final double m_heightMeters;
 
-        private HeightPosition(double heightMeters){
+       private EleHeights(double heightMeters){
             m_heightMeters = heightMeters;
         }
     }
