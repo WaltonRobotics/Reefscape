@@ -108,7 +108,7 @@ public class Elevator extends SubsystemBase {
 
         public final double m_heightMeters;
 
-        private EleHeights(double heightMeters){
+       private EleHeights(double heightMeters){
             m_heightMeters = heightMeters;
         }
     }
