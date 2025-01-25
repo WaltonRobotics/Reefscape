@@ -27,32 +27,25 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-    private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-
-    /* Setting up bindings for necessary control of the swerve drive platform */
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-
-    private final Telemetry logger = new Telemetry(MaxSpeed);
-
-    private final CommandXboxController joystick = new CommandXboxController(0);
-    private final CommandXboxController manipulator = new CommandXboxController(1);
-
-    public final Swerve drivetrain = TunerConstants.createDrivetrain();
-    private final Algae m_algae = new Algae();
-    private final Elevator m_elevator = new Elevator();
-
-    private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-    private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
-    private final AutoChooser autoChooser = new AutoChooser();
+  private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+  /* Setting up bindings for necessary control of the swerve drive platform */
+  private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+          .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+  private final Telemetry logger = new Telemetry(MaxSpeed);
+  private final CommandXboxController joystick = new CommandXboxController(0);
+  private final CommandXboxController manipulator = new CommandXboxController(1);
+  public final Swerve drivetrain = TunerConstants.createDrivetrain();
+  private final Algae algae = new Algae();
+  private final Elevator elevator = new Elevator();
+  private final AutoFactory autoFactory = drivetrain.createAutoFactory();
+  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
+  private final AutoChooser autoChooser = new AutoChooser();
 
   public Robot() {
      /* autossss */
-      autoChooser.addRoutine("ezTest1", waltAutonFactory::ezTest1);
-      autoChooser.addRoutine("middle_2pc", waltAutonFactory::middle_2pc);
 
       SmartDashboard.putData("Auto Chooser", autoChooser);
 
@@ -91,27 +84,27 @@ public class Robot extends TimedRobot {
 
         /*TODO: test to see if this actually works */
         // wrist position controls
-        manipulator.y().onTrue(m_algae.setWristPosition(Algae.WristPosition.HOME));
-        manipulator.x().onTrue(m_algae.setWristPosition(Algae.WristPosition.INTAKE));
-        manipulator.b().onTrue(m_algae.setWristPosition(Algae.WristPosition.PROCESSOR_SHOOT));
+        manipulator.y().onTrue(algae.setWristPosition(Algae.WristPosition.HOME));
+        manipulator.x().onTrue(algae.setWristPosition(Algae.WristPosition.INTAKE));
+        manipulator.b().onTrue(algae.setWristPosition(Algae.WristPosition.PROCESSOR_SHOOT));
 
         // intake controls
         manipulator.rightTrigger()
-            .whileTrue(m_algae.setIntakeAction(Algae.IntakeSpeed.INTAKE));
+            .whileTrue(algae.setIntakeAction(Algae.IntakeSpeed.INTAKE));
         manipulator.leftTrigger()
-            .whileTrue(m_algae.setIntakeAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+            .whileTrue(algae.setIntakeAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         
 
 
-        joystick.povDown().onTrue(m_elevator.setPosition(Elevator.HeightPosition.HOME));
-        joystick.povLeft().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L1));
-        joystick.povRight().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L2));
-        joystick.povUp().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L3));
-        joystick.x().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L4));
-        joystick.y().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CORAL_STATION));
+        joystick.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.HOME));
+        joystick.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
+        joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
+        joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
+        joystick.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
+        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CS));
 
-        joystick.a().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CLIMB_UP));
-        joystick.b().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CLIMB_DOWN));
+        joystick.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
+        joystick.b().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
