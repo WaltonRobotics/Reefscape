@@ -21,6 +21,7 @@ import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Algae;
+import frc.robot.subsystems.Elevator;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -42,6 +43,7 @@ public class Robot extends TimedRobot {
 
     public final Swerve drivetrain = TunerConstants.createDrivetrain();
     private final Algae m_algae = new Algae();
+    private final Elevator m_elevator = new Elevator();
 
     private final AutoFactory autoFactory = drivetrain.createAutoFactory();
     private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
@@ -101,13 +103,22 @@ public class Robot extends TimedRobot {
         
 
 
+        joystick.povDown().onTrue(m_elevator.setPosition(Elevator.HeightPosition.HOME));
+        joystick.povLeft().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L1));
+        joystick.povRight().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L2));
+        joystick.povUp().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L3));
+        joystick.x().onTrue(m_elevator.setPosition(Elevator.HeightPosition.L4));
+        joystick.y().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CORAL_STATION));
+
+        joystick.a().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CLIMB_UP));
+        joystick.b().onTrue(m_elevator.setPosition(Elevator.HeightPosition.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
   @Override
   public void robotPeriodic() {
-    CommandScheduler.getInstance().run(); 
+    CommandScheduler.getInstance().run();
   }
 
   @Override
