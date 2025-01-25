@@ -106,7 +106,7 @@ public abstract class TrajsAndLocs {
         }
 
         public void configureTrajectories() {
-            //TODO: like actually do. later tho :3
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_1, CS.CS_LEFT), "");
         }
     }
 }
