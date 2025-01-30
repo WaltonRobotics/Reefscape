@@ -12,6 +12,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,7 +23,9 @@ import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Algae;
+import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -37,23 +41,27 @@ public class Robot extends TimedRobot {
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
-  private final CommandXboxController joystick = new CommandXboxController(0);
+  private final CommandXboxController driver = new CommandXboxController(0);
   private final CommandXboxController manipulator = new CommandXboxController(1);
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Algae algae = new Algae();
+  private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
+
+  public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
   private final AutoChooser autoChooser = new AutoChooser();
 
   public Robot() {
-     /* autossss */
+    /* autossss */
+    autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
 
-      SmartDashboard.putData("Auto Chooser", autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
 
-      configureBindings();
+    configureBindings();
   }
 
   private void configureBindings() {
@@ -62,15 +70,15 @@ public class Robot extends TimedRobot {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+                drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                    .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                    .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
 
-        joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        joystick.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+        driver.b().whileTrue(drivetrain.applyRequest(() ->
+            point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
         ));
 
         // Run SysId routines when holding back/start and X/Y.
@@ -81,7 +89,7 @@ public class Robot extends TimedRobot {
         //joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
         // reset the field-centric heading on left bumper press
-        joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+        driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
         //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
@@ -100,18 +108,24 @@ public class Robot extends TimedRobot {
         
 
 
-        joystick.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.HOME));
-        joystick.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        joystick.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CS));
+        driver.povDown().onTrue(elevator.toHome());
+        driver.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
+        driver.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
+        driver.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
+        driver.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
+        driver.y().onTrue(elevator.toCS());
 
-        joystick.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        joystick.b().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
+        driver.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
+        driver.b().onTrue(elevator.toHome());
 
         drivetrain.registerTelemetry(logger::telemeterize);
-    }
+  }
+
+  private void driverRumble(double intensity) {
+		if (!DriverStation.isAutonomous()) {
+			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
+		}
+	}
 
   @Override
   public void robotPeriodic() {
@@ -129,6 +143,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    superstructure.autonPreload();
     m_autonomousCommand = autoChooser.selectedCommand();
 
     if (m_autonomousCommand != null) {
@@ -147,6 +162,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    superstructure.resetAfterAuton();
   }
 
   @Override

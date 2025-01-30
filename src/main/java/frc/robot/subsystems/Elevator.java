@@ -75,16 +75,42 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command setPosition(double heightMeters) {
-        m_atHeight = false;
         return runOnce(
             () -> { 
                 log_elevatorDesiredPosition.accept(heightMeters);
-                m_right.setControl(m_MMEVRequest.withPosition(heightMeters));}
-        ).andThen(() -> invertAtHeight());
+                m_right.setControl(m_MMEVRequest.withPosition(heightMeters));
+        });
     }
 
+    // also use for climbing
+    public Command toHome() {
+        return runOnce(
+            () -> { 
+                log_elevatorDesiredPosition.accept(0.0);
+                m_right.setControl(m_MMEVRequest.withPosition(0));
+            }
+        );
+    }
+
+    public Command toCS() {
+        return runOnce(
+            () -> {
+                log_elevatorDesiredPosition.accept(1.0);
+                m_right.setControl(m_MMEVRequest.withPosition(1));
+            }
+        );
+    }
+
+    /* 
+     * use for scoring
+     */
     public Command setPosition(EleHeights heightMeters) {
-        return setPosition(heightMeters.m_heightMeters);
+        m_atHeight = false;
+        return runOnce(
+            () -> { 
+                log_elevatorDesiredPosition.accept(heightMeters.m_heightMeters);
+                m_right.setControl(m_MMEVRequest.withPosition(heightMeters.m_heightMeters));}
+        ).andThen(() -> invertAtHeight());
     }
 
     @Override
@@ -112,12 +138,9 @@ public class Elevator extends SubsystemBase {
 
 
     public enum EleHeights {
-        HOME(0),
-        CS(1),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         L1(2),
         L2(3),
-        CLIMB_DOWN(3.5), //this height will move the robot back down from the cage
         L3(4),
         L4(5);
 
