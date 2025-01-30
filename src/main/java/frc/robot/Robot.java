@@ -88,15 +88,15 @@ public class Robot extends TimedRobot {
 
         /*TODO: test to see if this actually works */
         // wrist position controls
-        manipulator.y().onTrue(algae.setWristPosition(Algae.WristPosition.HOME));
-        manipulator.x().onTrue(algae.setWristPosition(Algae.WristPosition.INTAKE));
-        manipulator.b().onTrue(algae.setWristPosition(Algae.WristPosition.PROCESSOR_SHOOT));
+        manipulator.y().onTrue(algae.toAngle(Algae.WristPosition.HOME));
+        manipulator.x().onTrue(algae.toAngle(Algae.WristPosition.INTAKE));
+        manipulator.b().onTrue(algae.toAngle(Algae.WristPosition.PROCESSOR_SHOOT));
 
         // intake controls
-        manipulator.rightTrigger()
-            .whileTrue(algae.setIntakeAction(Algae.IntakeSpeed.INTAKE));
-        manipulator.leftTrigger()
-            .whileTrue(algae.setIntakeAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+        // manipulator.rightTrigger()
+        //     .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.INTAKE));
+        // manipulator.leftTrigger()
+        //     .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         
 
 
