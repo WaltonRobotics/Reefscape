@@ -5,7 +5,6 @@ import static frc.robot.Constants.RobotK.*;
 import java.util.function.DoubleConsumer;
 
 import edu.wpi.first.networktables.PubSubOption;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -22,15 +21,15 @@ public class Superstructure {
     private boolean m_driverRumbled = false;
 
     private boolean m_preload = false;
+    private boolean m_autonScoreReq = false;
 
     public final EventLoop stateEventLoop = new EventLoop();
-
-    public final Timer m_autonTimer = new Timer();
 
     private final DoubleConsumer m_driverRumbler; // when SCORE_READY
 
     private final Trigger trg_preloadReq = new Trigger(() -> m_preload).and(RobotModeTriggers.autonomous());
     private final Trigger trg_driverScoreReq;
+    private final Trigger trg_autonScoreReq = new Trigger(() -> m_autonScoreReq).and(RobotModeTriggers.autonomous());
 
     /* NOTE: sensor trigs are in Coral.java */
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.IDLE));
@@ -56,7 +55,12 @@ public class Superstructure {
 
     private void configStateTrigs() {
         // stateTrg_idle
-        (stateTrg_scoring.and(() -> !m_coral.bs_coralMotorRunning.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.IDLE));
+        if(RobotModeTriggers.autonomous().getAsBoolean()) {
+            (stateTrg_scoring.and(() -> !m_coral.bs_coralMotorRunning.getAsBoolean()))
+                .onTrue(Commands.runOnce(() -> m_coralState = CoralState.IDLE).andThen(Commands.runOnce(() -> m_autonScoreReq = false)));
+        } else {
+            (stateTrg_scoring.and(() -> !m_coral.bs_coralMotorRunning.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.IDLE));
+        }
 
         // stateTrg_intaking
         ((stateTrg_idle.or(trg_preloadReq)).and(m_coral.bs_topBeamBreak).and(() -> !m_coral.bs_botBeamBreak.getAsBoolean()))
@@ -67,18 +71,33 @@ public class Superstructure {
         (stateTrg_intaking.and(() -> !m_coral.bs_botBeamBreak.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.INTOOK));
 
         // stateTrg_scoreReady
-        ((stateTrg_intook.and(m_ele.bs_atHeight))).onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORE_READY));
-        stateTrg_intook.onTrue(DriverRumble(1, 0.5));
+        ((stateTrg_intook.and(m_ele.bs_atHeight)))
+            .onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORE_READY).alongWith(Commands.runOnce(() -> m_preload = false)));
+        stateTrg_intook.onTrue(driverRumble(1, 0.5));
 
         // stateTrg_scoring
         (stateTrg_scoreReady.and(trg_driverScoreReq)).onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORING));
+        (stateTrg_scoreReady.and(trg_autonScoreReq)).onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORING));
         stateTrg_scoring.onTrue(m_coral.score().andThen(() -> m_ele.invertAtHeight()));
 
         // bypass intaking for autons
         (stateTrg_idle.and(() -> trg_preloadReq.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.INTOOK));
     }
 
-    private Command DriverRumble(double intensity, double secs) {
+    public void resetAfterAuton() {
+        m_preload = false;
+        m_autonScoreReq = false;
+    }
+
+    public void autonPreload() {
+        m_preload = true;
+    }
+
+    public void autonScore() {
+        m_autonScoreReq = true;
+    }
+
+    private Command driverRumble(double intensity, double secs) {
         return Commands.startEnd(
             () -> {
                 if(!m_driverRumbled) {
@@ -105,6 +124,10 @@ public class Superstructure {
         return Commands.parallel(
             changeState(state)
         );
+    }
+
+    public CoralState getCoralState() {
+        return m_coralState;
     }
 
     public enum CoralState {
