@@ -26,9 +26,11 @@ public class Constants {
     /* general */
     public static boolean kDebugLoggingEnabled = true;
 
-     // TODO: NONE OF THESE ARE REAL NUMBERS!!!!!!!!!!!!!!!!!
+    // TODO: NONE OF THESE ARE REAL NUMBERS!!!!!!!!!!!!!!!!!
     // BE WARY OF MOTOR NUMBERS - MANY ARE STOLEN FROM ELEVATOR!!!!! (couldn't easily find better ones)
     public static class AlgaeK {
+        public static final String kLogTab = "AlgaeSubsys";
+        
         public static final int kWristCANID = 12;
         public static final int kIntakeCANID = 13;
 
@@ -84,10 +86,16 @@ public class Constants {
             .withFeedback(kIntakeFeedbackConfigs)
             .withMotionMagic(kIntakeMagicConfigs)
             .withSlot0(kIntakeSlot0Configs);
+
+        public static final double kMaxAngleDeg = 10; //dummy num
     }
 
     public class Coralk {
+        public static final String kLogTab = "EleSubsys";
         public static final int kCoralMotorCANID = 1; //TODO: check real CANID
+        public static final int kFingerMotorCANID = 2;
+        public static final int kTopBeamBreakChannel = 3;
+        public static final int kBotBeamBreakChannel = 4;
 
         public static final double kGearRatio = 27; //TODO: check real gear ratio
         public static final double kSpoolDiameter = 2; //TODO: check real spool diameter
@@ -120,6 +128,8 @@ public class Constants {
     }
 
     public class ElevatorK{
+        public static final String kLogTab = "EleSubsys";
+
         public static final int kLeftCANID = 10;
         public static final int kRightCANID = 11;
 
@@ -183,5 +193,9 @@ public class Constants {
             .withSlot0(kSlot0Configs);
 
 
+    }
+
+    public class RobotK {
+        public static final String kLogTab = "SuperStructure";
     }
 }

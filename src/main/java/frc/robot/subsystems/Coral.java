@@ -1,114 +1,116 @@
 package frc.robot.subsystems;
 
-import java.util.function.BooleanSupplier;
-
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.hardware.TalonFXS;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.Coralk;
+
+import static edu.wpi.first.units.Units.Degrees;
+import static frc.robot.Constants.Coralk.*;
+
+import java.util.function.BooleanSupplier;
+
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
-import frc.util.WaltLogger.DoubleLogger;
-
-import static frc.robot.subsystems.Coral.CoralState.*;
 
 public class Coral extends SubsystemBase {
-    private final TalonFX m_coralMotor = new TalonFX(Coralk.kCoralMotorCANID, TunerConstants.kCANBus);
+    private final TalonFX m_coralMotor = new TalonFX(kCoralMotorCANID, TunerConstants.kCANBus);
 
-    private final DigitalInput topBeamBreak = new DigitalInput(0);     //TODO: set channels to actual values
-    private final DigitalInput botBeamBreak = new DigitalInput(1);
+    private final TalonFXS m_fingerMotor = new TalonFXS(kFingerMotorCANID);
+    private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
 
-    public final EventLoop sensorEventLoop = new EventLoop();
-    public final EventLoop stateEventLoop = new EventLoop();
+    private boolean m_coralIsRunning = false;
 
-    private CoralState m_coralState;
+    private boolean m_coralIsCoast = false;
+    private GenericEntry nte_coralIsCoast;
+    private boolean m_fingerIsCoast = false;
+    private GenericEntry nte_fingerIsCoast;
 
-    // state triggers
-    public final Trigger stateTrg_noCoral = new Trigger(stateEventLoop, () -> m_coralState == NO_CORAL);
-    public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_coralState == INTAKING);
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_coralState == INTOOK);
-    public final Trigger stateTrg_elevator = new Trigger(stateEventLoop, () -> m_coralState == ELEVATOR);
-    public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_coralState == SCORE_READY);
-    public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_coralState == SCORING);
-    
-    // beam break triggers
-    private boolean topBeamBreakIrq = false;
-    private boolean botBeamBreakIrq = false;
+    // true when beam break brokey
+    public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
+    public DigitalInput m_botBeamBreak = new DigitalInput(kBotBeamBreakChannel);
 
-    public final Trigger irqTrg_topBeamBreak = new Trigger(sensorEventLoop, () -> topBeamBreakIrq);
-    public final Trigger irqTrg_botBeamBreak = new Trigger(sensorEventLoop, () -> botBeamBreakIrq);
+    public final BooleanSupplier bs_topBeamBreak = () -> m_topBeamBreak.get();
+    public final BooleanSupplier bs_botBeamBreak = () -> m_botBeamBreak.get();
+
+    public final BooleanSupplier bs_coralMotorRunning = () -> m_coralIsRunning;
+
+    private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
+    private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
 
     public Coral() {
-        m_coralMotor.getConfigurator().apply(Coralk.kCoralMotorTalonFXConfiguration);
+        m_coralMotor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);
 
-        register();
-        configureStateTriggers();
+        nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
+                  .add("coral coast", false)
+                  .withWidget(BuiltInWidgets.kToggleSwitch)
+                  .getEntry();
+        nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
+                  .add("finger coast", false)
+                  .withWidget(BuiltInWidgets.kToggleSwitch)
+                  .getEntry();
     }
 
-    private Command changeStateCmd(CoralState state) {
-        return Commands.runOnce(() -> {
-            if (m_coralState == state) { return; }
-            var oldState = m_coralState;
-            m_coralState = state;
-            System.out.println("changing state from " + oldState + " to " + m_coralState);
-        }).withName("SuperStateChange_To" + state);
+    public void setCoralCoast(boolean coast) {
+        m_coralMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    private void configureStateTriggers() {
-        irqTrg_topBeamBreak.onTrue(Commands.runOnce(() -> m_coralState = INTAKING));
-        irqTrg_botBeamBreak.onTrue(Commands.runOnce(() -> m_coralState = INTOOK));
-        // i think this should be continued in superstructure
+    public void setFingerCoast(boolean coast) {
+        m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    /**
-     * @param speed [-1.0, 1.0] (-1 being max outake, 1 being max intake)
-     * @return command that tells the motor to set to provided speed
-     */
-    public Command setSpeed(double speed) {
-        return Commands.runOnce(() -> m_coralMotor.set(speed));
+    private void falsifyCoralIsRunning() {
+        m_coralIsRunning = false;
     }
 
     /**
      * @param destinationVelocity Units in percent max velocity [-1.0, 1.0]
      * @return A Command which sets the intake to go to the specificed velocity
      */
-    public Command setMotorAction(double destinationVelocity) {
+    public Command setCoralMotorAction(double destinationVelocity) {
+        m_coralIsRunning = true;
         return Commands.runEnd(
             () -> m_coralMotor.set(destinationVelocity),
             () -> m_coralMotor.set(0)
-        );
+        ).andThen(() -> falsifyCoralIsRunning());
     }
 
-    public enum MotorSpeed {
-        MAX_OUTAKE(-1.0),
-        STOP(0.0),
-        MAX_INTAKE(1.0);
-
-        public final double m_motorSpeed;
-
-        private MotorSpeed(double motorSpeed) {
-            m_motorSpeed = motorSpeed;
-        }
+    public Command intake() {
+        return setCoralMotorAction(1).until(bs_botBeamBreak);
     }
 
-    public enum CoralState {
-        NO_CORAL(0),
-        INTAKING(1), // STARTS WHEN FIRST ONE BREAKS ENDS WHEN SECOND ONE BREAKS: wheels run
-        INTOOK(2), // WHEN SECOND BEAM BREAK BREAKS: wheels stop run
-        ELEVATOR(3),
-        SCORE_READY(4), //when elevator is at desired height: button pressing is allowed to do something
-        SCORING(5); //hitting a button: wheels running
+    public Command score() {
+        return setCoralMotorAction(-1).until(() -> bs_botBeamBreak.getAsBoolean() == false);
+    }
 
-        public final int m_idx;
+    public Command fingerOut() {
+        return runOnce(
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees))));
+    }
 
-        private CoralState(int idx) {
-            m_idx = idx;
-        }
+    public Command fingerIn() {
+        return runOnce(
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees))));
+    }
+
+    @Override
+    public void periodic() {
+        m_coralIsCoast = nte_coralIsCoast.getBoolean(false);
+        setCoralCoast(m_coralIsCoast);
+        m_fingerIsCoast = nte_fingerIsCoast.getBoolean(false);
+        setFingerCoast(m_coralIsCoast);
+
+        log_topBeamBreak.accept(bs_topBeamBreak);
+        log_botBeamBreak.accept(bs_botBeamBreak);
     }
 }

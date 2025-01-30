@@ -1,78 +1,137 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.AlgaeK;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
-public class Algae {
-    private final TalonFX m_wristMotor = new TalonFX(AlgaeK.kWristCANID);
-    private final TalonFX m_intakeMotor = new TalonFX(AlgaeK.kIntakeCANID);
+import static frc.robot.Constants.AlgaeK.*;
+
+public class Algae extends SubsystemBase {
+    private final TalonFX m_wristMotor = new TalonFX(kWristCANID);
+    private final TalonFX m_intakeMotor = new TalonFX(kIntakeCANID);
+
+    private double m_targetAngleDeg = 0;
 
     private final MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
+    public final Trigger m_currentDraw = new Trigger(() -> m_intakeMotor.getStatorCurrent().getValueAsDouble() > 20).debounce(.1); // dummy numbers
+
+    private boolean m_WristIsCoast = false;
+    private boolean m_IntakeIsCoast = false;
+
+    private final DoubleLogger log_wristDeg = WaltLogger.logDouble(kLogTab, "angle degrees");
+    private final DoubleLogger log_wristTargetAngleDeg = WaltLogger.logDouble(kLogTab, "target angle degrees");
+    private final DoubleLogger log_intakeCurrentDraw = WaltLogger.logDouble(kLogTab, "intake current draw");
+    private final GenericEntry nte_wristIsCoast;
+    private final GenericEntry nte_intakeIsCoast;
+
     public Algae() {
-        m_wristMotor.getConfigurator().apply(AlgaeK.kWristConfiguration);
-        m_intakeMotor.getConfigurator().apply(AlgaeK.kIntakeConfiguration);
+        m_wristMotor.getConfigurator().apply(kWristConfiguration);
+        m_intakeMotor.getConfigurator().apply(kIntakeConfiguration);
 
-        // no idea if these are redundant but better safe than sorry
-        m_wristMotor.setPosition(0);
-        m_intakeMotor.setPosition(0);
+        m_wristMotor.setNeutralMode(NeutralModeValue.Brake);
+
+        nte_wristIsCoast = Shuffleboard.getTab(kLogTab)
+                  .add("wrist coast", false)
+                  .withWidget(BuiltInWidgets.kToggleSwitch)
+                  .getEntry();
+        nte_intakeIsCoast = Shuffleboard.getTab(kLogTab)
+        .add("intake coast", false)
+        .withWidget(BuiltInWidgets.kToggleSwitch)
+        .getEntry();
     }
 
-    public Command setWristPosition(Angle destination) {
-        return Commands.runOnce(() -> m_wristMotor.setControl(
-            m_MMEVRequest.withPosition(destination)
-        ));
+    public void setCoast(TalonFX motor, boolean coast) {
+        motor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    public Command setWristPosition(WristPosition destination) {
-        return setWristPosition(destination.m_angle);
+    /* WRIST */
+
+    public Command toAngle(double destinationDeg) { 
+        m_targetAngleDeg = destinationDeg;
+        return Commands.runOnce(() -> {
+            log_wristTargetAngleDeg.accept(destinationDeg); // is this right? who knows. i dont!
+            m_wristMotor.setControl(
+                m_MMEVRequest.withPosition(Degrees.of(destinationDeg)));
+        });
     }
 
+    public Command toAngle(WristPosition destination) {
+        return toAngle(destination.m_angleDeg);
+    }
+
+    public Angle getAngle() {
+        return Rotations.of(m_intakeMotor.getPosition().getValueAsDouble());
+    }
+
+    // taken from Shosty code
+    private double getDegrees() {
+        return Units.rotationsToDegrees(m_intakeMotor.getPosition().getValueAsDouble()) + 28;
+    }
+
+    public double getTargetAngleDeg() {
+        return m_targetAngleDeg;
+    }
+
+    /* INTAKE */
     /**
      * @param destinationVelocity Percent max velocity [-1.0, 1.0]
      * @return A Command which sets the intake to go to the specificed velocity
      */
-    public Command setIntakeAction(double destinationVelocity) {
+    public Command setWheelAction(double destinationVelocity) {
         return Commands.runEnd(
             () -> m_intakeMotor.set(destinationVelocity),
             () -> m_intakeMotor.set(0)
-        );
+        ).until(() -> m_currentDraw.getAsBoolean());
     }
 
     /**
      * @param destinationVelocity Choose speed from IntakeSpeed
      * @return A Command which sets the intake to go the specified velocity
      */
-    public Command setIntakeAction(IntakeSpeed destinationVelocity) {
-        return setIntakeAction(destinationVelocity.m_intakeSpeed);
+    public Command setWheelAction(IntakeSpeed destinationVelocity) {
+        return setWheelAction(destinationVelocity.m_intakeSpeed);
     }
 
-    /**
-     * @return A Command which sets the intake to go to 0 speed
-     */
-    public Command stopIntake() {
-        return setIntakeAction(IntakeSpeed.STOP);
+    @Override
+    public void periodic() {
+        log_wristDeg.accept(getDegrees());
+        log_wristTargetAngleDeg.accept(getTargetAngleDeg());
+        log_intakeCurrentDraw.accept(m_intakeMotor.getStatorCurrent().getValueAsDouble());
+        
+        m_WristIsCoast = nte_wristIsCoast.getBoolean(false);
+        m_IntakeIsCoast = nte_intakeIsCoast.getBoolean(false);
+        setCoast(m_wristMotor, m_WristIsCoast);
+        setCoast(m_intakeMotor, m_IntakeIsCoast);
     }
 
     /**
      * An enum that holds the most significant positions for the wrist 
      */
     public enum WristPosition {
-        HOME(Degrees.of(0)),
-        INTAKE(Degrees.of(-45)),
-        PROCESSOR_SHOOT(Degrees.of(5));
+        HOME(0),
+        INTAKE(1),
+        PROCESSOR_SHOOT(2);
 
-        public final Angle m_angle;
+        public final double m_angleDeg;
 
-        private WristPosition(Angle angle) {
-            m_angle = angle;
+        private WristPosition(double angle) {
+            m_angleDeg = angle;
         }
     }
 
@@ -82,7 +141,6 @@ public class Algae {
      */
     public enum IntakeSpeed {
         // DUMMY NUMBERS
-        STOP(0),
         INTAKE(0.5),
         PROCESSOR_SHOOT(-0.5);
 
