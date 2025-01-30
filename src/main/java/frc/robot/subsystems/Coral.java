@@ -108,7 +108,7 @@ public class Coral extends SubsystemBase {
         m_coralIsCoast = nte_coralIsCoast.getBoolean(false);
         setCoralCoast(m_coralIsCoast);
         m_fingerIsCoast = nte_fingerIsCoast.getBoolean(false);
-        setFingerCoast(m_coralIsCoast);
+        setFingerCoast(m_fingerIsCoast);
 
         log_topBeamBreak.accept(bs_topBeamBreak);
         log_botBeamBreak.accept(bs_botBeamBreak);
