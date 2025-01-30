@@ -1,8 +1,6 @@
 package frc.robot.autons;
 
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 import edu.wpi.first.math.Pair;
 
