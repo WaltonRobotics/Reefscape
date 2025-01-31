@@ -122,11 +122,13 @@ public class Algae extends SubsystemBase {
 
     /**
      * An enum that holds the most significant positions for the wrist 
+     * 
+     * these values stil aren't super accurate yet and still need testing
      */
     public enum WristPosition {
-        HOME(0),
-        INTAKE(1),
-        PROCESSOR_SHOOT(2);
+        HOME(Degrees.toBaseUnits(41.896)),
+        INTAKE(Degrees.toBaseUnits(163)),
+        PROCESSOR_SHOOT(Degrees.toBaseUnits(90));
 
         public final double m_angleDeg;
 

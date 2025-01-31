@@ -9,6 +9,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -137,16 +138,29 @@ public class Elevator extends SubsystemBase {
     }
 
 
+    //all these values here are still not 100% exact (CLIMB_UP IS STILL A DUMMY VALUE) and will need tweaking
     public enum EleHeights {
+        HOME(Units.inchesToMeters(14.542)),
         CLIMB_UP(1.5), // this height will move the robot up for climb
-        L1(2),
-        L2(3),
-        L3(4),
-        L4(5);
+        L1(Units.inchesToMeters(37)),
+        L2(Units.inchesToMeters(48.041)),
+        L3(Units.inchesToMeters(64)),
+        L4(Units.inchesToMeters(86));
 
         public final double m_heightMeters;
 
        private EleHeights(double heightMeters){
+            m_heightMeters = heightMeters;
+        }
+    }
+
+    public enum AlgaeHeight {
+        L2(Units.inchesToMeters(34.782)),
+        L3(Units.inchesToMeters(49.235));
+
+        public final double m_heightMeters;
+
+        private AlgaeHeight(double heightMeters){
             m_heightMeters = heightMeters;
         }
     }
