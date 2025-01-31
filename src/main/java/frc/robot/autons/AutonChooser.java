@@ -11,8 +11,10 @@ import frc.robot.autons.TrajsAndLocs.ScoringLocs;
 
 public class AutonChooser {
 
-    public static enum AutonOption{
-        MEOW("lalalal", TrajsAndLocs.FirstScoringLocs.REEF_1);
+    public enum AutonOption{
+        MEOW("Reef 1", TrajsAndLocs.FirstScoringLocs.REEF_1),
+        GROWL("Reef 2", TrajsAndLocs.FirstScoringLocs.REEF_2),
+        BARK("Reef 3", TrajsAndLocs.FirstScoringLocs.REEF_3);
 
         public final String m_description;
         public final FirstScoringLocs m_traj;
@@ -23,6 +25,7 @@ public class AutonChooser {
         }
 
     }
+
 
     private AutonChooser(){
 

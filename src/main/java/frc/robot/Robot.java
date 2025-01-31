@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.WaltAutonFactory;
-import frc.robot.autons.AutonChooser.AutonOption;
+import frc.robot.autons.AutonChooser.*;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
@@ -54,6 +54,8 @@ public class Robot extends TimedRobot {
 
     private void mapAutonCommands(){
       AutonChooser.assignAutonCommand(AutonOption.MEOW, TrajsAndLocs.FirstScoringLocs.REEF_1);
+      AutonChooser.assignAutonCommand(AutonOption.GROWL, TrajsAndLocs.FirstScoringLocs.REEF_2);
+      AutonChooser.assignAutonCommand(AutonOption.BARK, TrajsAndLocs.FirstScoringLocs.REEF_3);
     }
 
 
