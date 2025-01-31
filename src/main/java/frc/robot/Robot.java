@@ -12,12 +12,17 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.autons.AutonChooser;
+import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.WaltAutonFactory;
+import frc.robot.autons.AutonChooser.AutonOption;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
@@ -47,10 +52,13 @@ public class Robot extends TimedRobot {
     private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
     private final AutoChooser autoChooser = new AutoChooser();
 
+    private void mapAutonCommands(){
+      AutonChooser.assignAutonCommand(AutonOption.MEOW, TrajsAndLocs.FirstScoringLocs.REEF_1);
+    }
+
+
   public Robot() {
      /* autossss */
-
-      SmartDashboard.putData("Auto Chooser", autoChooser);
 
       configureBindings();
   }
@@ -98,6 +106,12 @@ public class Robot extends TimedRobot {
         drivetrain.registerTelemetry(logger::telemeterize);
     }
 
+
+  @Override
+  public void robotInit(){
+    mapAutonCommands();
+  }
+
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
@@ -114,6 +128,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    
     m_autonomousCommand = autoChooser.selectedCommand();
 
     if (m_autonomousCommand != null) {
