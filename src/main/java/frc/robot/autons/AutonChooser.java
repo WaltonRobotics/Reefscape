@@ -16,9 +16,14 @@ import frc.robot.subsystems.Elevator.EleHeights;
 public class AutonChooser {
 
     public enum StartAuton{
-        MEOW("Reef 1", TrajsAndLocs.FirstScoringLocs.REEF_1),
-        GROWL("Reef 2", TrajsAndLocs.FirstScoringLocs.REEF_2),
-        BARK("Reef 3", TrajsAndLocs.FirstScoringLocs.REEF_3);
+        REEF_H("Reef H Start", TrajsAndLocs.FirstScoringLocs.REEF_H),
+        REEF_I("Reef I Start", TrajsAndLocs.FirstScoringLocs.REEF_I),
+        REEF_J("Reef J Start", TrajsAndLocs.FirstScoringLocs.REEF_J),
+
+        REEF_E("Reef E Start", TrajsAndLocs.FirstScoringLocs.REEF_E),
+        REEF_F("Reef F Start", TrajsAndLocs.FirstScoringLocs.REEF_F),
+        REEF_G("Reef G Start", TrajsAndLocs.FirstScoringLocs.REEF_G);
+
 
         public final String m_description;
         public final FirstScoringLocs m_traj;
@@ -59,12 +64,39 @@ public class AutonChooser {
         }
     }
 
+    public enum ScoringAuton{
+        REEF_A("Reef A End", TrajsAndLocs.ScoringLocs.REEF_A),
+        REEF_B("Reef B End", TrajsAndLocs.ScoringLocs.REEF_B),
+        REEF_C("Reef C End", TrajsAndLocs.ScoringLocs.REEF_C),
+        REEF_D("Reef D End", TrajsAndLocs.ScoringLocs.REEF_D),
+        REEF_E("Reef E End", TrajsAndLocs.ScoringLocs.REEF_E),
+        REEF_F("Reef F End", TrajsAndLocs.ScoringLocs.REEF_F),
+        REEF_G("Reef G End", TrajsAndLocs.ScoringLocs.REEF_G),
+        REEF_H("Reef H End", TrajsAndLocs.ScoringLocs.REEF_H),
+        REEF_I("Reef I End", TrajsAndLocs.ScoringLocs.REEF_I),
+        REEF_J("Reef J End", TrajsAndLocs.ScoringLocs.REEF_J),
+        REEF_K("Reef K End", TrajsAndLocs.ScoringLocs.REEF_K),
+        REEF_L("Reef L End", TrajsAndLocs.ScoringLocs.REEF_L);
+        
+
+        public final String m_description;
+        public final ScoringLocs m_traj;
+
+        ScoringAuton(String description, ScoringLocs traj){
+            m_description = description;
+            m_traj = traj;
+        }
+    }
+
     private AutonChooser(){
 
     }
 
     private static EnumMap<StartAuton, FirstScoringLocs> startChooserMap = new EnumMap<>(StartAuton.class);
     private static SendableChooser<StartAuton> startAutonNTChooser = new SendableChooser<StartAuton>();
+
+    private static EnumMap<ScoringAuton, ScoringLocs> scoringChooserMap = new EnumMap<>(ScoringAuton.class);
+    private static SendableChooser<ScoringAuton> scoringChooser = new SendableChooser<ScoringAuton>();
 
     private static EnumMap<EleAutonHeights, EleHeights> eleChooserMap = new EnumMap<>(EleAutonHeights.class);
     private static SendableChooser<EleAutonHeights> eleAutonNTChooser = new SendableChooser<EleAutonHeights>();
@@ -77,6 +109,7 @@ public class AutonChooser {
         SmartDashboard.putData("StartAuton", startAutonNTChooser);
         SmartDashboard.putData("EleChooser", eleAutonNTChooser);
         SmartDashboard.putData("CoralChooser", coralAutonNTChooser);
+        SmartDashboard.putData("ScoringAuton",scoringChooser);
     }
 
     public static void assignAutonCommand(StartAuton auton, FirstScoringLocs firstScoringLocs){
@@ -92,6 +125,10 @@ public class AutonChooser {
     public static void assignAutonCommand(CSOptions coralChooser, CS coralStation){
         coralChooserMap.put(coralChooser, coralStation);
         coralAutonNTChooser.addOption(coralChooser.m_description, coralChooser);
+    }
+    public static void assignAutonCommand(ScoringAuton auton, ScoringLocs scoringLocs){
+        scoringChooserMap.put(auton, scoringLocs);
+        scoringChooser.addOption(auton.m_description, auton);
     }
 
 }
