@@ -11,6 +11,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -97,14 +98,14 @@ public class Elevator extends SubsystemBase {
 
 
     public enum EleHeights {
-        HOME(0),
-        CS(1),
         CLIMB_UP(1.5), // this height will move the robot up for climb
-        L1(2),
-        L2(3),
-        CLIMB_DOWN(3.5), //this height will move the robot back down from the cage
-        L3(4),
-        L4(5);
+        CLIMB_DOWN(5), //this height will move the robot down for climb
+        HOME(Units.inchesToMeters(15.452)),
+        L1(Units.inchesToMeters(37)),
+        L2(Units.inchesToMeters(48.041)),
+        L3(Units.inchesToMeters(64)),
+        L4(Units.inchesToMeters(86)),
+        CS(10);
 
         public final double m_heightMeters;
 
