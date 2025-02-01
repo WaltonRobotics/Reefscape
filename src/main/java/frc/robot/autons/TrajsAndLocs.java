@@ -23,13 +23,13 @@ public abstract class TrajsAndLocs {
      * Kept separate so that ppl dont accidentally choose a first reefLoc that doesn't have a traj going form [startingLoc] -> [reefLoc]
      */
     public static enum FirstScoringLocs {
-        REEF_1(StartingLocs.MID_1, ""),
-        REEF_2(StartingLocs.LEFT, ""),
-        REEF_3(StartingLocs.LEFT, ""),
+        REEF_H(StartingLocs.MID_1, ""),
+        REEF_I(StartingLocs.LEFT, ""),
+        REEF_J(StartingLocs.LEFT, ""),
 
-        REEF_10(StartingLocs.RIGHT, ""),
-        REEF_11(StartingLocs.RIGHT, ""),
-        REEF_12(StartingLocs.MID_12, "");
+        REEF_E(StartingLocs.RIGHT, ""),
+        REEF_F(StartingLocs.RIGHT, ""),
+        REEF_G(StartingLocs.MID_12, "");
 
         public Pair<StartingLocs, String> m_startAndTraj;
 
@@ -42,18 +42,18 @@ public abstract class TrajsAndLocs {
     }
 
     public static enum ScoringLocs {
-        REEF_1(FirstScoringLocs.REEF_1),
-        REEF_2(FirstScoringLocs.REEF_2),
-        REEF_3(FirstScoringLocs.REEF_3),
-        REEF_4,
-        REEF_5,
-        REEF_6,
-        REEF_7,
-        REEF_8,
-        REEF_9,
-        REEF_10(FirstScoringLocs.REEF_10),
-        REEF_11(FirstScoringLocs.REEF_11),
-        REEF_12(FirstScoringLocs.REEF_12),
+        REEF_H(FirstScoringLocs.REEF_H),
+        REEF_I(FirstScoringLocs.REEF_I),
+        REEF_J(FirstScoringLocs.REEF_J),
+        REEF_K,
+        REEF_L,
+        REEF_A,
+        REEF_B,
+        REEF_C,
+        REEF_D,
+        REEF_E(FirstScoringLocs.REEF_E),
+        REEF_F(FirstScoringLocs.REEF_F),
+        REEF_G(FirstScoringLocs.REEF_G),
         INVALID_LOC;
 
         public FirstScoringLocs m_pairedLoc;
@@ -71,18 +71,18 @@ public abstract class TrajsAndLocs {
 
         public static ScoringLocs getSameLoc(FirstScoringLocs startLoc) {
             switch (startLoc) {
-                case REEF_1:
-                    return REEF_1;
-                case REEF_2:
-                    return REEF_2;
-                case REEF_3:
-                    return REEF_3;
-                case REEF_10:
-                    return REEF_10;
-                case REEF_11:
-                    return REEF_11;
-                case REEF_12:
-                    return REEF_12;
+                case REEF_H:
+                    return REEF_H;
+                case REEF_I:
+                    return REEF_I;
+                case REEF_J:
+                    return REEF_J;
+                case REEF_E:
+                    return REEF_E;
+                case REEF_F:
+                    return REEF_F;
+                case REEF_G:
+                    return REEF_G;
                 default:
                     return INVALID_LOC; //TODO: find better fail case T^T
             }

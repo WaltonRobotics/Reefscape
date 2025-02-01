@@ -54,10 +54,27 @@ public class Robot extends TimedRobot {
     private final AutoChooser autoChooser = new AutoChooser();
 
     private void mapAutonCommands(){
-      AutonChooser.assignAutonCommand(StartAuton.MEOW, TrajsAndLocs.FirstScoringLocs.REEF_1);
-      AutonChooser.assignAutonCommand(StartAuton.GROWL, TrajsAndLocs.FirstScoringLocs.REEF_2);
-      AutonChooser.assignAutonCommand(StartAuton.BARK, TrajsAndLocs.FirstScoringLocs.REEF_3);
-      
+      //start autons
+      AutonChooser.assignAutonCommand(StartAuton.REEF_H, TrajsAndLocs.FirstScoringLocs.REEF_H);
+      AutonChooser.assignAutonCommand(StartAuton.REEF_I, TrajsAndLocs.FirstScoringLocs.REEF_I);
+      AutonChooser.assignAutonCommand(StartAuton.REEF_J, TrajsAndLocs.FirstScoringLocs.REEF_J);
+
+      AutonChooser.assignAutonCommand(StartAuton.REEF_E, TrajsAndLocs.FirstScoringLocs.REEF_E);
+      AutonChooser.assignAutonCommand(StartAuton.REEF_F, TrajsAndLocs.FirstScoringLocs.REEF_F);
+      AutonChooser.assignAutonCommand(StartAuton.REEF_G, TrajsAndLocs.FirstScoringLocs.REEF_G);
+
+      //scoring autons
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_A, TrajsAndLocs.ScoringLocs.REEF_A);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_B, TrajsAndLocs.ScoringLocs.REEF_B);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_C, TrajsAndLocs.ScoringLocs.REEF_C);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_D, TrajsAndLocs.ScoringLocs.REEF_D);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_E, TrajsAndLocs.ScoringLocs.REEF_E);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_F, TrajsAndLocs.ScoringLocs.REEF_F);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_G, TrajsAndLocs.ScoringLocs.REEF_G);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_H, TrajsAndLocs.ScoringLocs.REEF_H);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_I, TrajsAndLocs.ScoringLocs.REEF_I);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_J, TrajsAndLocs.ScoringLocs.REEF_J);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_K, TrajsAndLocs.ScoringLocs.REEF_K);
       //ele heights choices
       AutonChooser.assignAutonCommand(EleAutonHeights.HOME, EleHeights.HOME);
       AutonChooser.assignAutonCommand(EleAutonHeights.L1, EleHeights.L1);
@@ -69,6 +86,8 @@ public class Robot extends TimedRobot {
       AutonChooser.assignAutonCommand(CSOptions.LEFT, TrajsAndLocs.CS.CS_LEFT);
       AutonChooser.assignAutonCommand(CSOptions.RIGHT, TrajsAndLocs.CS.CS_RIGHT);
     }
+
+
 
 
   public Robot() {
