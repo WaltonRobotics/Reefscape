@@ -122,7 +122,7 @@ public class Robot extends TimedRobot {
 
         // climber controls
         manipulator.a().and(manipulator.povUp()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        manipulator.a().and(manipulator.povDown()).onTrue(elevator.toHome());
+        manipulator.a().and(manipulator.povDown()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
   }
