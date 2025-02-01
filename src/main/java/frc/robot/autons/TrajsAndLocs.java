@@ -1,10 +1,14 @@
 package frc.robot.autons;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public abstract class TrajsAndLocs {
     /* 
@@ -12,10 +16,15 @@ public abstract class TrajsAndLocs {
     */
 
     private static enum StartingLocs {
-        RIGHT,
-        MID_1,
-        MID_12,
-        LEFT;
+        RIGHT(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
+        MID_1(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
+        MID_12(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
+        LEFT(new Pose2d(1, 2, Rotation2d.fromDegrees(0)));
+
+        public final Pose2d pose;
+        private StartingLocs(Pose2d _pose) {
+            pose = _pose;
+        }
     }
     
     /*
@@ -41,7 +50,7 @@ public abstract class TrajsAndLocs {
         }
     }
 
-    public static enum ScoringLocs {
+    public static enum ReefLocation {
         REEF_H(FirstScoringLocs.REEF_H),
         REEF_I(FirstScoringLocs.REEF_I),
         REEF_J(FirstScoringLocs.REEF_J),
@@ -58,18 +67,26 @@ public abstract class TrajsAndLocs {
 
         public FirstScoringLocs m_pairedLoc;
 
-        private ScoringLocs() {
+        public static ArrayList<ReefLocation> OptimalLeftStartCycles = new ArrayList<>();
+        static {
+            OptimalLeftStartCycles.add(REEF_H);
+            OptimalLeftStartCycles.add(REEF_I);
+            OptimalLeftStartCycles.add(REEF_J);
+            OptimalLeftStartCycles.add(REEF_K);
+        }
+
+        private ReefLocation() {
             m_pairedLoc = null;
         }
 
         /*
          * for the positions that *could* be starting locations
          */
-        private ScoringLocs(FirstScoringLocs sameLoc) {
+        private ReefLocation(FirstScoringLocs sameLoc) {
             m_pairedLoc = sameLoc;
         }
 
-        public static ScoringLocs getSameLoc(FirstScoringLocs startLoc) {
+        public static ReefLocation getSameLoc(FirstScoringLocs startLoc) {
             switch (startLoc) {
                 case REEF_H:
                     return REEF_H;
@@ -89,24 +106,33 @@ public abstract class TrajsAndLocs {
         }
     }
 
-    public static enum CS {
+    public static enum HpStation {
         /* pov from driver station */
         CS_RIGHT,
         CS_LEFT;
     }
 
+    public static class ReefHpPair extends Pair<ReefLocation, HpStation> {
+        public ReefHpPair(ReefLocation reef, HpStation hp) {
+            super(reef, hp);
+        }
+    }
+
+    public static class HpReefPair extends Pair<HpStation, ReefLocation> {
+        public HpReefPair(HpStation hp, ReefLocation reef) {
+            super(hp, reef);
+        }
+    }
+
     //TODO: fill out values frfr
     public static class Trajectories {
-        public HashMap<Pair<ScoringLocs, CS>, String> m_toCSTrajMap;
-        public HashMap<Pair<CS, ScoringLocs>, String> m_toRTrajMap;
 
-        public Trajectories() {
-            m_toCSTrajMap = new HashMap<Pair<ScoringLocs, CS>, String>();
-            m_toRTrajMap = new HashMap<Pair<CS, ScoringLocs>, String>();
-        }
+        public static HashMap<Pair<ReefLocation, HpStation>, String> ReefToHpMap = new HashMap<>();
+        public static HashMap<Pair<HpStation, ReefLocation>, String> HpToReefMap = new HashMap<>();
 
-        public void configureTrajectories() {
-            //TODO: like actually do. later tho :3
+        static {
+            // fill in maps here
+            ReefToHpMap.put(new Pair<ReefLocation, HpStation>(ReefLocation.REEF_A, HpStation.CS_LEFT), "cs_6_left");
         }
     }
 }
