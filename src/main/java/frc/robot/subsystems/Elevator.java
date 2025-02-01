@@ -138,14 +138,15 @@ public class Elevator extends SubsystemBase {
     }
 
 
-    //all these values here are still not 100% exact (CLIMB_UP IS STILL A DUMMY VALUE) and will need tweaking
+    //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeights {
         HOME(Units.inchesToMeters(14.542)),
-        CLIMB_UP(1.5), // this height will move the robot up for climb
         L1(Units.inchesToMeters(37)),
         L2(Units.inchesToMeters(48.041)),
         L3(Units.inchesToMeters(64)),
-        L4(Units.inchesToMeters(86));
+        L4(Units.inchesToMeters(86)),
+        CLIMB_UP(1.5), // this height will move the robot up for climb
+        CLIMB_DOWN(5); //this height will ove robot down for climb
 
         public final double m_heightMeters;
 
