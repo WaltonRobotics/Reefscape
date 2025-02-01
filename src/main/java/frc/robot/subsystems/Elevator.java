@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
@@ -73,7 +75,26 @@ public class Elevator extends SubsystemBase {
         );
     }
 
-    public Command setPosition(EleHeights heightMeters) {
+    public Command toPosition(EleHeight height, double closeEnough) {
+        BooleanSupplier elevAtHeight = () -> {
+            var diff = m_right.getPosition().getValueAsDouble() - height.m_heightMeters; 
+            return Math.abs(diff) <= closeEnough;
+        };
+
+        return startEnd(() -> {
+            log_elevatorDesiredPosition.accept(height.m_heightMeters);
+            m_right.setControl(m_MMEVRequest.withPosition(height.m_heightMeters));
+        },
+        () -> {
+            // log stopping
+        }).until(elevAtHeight);
+    }
+
+    public Command toPosition(EleHeight height) {
+        return toPosition(height, 0.01);
+    }
+
+    public Command setPosition(EleHeight heightMeters) {
         return setPosition(heightMeters.m_heightMeters);
     }
 
@@ -97,7 +118,7 @@ public class Elevator extends SubsystemBase {
     }
 
 
-    public enum EleHeights {
+    public enum EleHeight {
         CLIMB_UP(1.5), // this height will move the robot up for climb
         CLIMB_DOWN(5), //this height will move the robot down for climb
         HOME(Units.inchesToMeters(15.452)),
@@ -109,7 +130,7 @@ public class Elevator extends SubsystemBase {
 
         public final double m_heightMeters;
 
-       private EleHeights(double heightMeters){
+       private EleHeight(double heightMeters){
             m_heightMeters = heightMeters;
         }
     }

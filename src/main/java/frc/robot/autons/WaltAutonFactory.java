@@ -8,110 +8,136 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.autons.TrajsAndLocs.CS;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.autons.TrajsAndLocs.HpStation;
+import frc.robot.autons.TrajsAndLocs.ReefHpPair;
 import frc.robot.autons.TrajsAndLocs.FirstScoringLocs;
-import frc.robot.autons.TrajsAndLocs.ScoringLocs;
+import frc.robot.autons.TrajsAndLocs.HpReefPair;
+import frc.robot.autons.TrajsAndLocs.ReefLocation;
+import frc.robot.autons.TrajsAndLocs.Trajectories;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Elevator.EleHeights;
+import frc.robot.subsystems.Elevator.EleHeight;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
-    private TrajsAndLocs.Trajectories m_trajs = new TrajsAndLocs.Trajectories();
-    private SequentialCommandGroup m_cmdSched;
-    final AutoRoutine m_routine;
-    private ArrayList<AutoTrajectory> m_trajList = new ArrayList<AutoTrajectory>();
-    private double eleWaitSecs = 1; //dummy num
+    private final SequentialCommandGroup m_fullCmdSequence;
+    private final AutoRoutine m_routine;
 
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
 
     public WaltAutonFactory(AutoFactory autoFactory, Swerve swerve, Elevator ele) {
-        m_trajs.configureTrajectories();
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton");
-        m_cmdSched = new SequentialCommandGroup(/* TODO: resetOdometry */);
+        m_fullCmdSequence = new SequentialCommandGroup(/* TODO: resetOdometry */);
     }
 
-    public SequentialCommandGroup generateAuton(Swerve drivetrain, Elevator ele, /* TODO: coral */ FirstScoringLocs firstScoreLoc, ArrayList<ScoringLocs> scoreLocs, ArrayList<EleHeights> eleHeights, ArrayList<CS> CSLocs) {
-        ScoringLocs firstLoc = ScoringLocs.getSameLoc(firstScoreLoc);
+    class AutonCycle {
+        public final ReefLocation reefLoc;
+        public final EleHeight height;
+        public final HpStation hpStation;
+        public final ReefHpPair reefHpPair;
+        public final HpReefPair hpReefPair;
 
-        /* iteration 1 */
-        m_cmdSched.addCommands(
-            /* scoring the first piece */
-            Commands.parallel(
-                m_routine.trajectory(firstScoreLoc.m_startAndTraj.getSecond()).cmd(),
-                Commands.sequence(
-                    ele.setPosition(EleHeights.HOME).asProxy(), //ele cmd: check later
-                    Commands.waitSeconds(eleWaitSecs), //dummy num
-                    ele.setPosition(eleHeights.get(0)).asProxy()
-                )
-            ),
-            drivetrain.applyRequest(() -> brake).asProxy(),
-            /* coral score */
+        public AutonCycle (ReefLocation _reefLoc, EleHeight _height, HpStation _hpStation) {
+            reefLoc = _reefLoc;
+            height = _height;
+            hpStation = _hpStation;
+            reefHpPair = new ReefHpPair(reefLoc, hpStation);
+            hpReefPair = new HpReefPair(hpStation, reefLoc);
 
-            /* going to cs */
-            Commands.parallel(
-                m_routine.trajectory(m_trajs.m_toCSTrajMap.get(new Pair<ScoringLocs, CS>(firstLoc, CSLocs.get(0)))).cmd(),
-                Commands.sequence(
-                    ele.setPosition(EleHeights.HOME).asProxy(),
-                    Commands.waitSeconds(eleWaitSecs),
-                    ele.setPosition(EleHeights.CS).asProxy()
-                )
-            ),
-            drivetrain.applyRequest(() -> brake).asProxy()
-            /* coral intake */
+            if (!Trajectories.ReefToHpMap.containsKey(reefHpPair)) {
+                // crash code
+            }
+
+            if (!Trajectories.ReefToHpMap.containsKey(hpReefPair)) {
+                // crash code
+            }
+        }
+    };
+
+    // ArrayList<AutonCycle> cycles = 
+    //     new AutonCycle(ScoringLoc.REEF_A, EleHeight.L4, HpStation.CS_LEFT),
+    //     new AutonCycle(ScoringLoc.REEF_A, EleHeight.L4, HpStation.CS_LEFT),
+    //     new AutonCycle(ScoringLoc.REEF_A, EleHeight.L4, HpStation.CS_LEFT),
+    //     new AutonCycle(ScoringLoc.REEF_A, EleHeight.L4, HpStation.CS_LEFT),
+    //     new AutonCycle(ScoringLoc.REEF_A, EleHeight.L4, HpStation.CS_LEFT)
+    // );
+
+    public Command generateAuton(Swerve drivetrain, Elevator ele, FirstScoringLocs firstScoreLoc, EleHeight firstHeight, ArrayList<AutonCycle> cycles) {
+        // iterate AutonCycles and validate all Hp->Score/Score->Hp pairs
+        // publish ElasticAlert if invalid pair is asked for
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(firstScoreLoc.m_startAndTraj.getSecond());
+        AutoTrajectory firstLoadTraj = m_routine.trajectory("cs_2_right");
+
+        m_routine.active().onTrue(
+            Commands.sequence(
+                firstScoreTraj.resetOdometry(),
+                firstScoreTraj.cmd()
+            )
         );
 
-        /* rest of the iterations */
-        for (int i = 0; i < scoreLocs.size(); i++) {
-            m_trajList.add(m_routine.trajectory(m_trajs.m_toRTrajMap.get(new Pair<CS, ScoringLocs>(CSLocs.get(i), scoreLocs.get(i)))));
-
-            if(CSLocs.size() >= i + 1) {
-                m_trajList.add(m_routine.trajectory(m_trajs.m_toCSTrajMap.get(new Pair<ScoringLocs, CS>(scoreLocs.get(i), CSLocs.get(i + 1)))));
-            }
-        }
-
-        int heightCounter = 1;
-        for (int i = 0; i < m_trajList.size(); i++) {
-            m_cmdSched.addCommands(
+        firstScoreTraj.atTime("ElevUp").onTrue(ele.toPosition(firstHeight)); // pre-scoreReq to superstructure
+        firstLoadTraj.atTime("Intake").onTrue(Commands.print("RunTheIntakePleeeaseee")); // autoIntakeReq to superstructure
+        firstScoreTraj.done().onTrue(
+            Commands.sequence(
                 Commands.parallel(
-                    m_trajList.get(i).cmd(),
-                    Commands.sequence(
-                        ele.setPosition(EleHeights.HOME).asProxy(),
-                        Commands.waitSeconds(eleWaitSecs),
-                        ele.setPosition(eleHeights.get(heightCounter)).asProxy()
-                    )
+                    drivetrain.applyRequest(() -> brake)
+                    // superstructure.autoScore() // should send autoScoreRequest to state machine
                 ),
-                drivetrain.applyRequest(() -> brake).asProxy()
-                /* coral score */
-            );
+                firstLoadTraj.cmd()
+            )
+        );
+        // ^ ends at HP station
 
-            heightCounter++;
+        // list of trajectory start commands
+        ArrayList<AutoTrajectory> trajList = new ArrayList<>();
+        for (int cycleIdx = 0; cycleIdx < cycles.size(); cycleIdx++ ) {
+            // starts at HP station from last cycle
+            AutonCycle cycle = cycles.get(cycleIdx);
 
-            if(m_trajList.size() >= i + 1) {
-                i++;
-                m_cmdSched.addCommands(
-                    Commands.parallel(
-                        m_trajList.get(i).cmd(),
-                        Commands.sequence(
-                            ele.setPosition(EleHeights.HOME).asProxy(),
-                            Commands.waitSeconds(eleWaitSecs),
-                            ele.setPosition(EleHeights.CS).asProxy()
-                        )
-                    ),
-                    drivetrain.applyRequest(() -> brake).asProxy()
-                    /* coral intake */
-                );
+            var hpToReefTraj = m_routine.trajectory(Trajectories.HpToReefMap.get(cycle.hpReefPair));
+            var reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHpMap.get(cycle.reefHpPair));
+
+            trajList.add(reefToHpTraj);
+            // attach this cycles first trajectory to the end of the last cycles last trajectory.
+            if (cycles.size() > 1 && cycleIdx > 0) {
+                var lastCycleDone = trajList.get(cycleIdx - 1).done(); 
+                var gotACoral = new Trigger(() -> false); // from superstructure
+
+                // once last cycles traj done, and got coral, begin moving to reef
+                lastCycleDone.and(gotACoral).onTrue(hpToReefTraj.cmd());
             }
+            // lift elevator early
+            hpToReefTraj.atTime("ElevUp").onTrue(ele.toPosition(cycle.height));
+            
+            // robot is now at reef and finished scoring
+            hpToReefTraj.done().onTrue(
+                Commands.sequence(
+                    Commands.parallel(
+                        drivetrain.applyRequest(() -> brake)
+                        // superstructure.autoScore() // should send autoScoreRequest to state machine
+                    ),
+                    // go back to HP
+                    reefToHpTraj.cmd()
+                )
+            );
         }
 
-        return m_cmdSched;
+        // start first cycle
+        firstLoadTraj.done().onTrue(
+            trajList.get(0).cmd()
+        );
+
+        return m_routine.cmd();
     }
 
     public AutoRoutine getAuton() {
-        m_routine.active().onTrue(m_cmdSched);
+        m_routine.active().onTrue(m_fullCmdSequence);
 
         return m_routine;
     }

@@ -26,7 +26,7 @@ import frc.robot.autons.AutonChooser.*;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Elevator.EleHeights;
+import frc.robot.subsystems.Elevator.EleHeight;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -64,33 +64,35 @@ public class Robot extends TimedRobot {
       AutonChooser.assignAutonCommand(StartAuton.REEF_G, TrajsAndLocs.FirstScoringLocs.REEF_G);
 
       //scoring autons
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_A, TrajsAndLocs.ScoringLocs.REEF_A);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_B, TrajsAndLocs.ScoringLocs.REEF_B);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_C, TrajsAndLocs.ScoringLocs.REEF_C);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_D, TrajsAndLocs.ScoringLocs.REEF_D);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_E, TrajsAndLocs.ScoringLocs.REEF_E);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_F, TrajsAndLocs.ScoringLocs.REEF_F);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_G, TrajsAndLocs.ScoringLocs.REEF_G);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_H, TrajsAndLocs.ScoringLocs.REEF_H);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_I, TrajsAndLocs.ScoringLocs.REEF_I);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_J, TrajsAndLocs.ScoringLocs.REEF_J);
-      AutonChooser.assignAutonCommand(ScoringAuton.REEF_K, TrajsAndLocs.ScoringLocs.REEF_K);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_A, TrajsAndLocs.ReefLocation.REEF_A);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_B, TrajsAndLocs.ReefLocation.REEF_B);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_C, TrajsAndLocs.ReefLocation.REEF_C);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_D, TrajsAndLocs.ReefLocation.REEF_D);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_E, TrajsAndLocs.ReefLocation.REEF_E);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_F, TrajsAndLocs.ReefLocation.REEF_F);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_G, TrajsAndLocs.ReefLocation.REEF_G);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_H, TrajsAndLocs.ReefLocation.REEF_H);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_I, TrajsAndLocs.ReefLocation.REEF_I);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_J, TrajsAndLocs.ReefLocation.REEF_J);
+      AutonChooser.assignAutonCommand(ScoringAuton.REEF_K, TrajsAndLocs.ReefLocation.REEF_K);
       //ele heights choices
-      AutonChooser.assignAutonCommand(EleAutonHeights.HOME, EleHeights.HOME);
-      AutonChooser.assignAutonCommand(EleAutonHeights.L1, EleHeights.L1);
-      AutonChooser.assignAutonCommand(EleAutonHeights.L2, EleHeights.L2);
-      AutonChooser.assignAutonCommand(EleAutonHeights.L3, EleHeights.L3);
-      AutonChooser.assignAutonCommand(EleAutonHeights.L4, EleHeights.L4);
+      AutonChooser.assignAutonCommand(EleAutonHeights.HOME, EleHeight.HOME);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L1, EleHeight.L1);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L2, EleHeight.L2);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L3, EleHeight.L3);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L4, EleHeight.L4);
 
       //coral station choices
-      AutonChooser.assignAutonCommand(CSOptions.LEFT, TrajsAndLocs.CS.CS_LEFT);
-      AutonChooser.assignAutonCommand(CSOptions.RIGHT, TrajsAndLocs.CS.CS_RIGHT);
+      AutonChooser.assignAutonCommand(CSOptions.LEFT, TrajsAndLocs.HpStation.CS_LEFT);
+      AutonChooser.assignAutonCommand(CSOptions.RIGHT, TrajsAndLocs.HpStation.CS_RIGHT);
     }
 
 
 
 
   public Robot() {
+    // iterate AutonCycles and validate all Hp->Score/Score->Hp pairs
+    // publish ElasticAlert if invalid pair is asked for
      /* autossss */
 
       configureBindings();
@@ -126,15 +128,15 @@ public class Robot extends TimedRobot {
         //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-        joystick.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.HOME));
-        joystick.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        joystick.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeights.CS));
+        joystick.povDown().onTrue(elevator.setPosition(Elevator.EleHeight.HOME));
+        joystick.povLeft().onTrue(elevator.setPosition(Elevator.EleHeight.L1));
+        joystick.povRight().onTrue(elevator.setPosition(Elevator.EleHeight.L2));
+        joystick.povUp().onTrue(elevator.setPosition(Elevator.EleHeight.L3));
+        joystick.x().onTrue(elevator.setPosition(Elevator.EleHeight.L4));
+        joystick.y().onTrue(elevator.setPosition(Elevator.EleHeight.CS));
 
-        joystick.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        joystick.b().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
+        joystick.a().onTrue(elevator.setPosition(Elevator.EleHeight.CLIMB_UP));
+        joystick.b().onTrue(elevator.setPosition(Elevator.EleHeight.CLIMB_DOWN));
 
         drivetrain.registerTelemetry(logger::telemeterize);
     }
