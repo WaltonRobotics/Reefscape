@@ -95,28 +95,34 @@ public class Robot extends TimedRobot {
         //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
         /*TODO: test to see if this actually works */
+        // driver controls (not sure abt alignment inputs)
+        driver.rightTrigger().whileTrue(coral.score());
+        driver.rightTrigger().whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+        
         // wrist position controls
-        manipulator.y().onTrue(algae.toAngle(Algae.WristPosition.HOME));
+        manipulator.a().onTrue(algae.toAngle(Algae.WristPosition.HOME));
         manipulator.x().onTrue(algae.toAngle(Algae.WristPosition.INTAKE));
-        manipulator.b().onTrue(algae.toAngle(Algae.WristPosition.PROCESSOR_SHOOT));
+        manipulator.y().onTrue(algae.toAngle(Algae.WristPosition.PROCESSOR_SHOOT));
 
         // intake controls
-        // manipulator.rightTrigger()
-        //     .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.INTAKE));
-        // manipulator.leftTrigger()
-        //     .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+        manipulator.leftTrigger()
+          .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.INTAKE));
+        manipulator.rightTrigger()
+          .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
+        manipulator.leftTrigger().and(manipulator.b())
+          .whileTrue(coral.intake());
         
+        // elevator controls
+        manipulator.leftBumper().onTrue(elevator.toHome());
+        manipulator.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
+        manipulator.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
+        manipulator.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
+        manipulator.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
+        manipulator.rightStick().whileTrue(elevator.setPosition(manipulator.getRightX())); // might need lambda?
 
-
-        driver.povDown().onTrue(elevator.toHome());
-        driver.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        driver.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        driver.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        driver.x().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        driver.y().onTrue(elevator.toCS());
-
-        driver.a().onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        driver.b().onTrue(elevator.toHome());
+        // climber controls
+        manipulator.a().and(manipulator.povUp()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
+        manipulator.a().and(manipulator.povDown()).onTrue(elevator.toHome());
 
         drivetrain.registerTelemetry(logger::telemeterize);
   }
