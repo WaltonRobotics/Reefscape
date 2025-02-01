@@ -26,6 +26,7 @@ import frc.robot.autons.AutonChooser.*;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.EleHeights;
 
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
@@ -53,9 +54,20 @@ public class Robot extends TimedRobot {
     private final AutoChooser autoChooser = new AutoChooser();
 
     private void mapAutonCommands(){
-      AutonChooser.assignAutonCommand(AutonOption.MEOW, TrajsAndLocs.FirstScoringLocs.REEF_1);
-      AutonChooser.assignAutonCommand(AutonOption.GROWL, TrajsAndLocs.FirstScoringLocs.REEF_2);
-      AutonChooser.assignAutonCommand(AutonOption.BARK, TrajsAndLocs.FirstScoringLocs.REEF_3);
+      AutonChooser.assignAutonCommand(StartAuton.MEOW, TrajsAndLocs.FirstScoringLocs.REEF_1);
+      AutonChooser.assignAutonCommand(StartAuton.GROWL, TrajsAndLocs.FirstScoringLocs.REEF_2);
+      AutonChooser.assignAutonCommand(StartAuton.BARK, TrajsAndLocs.FirstScoringLocs.REEF_3);
+      
+      //ele heights choices
+      AutonChooser.assignAutonCommand(EleAutonHeights.HOME, EleHeights.HOME);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L1, EleHeights.L1);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L2, EleHeights.L2);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L3, EleHeights.L3);
+      AutonChooser.assignAutonCommand(EleAutonHeights.L4, EleHeights.L4);
+
+      //coral station choices
+      AutonChooser.assignAutonCommand(CSOptions.LEFT, TrajsAndLocs.CS.CS_LEFT);
+      AutonChooser.assignAutonCommand(CSOptions.RIGHT, TrajsAndLocs.CS.CS_RIGHT);
     }
 
 
