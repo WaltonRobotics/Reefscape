@@ -1,5 +1,5 @@
 {
- "name":"hp_C_right",
+ "name":"HP_C_right",
  "version":1,
  "snapshot":{
   "waypoints":[
@@ -13,8 +13,8 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"reef_8.x", "val":3.5517477989196777}, "y":{"exp":"reef_8.y", "val":2.7324421405792236}, "heading":{"exp":"reef_8.heading", "val":1.009632617018536}, "intervals":18, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"cs_right.x", "val":1.5258736610412598}, "y":{"exp":"cs_right.y", "val":1.1567624807357788}, "heading":{"exp":"cs_right.heading", "val":0.9239216244700048}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"reef_C.x", "val":3.5517477989196777}, "y":{"exp":"reef_C.y", "val":2.7324421405792236}, "heading":{"exp":"reef_C.heading", "val":1.009632617018536}, "intervals":18, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"HP_right.x", "val":1.5258736610412598}, "y":{"exp":"HP_right.y", "val":1.1567624807357788}, "heading":{"exp":"HP_right.heading", "val":0.9239216244700048}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
