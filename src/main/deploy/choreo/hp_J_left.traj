@@ -1,5 +1,5 @@
 {
- "name":"hp_J_left",
+ "name":"HP_J_left",
  "version":1,
  "snapshot":{
   "waypoints":[
@@ -14,9 +14,9 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"reef_3.x", "val":5.097414493560791}, "y":{"exp":"reef_3.y", "val":5.418601036071777}, "heading":{"exp":"reef_3.heading", "val":-2.117585299168708}, "intervals":21, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"reef_J.x", "val":5.097414493560791}, "y":{"exp":"reef_J.y", "val":5.418601036071777}, "heading":{"exp":"reef_J.heading", "val":-2.117585299168708}, "intervals":21, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"2.5600905418395996 m", "val":2.5600905418395996}, "y":{"exp":"6.520769119262695 m", "val":6.520769119262695}, "heading":{"exp":"-1.6170412427265226 rad", "val":-1.6170412427265226}, "intervals":15, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"cs_left.x", "val":1.4508415460586548}, "y":{"exp":"cs_left.y", "val":6.889235019683838}, "heading":{"exp":"cs_left.heading", "val":-0.9010539763649807}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"HP_left.x", "val":1.4508415460586548}, "y":{"exp":"HP_left.y", "val":6.889235019683838}, "heading":{"exp":"HP_left.heading", "val":-0.9010539763649807}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
