@@ -65,11 +65,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
     /* wheel radius characterization schtuffs */
-    public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
-    private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
-    private final SwerveRequest.RobotCentric m_characterizationReq = new SwerveRequest.RobotCentric()
-		.withDriveRequestType(DriveRequestType.OpenLoopVoltage);
-    private final double m_characterizationSpeed = 1.5;
+    // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
+    // private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
+    // private final SwerveRequest.RobotCentric m_characterizationReq = new SwerveRequest.RobotCentric()
+	// 	.withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+    // private final double m_characterizationSpeed = 1.5;
 
     /* loggin' */
     private final DoubleLogger log_lastGyro = WaltLogger.logDouble("Swerve", "lastGyro");
@@ -79,6 +79,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
+    private double averageWheelPosition = 0;
 
     private double[] startWheelPositions = new double[4];
     private double currentEffectiveWheelRadius = 0;
@@ -305,13 +306,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     public Command wheelRadiusCharacterization(double omegaDirection) {
+
+        /* wheel radius characterization schtuffs */
+        final DoubleSupplier m_gyroYawRadsSupplier = () -> Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
+        // () -> getState().Pose.getRotation().getRadians();
+        final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
+        final SwerveRequest.RobotCentric m_characterizationReq = new SwerveRequest.RobotCentric()
+		    .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+        final double m_characterizationSpeed = 1.5;
+
 		var initialize = runOnce(() -> {
 			lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
 			accumGyroYawRads = 0;
 			currentEffectiveWheelRadius = 0;
+            averageWheelPosition = 0;
 			for (int i = 0; i < getModules().length; i++) {
 				var pos = getModules()[i].getPosition(true);
-				startWheelPositions[i] = pos.distanceMeters / TunerConstants.kDriveRotationsPerMeter;
+				startWheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
 			}
 			m_omegaLimiter.reset(0);
 		});
@@ -322,15 +333,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 					.withRotationalRate(m_omegaLimiter.calculate(m_characterizationSpeed * omegaDirection)));
 				accumGyroYawRads += MathUtil.angleModulus(m_gyroYawRadsSupplier.getAsDouble() - lastGyroYawRads);
 				lastGyroYawRads = m_gyroYawRadsSupplier.getAsDouble();
-				double averageWheelPosition = 0;
+				averageWheelPosition = 0;
 				double[] wheelPositions = new double[4];
 				for (int i = 0; i < getModules().length; i++) {
 					var pos = getModules()[i].getPosition(true);
 					wheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
 					averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
 				}
-				averageWheelPosition /= 4.0;
+				averageWheelPosition = averageWheelPosition / 4.0;
 				currentEffectiveWheelRadius = (accumGyroYawRads * TunerConstants.kDriveRadius) / averageWheelPosition;
+                // System.out.println("effective wheel radius: " + currentEffectiveWheelRadius);
+                System.out.println("Average Wheel Position: " + averageWheelPosition);
 				log_lastGyro.accept(lastGyroYawRads);
 				log_avgWheelPos.accept(averageWheelPosition);
 				log_accumGyro.accept(accumGyroYawRads);
@@ -338,12 +351,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 			}, () -> {
 				setControl(m_characterizationReq.withRotationalRate(0));
 				if (Math.abs(accumGyroYawRads) <= Math.PI * 2.0) {
-					System.out.println("not enough data for characterization " + accumGyroYawRads);
+					System.out.println("not enough data for characterization " + accumGyroYawRads
+                    + "\navgWheelPos: " + averageWheelPosition + "radians");
 				} else {
 					System.out.println(
 						"effective wheel radius: "
 							+ currentEffectiveWheelRadius
-							+ " inches");
+							+ " inches" + 
+                            "\naccumGryoYawRads: " + accumGyroYawRads + "radians" 
+                            + "\navgWheelPos: " + averageWheelPosition + "radians");
 				}
 			});
 
