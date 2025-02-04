@@ -27,13 +27,11 @@ import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
-import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
-import frc.robot.Constants.FieldK.Reef.ReefHeight;
 
 //numbers are dummies
 public class Constants {
