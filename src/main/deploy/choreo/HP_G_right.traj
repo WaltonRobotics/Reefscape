@@ -1,5 +1,5 @@
 {
- "name":"cs_12_right",
+ "name":"HP_G_right",
  "version":1,
  "snapshot":{
   "waypoints":[
@@ -15,10 +15,10 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"reef_12.x", "val":6.102848052978516}, "y":{"exp":"reef_12.y", "val":3.8579275608062744}, "heading":{"exp":"reef_12.heading", "val":3.141592653589793}, "intervals":16, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"reef_G.x", "val":6.102848052978516}, "y":{"exp":"reef_G.y", "val":3.8579275608062744}, "heading":{"exp":"reef_G.heading", "val":3.141592653589793}, "intervals":16, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.727685928344727 m", "val":5.727685928344727}, "y":{"exp":"2.312260627746582 m", "val":2.312260627746582}, "heading":{"exp":"2.75098545320847 rad", "val":2.75098545320847}, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"3.9569222927093506 m", "val":3.9569222927093506}, "y":{"exp":"1.4718981981277466 m", "val":1.4718981981277466}, "heading":{"exp":"1.634539592767553 rad", "val":1.634539592767553}, "intervals":20, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"cs_right.x", "val":1.5258736610412598}, "y":{"exp":"cs_right.y", "val":1.1567624807357788}, "heading":{"exp":"cs_right.heading", "val":0.9239216244700048}, "intervals":28, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"HP_right.x", "val":1.5258736610412598}, "y":{"exp":"HP_right.y", "val":1.1567624807357788}, "heading":{"exp":"HP_right.heading", "val":0.9239216244700048}, "intervals":28, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
