@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
 
   public Robot() {
     /* autossss */
-    autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
+    // autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
 
     configureBindings();
   }
