@@ -14,7 +14,7 @@ public abstract class TrajsAndLocs {
      * 
      * POV: driver station
      */
-    private static enum StartingLocs {
+    public static enum StartingLocs {
         // TODO: fill out the Real Values
         LEFT(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
         MID(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),

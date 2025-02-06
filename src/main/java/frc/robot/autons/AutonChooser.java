@@ -13,8 +13,8 @@ public class AutonChooser {
     private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
     private static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
 
-    private static EnumMap<FirstScoringLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.FirstScoringLocs.class);
-    private static SendableChooser<FirstScoringLocs> firstScoringChooser = new SendableChooser<FirstScoringLocs>();
+    private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
+    private static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
 
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);
@@ -26,7 +26,7 @@ public class AutonChooser {
         startingPositionChooser.addOption(description, startingLoc);
     }
 
-    public static void assignFirstScoring(FirstScoringLocs scoringLoc, String description){
+    public static void assignFirstScoring(ReefLocs scoringLoc, String description){
         firstScoringMap.put(scoringLoc, description);
         firstScoringChooser.addOption(description, scoringLoc);
     }

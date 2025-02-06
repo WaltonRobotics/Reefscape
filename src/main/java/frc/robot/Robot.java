@@ -61,8 +61,7 @@ public class Robot extends TimedRobot {
 
   private void mapAutonCommands(){
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID_G, "mid_g");
-    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID_H, "mid_h");
+    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
   }
 
