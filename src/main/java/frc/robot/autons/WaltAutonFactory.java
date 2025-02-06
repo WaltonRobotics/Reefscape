@@ -10,9 +10,8 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import frc.robot.autons.TrajsAndLocs.CS;
-import frc.robot.autons.TrajsAndLocs.FirstScoringLocs;
-import frc.robot.autons.TrajsAndLocs.ScoringLocs;
+import frc.robot.autons.TrajsAndLocs.HPStation;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
@@ -37,10 +36,10 @@ public class WaltAutonFactory {
         m_cmdSched = new SequentialCommandGroup();
     }
 
-    public SequentialCommandGroup generateAuton(Superstructure superstructure, Swerve drivetrain, Elevator ele, Coral coral, FirstScoringLocs firstScoreLoc, ArrayList<ScoringLocs> scoreLocs, ArrayList<EleHeights> eleHeights, ArrayList<CS> CSLocs) {
-        ScoringLocs firstLoc = ScoringLocs.getSameLoc(firstScoreLoc);
+    public SequentialCommandGroup generateAuton(Superstructure superstructure, Swerve drivetrain, Elevator ele, Coral coral, ReefLocs firstScoreLoc, ArrayList<ReefLocs> scoreLocs, ArrayList<EleHeights> eleHeights, ArrayList<CS> CSLocs) {
+        ReefLocs firstLoc = ReefLocs.getSameLoc(firstScoreLoc);
         AutoTrajectory firstRTraj = m_routine.trajectory(firstScoreLoc.m_startAndTraj.getSecond());
-        AutoTrajectory firstCSTraj = m_routine.trajectory(m_trajs.m_toCSTrajMap.get(new Pair<ScoringLocs, CS>(firstLoc, CSLocs.get(0))));
+        AutoTrajectory firstCSTraj = m_routine.trajectory(m_trajs.m_toCSTrajMap.get(new Pair<ReefLocs, HPStation>(firstLoc, CSLocs.get(0))));
 
         /* iteration 1 */
         m_cmdSched.addCommands(
