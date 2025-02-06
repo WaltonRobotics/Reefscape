@@ -31,4 +31,12 @@ public class AutonChooser {
         firstScoringChooser.addOption(description, scoringLoc);
     }
 
+    public static void chooseFirstScoring(){
+        if(startingPositionChooser.getSelected().equals(TrajsAndLocs.StartingLocs.LEFT)){
+            for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.size(); i++) {
+                assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i), TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i).toString());
+            }
+        }
+    }
+
 }
