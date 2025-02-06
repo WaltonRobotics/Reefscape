@@ -11,10 +11,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -48,6 +50,7 @@ public class Robot extends TimedRobot {
   private final Algae algae = new Algae();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
+  private final Vision vision = new Vision();
 
   public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
 
@@ -183,5 +186,13 @@ public class Robot extends TimedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    drivetrain.simulationPeriodic();
+    Pose2d robotPose = drivetrain.getState().Pose;
+    vision.simulationPeriodic(robotPose);
+
+    Field2d debugField = vision.getSimDebugField();
+    debugField.getObject("EstimatedRobot").setPose(robotPose);
+    debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.getModulePoses());
+  }
 }

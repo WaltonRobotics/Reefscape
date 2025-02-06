@@ -4,6 +4,9 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.simulation.PhotonCameraSim;
+import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -11,11 +14,13 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.Constants.FieldK;
 import frc.util.AllianceFlipUtil;
 import frc.util.WaltLogger;
@@ -36,6 +41,9 @@ public class Vision {
 
     public static final double kMaxPoseHeight = 0.405;
     public static final double kMaxPoseAngle = 0.3;
+
+    private PhotonCameraSim m_cameraSim;
+    private VisionSystemSim m_visionSim;
 
     // Total of 16 AprilTags
     // https://firstfrc.blob.core.windows.net/frc2024/Manual/2024GameManual.pdf (page 35 and more)
@@ -69,6 +77,25 @@ public class Vision {
     public Vision() {
         m_flatbotCam_poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
         log_flatbotCamOnRobot.accept(new Pose3d().plus(m_roboToCam));
+
+        if (Robot.isSimulation()) {
+            // Create the vision system simulation which handles cameras and targets on the field.
+            m_visionSim = new VisionSystemSim("main");
+            // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
+            m_visionSim.addAprilTags(kTagLayout);
+            // Create simulated camera properties. These can be set to mimic your actual camera
+            var cameraProp = new SimCameraProperties();
+            // TODO: update these values to reflect the real camera
+            cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
+            cameraProp.setCalibError(0.35, 0.10);
+            cameraProp.setFPS(15);
+            cameraProp.setAvgLatencyMs(50);
+            cameraProp.setLatencyStdDevMs(15);
+
+            m_cameraSim = new PhotonCameraSim(m_flatbotCam, cameraProp);
+            
+            m_cameraSim.enableDrawWireframe(true);
+        }
     }
 
     /**
@@ -195,6 +222,23 @@ public class Vision {
         }
 
         return false;
+    }
+
+    public void simulationPeriodic(Pose2d robotSimPose) {
+        m_visionSim.update(robotSimPose);
+    }
+
+    public void resetSimPose(Pose2d pose) {
+        if (Robot.isSimulation()) {
+            m_visionSim.resetRobotPose(pose);
+        }
+    }
+
+    public Field2d getSimDebugField() {
+        if (!Robot.isSimulation()) {
+            return null;
+        }
+        return m_visionSim.getDebugField();
     }
 
     /**

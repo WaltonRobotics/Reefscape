@@ -135,8 +135,8 @@ public class TunerConstants {
     private static final boolean kFrontLeftSteerMotorInverted = true;
     private static final boolean kFrontLeftEncoderInverted = false;
 
-    private static final Distance kFrontLeftXPos = Inches.of(9.375);
-    private static final Distance kFrontLeftYPos = Inches.of(11.375);
+    public static final Distance kFrontLeftXPos = Inches.of(9.375);
+    public static final Distance kFrontLeftYPos = Inches.of(11.375);
 
     // Front Right
     private static final int kFrontRightDriveMotorId = 3;
@@ -146,8 +146,8 @@ public class TunerConstants {
     private static final boolean kFrontRightSteerMotorInverted = true;
     private static final boolean kFrontRightEncoderInverted = false;
 
-    private static final Distance kFrontRightXPos = Inches.of(9.375);
-    private static final Distance kFrontRightYPos = Inches.of(-11.375);
+    public static final Distance kFrontRightXPos = Inches.of(9.375);
+    public static final Distance kFrontRightYPos = Inches.of(-11.375);
 
     // Back Left
     private static final int kBackLeftDriveMotorId = 7;
@@ -157,8 +157,8 @@ public class TunerConstants {
     private static final boolean kBackLeftSteerMotorInverted = true;
     private static final boolean kBackLeftEncoderInverted = false;
 
-    private static final Distance kBackLeftXPos = Inches.of(-9.375);
-    private static final Distance kBackLeftYPos = Inches.of(11.375);
+    public static final Distance kBackLeftXPos = Inches.of(-9.375);
+    public static final Distance kBackLeftYPos = Inches.of(11.375);
 
     // Back Right
     private static final int kBackRightDriveMotorId = 1;
@@ -168,8 +168,8 @@ public class TunerConstants {
     private static final boolean kBackRightSteerMotorInverted = true;
     private static final boolean kBackRightEncoderInverted = false;
 
-    private static final Distance kBackRightXPos = Inches.of(-9.375);
-    private static final Distance kBackRightYPos = Inches.of(-11.375);
+    public static final Distance kBackRightXPos = Inches.of(-9.375);
+    public static final Distance kBackRightYPos = Inches.of(-11.375);
     // added by wrt
     public static final double kDriveRadius = Math.hypot(kFrontLeftXPos.magnitude(), kFrontLeftYPos.magnitude());
 
