@@ -78,24 +78,24 @@ public class WaltAutonFactory {
         }
     }
 
-    public Command generateAuton(Swerve drivetrain, Superstructure superstructure, ArrayList<AutonCycle> cycles) { // im assuming that autoncycle will include 1st iteration
-        // iterate AutonCycles and validate all HP->Score and Score->HP pairs
-        for (AutonCycle autonCycle : cycles) {
-            if(!autonCycle.isLegit()) {
-                return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
-            }
-        }
+    // public Command generateAuton(Swerve drivetrain, Superstructure superstructure, ArrayList<AutonCycle> cycles) { // im assuming that autoncycle will include 1st iteration
+    //     // iterate AutonCycles and validate all HP->Score and Score->HP pairs
+    //     for (AutonCycle autonCycle : cycles) {
+    //         if(!autonCycle.isLegit()) {
+    //             return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
+    //         }
+    //     }
 
-        AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycles.get(0).reefHPPair));
-        AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycles.get(0).hpReefPair));
+    //     AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycles.get(0).reefHPPair));
+    //     AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycles.get(0).hpReefPair));
 
-        m_routine.active().onTrue(
-            Commands.sequence(
-                firstScoreTraj.resetOdometry(),
-                firstScoreTraj.cmd()
-            )
-        );
+    //     m_routine.active().onTrue(
+    //         Commands.sequence(
+    //             firstScoreTraj.resetOdometry(),
+    //             firstScoreTraj.cmd()
+    //         )
+    //     );
 
-        firstScoreTraj.atTime("eleUp").onTrue()
-    }
+    //     firstScoreTraj.atTime("eleUp").onTrue()
+    // }
 }
