@@ -9,10 +9,10 @@ public abstract class TrajsAndLocs {
      * check docu for naming conventions:
     */
 
-    private static enum StartingLocs {
+    public static enum StartingLocs {
         RIGHT,
-        MID_1,
-        MID_12,
+        MID_G,
+        MID_H,
         LEFT;
     }
     
@@ -21,13 +21,13 @@ public abstract class TrajsAndLocs {
      * Kept separate so that ppl dont accidentally choose a first reefLoc that doesn't have a traj going form [startingLoc] -> [reefLoc]
      */
     public static enum FirstScoringLocs {
-        REEF_1(StartingLocs.MID_1, "mid_1"),
-        REEF_2(StartingLocs.LEFT, "left_2"),
-        REEF_3(StartingLocs.LEFT, "left_3"),
+        REEF_H(StartingLocs.MID_H, "mid_H"),
+        REEF_I(StartingLocs.LEFT, "left_I"),
+        REEF_J(StartingLocs.LEFT, "left_J"),
 
-        REEF_10(StartingLocs.RIGHT, "right_10"),
-        REEF_11(StartingLocs.RIGHT, "right_11"),
-        REEF_12(StartingLocs.MID_12, "mid_12");
+        REEF_E(StartingLocs.RIGHT, "right_E"),
+        REEF_F(StartingLocs.RIGHT, "right_F"),
+        REEF_G(StartingLocs.MID_G, "mid_G");
 
         public Pair<StartingLocs, String> m_startAndTraj;
 
@@ -40,18 +40,18 @@ public abstract class TrajsAndLocs {
     }
 
     public static enum ScoringLocs {
-        REEF_1(FirstScoringLocs.REEF_1),
-        REEF_2(FirstScoringLocs.REEF_2),
-        REEF_3(FirstScoringLocs.REEF_3),
-        REEF_4,
-        REEF_5,
-        REEF_6,
-        REEF_7,
-        REEF_8,
-        REEF_9,
-        REEF_10(FirstScoringLocs.REEF_10),
-        REEF_11(FirstScoringLocs.REEF_11),
-        REEF_12(FirstScoringLocs.REEF_12),
+        REEF_H(FirstScoringLocs.REEF_H),
+        REEF_I(FirstScoringLocs.REEF_I),
+        REEF_J(FirstScoringLocs.REEF_J),
+        REEF_K,
+        REEF_L,
+        REEF_A,
+        REEF_B,
+        REEF_C,
+        REEF_D,
+        REEF_E(FirstScoringLocs.REEF_E),
+        REEF_F(FirstScoringLocs.REEF_F),
+        REEF_G(FirstScoringLocs.REEF_G),
         INVALID_LOC;
 
         public FirstScoringLocs m_pairedLoc;
@@ -69,18 +69,18 @@ public abstract class TrajsAndLocs {
 
         public static ScoringLocs getSameLoc(FirstScoringLocs startLoc) {
             switch (startLoc) {
-                case REEF_1:
-                    return REEF_1;
-                case REEF_2:
-                    return REEF_2;
-                case REEF_3:
-                    return REEF_3;
-                case REEF_10:
-                    return REEF_10;
-                case REEF_11:
-                    return REEF_11;
-                case REEF_12:
-                    return REEF_12;
+                case REEF_H:
+                    return REEF_H;
+                case REEF_I:
+                    return REEF_I;
+                case REEF_J:
+                    return REEF_J;
+                case REEF_E:
+                    return REEF_E;
+                case REEF_F:
+                    return REEF_F;
+                case REEF_G:
+                    return REEF_G;
                 default:
                     return INVALID_LOC; //TODO: find better fail case T^T
             }
@@ -104,41 +104,41 @@ public abstract class TrajsAndLocs {
         }
 
         public void configureTrajectories() {
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_12, CS.CS_LEFT), "cs_12_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_1, CS.CS_LEFT), "cs_1_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_2, CS.CS_LEFT), "cs_2_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_3, CS.CS_LEFT), "cs_3_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_4, CS.CS_LEFT), "cs_4_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_5, CS.CS_LEFT), "cs_5_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_6, CS.CS_LEFT), "cs_6_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_7, CS.CS_LEFT), "cs_7_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_G, CS.CS_LEFT), "HP_G_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_H, CS.CS_LEFT), "HP_H_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_I, CS.CS_LEFT), "HP_I_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_J, CS.CS_LEFT), "HP_J_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_K, CS.CS_LEFT), "HP_K_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_L, CS.CS_LEFT), "HP_L_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_A, CS.CS_LEFT), "HP_A_left");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_B, CS.CS_LEFT), "HP_B_left");
 
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_6, CS.CS_RIGHT), "cs_6_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_7, CS.CS_RIGHT), "cs_7_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_8, CS.CS_RIGHT), "cs_8_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_9, CS.CS_RIGHT), "cs_9_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_10, CS.CS_RIGHT), "cs_10_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_11, CS.CS_RIGHT), "cs_11_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_12, CS.CS_RIGHT), "cs_12_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_1, CS.CS_RIGHT), "cs_1_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_A, CS.CS_RIGHT), "HP_A_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_B, CS.CS_RIGHT), "HP_B_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_C, CS.CS_RIGHT), "HP_C_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_D, CS.CS_RIGHT), "HP_D_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_E, CS.CS_RIGHT), "HP_E_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_F, CS.CS_RIGHT), "HP_F_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_G, CS.CS_RIGHT), "HP_G_right");
+            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_H, CS.CS_RIGHT), "HP_H_right");
 
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_12), "r_left_12");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_1), "r_left_1");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_2), "r_left_2");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_3), "r_left_3");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_4), "r_left_4");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_5), "r_left_5");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_6), "r_left_6");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_7), "r_left_7");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_G), "R_left_G");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_H), "R_left_H");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_I), "R_left_I");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_J), "R_left_J");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_K), "R_left_K");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_L), "R_left_L");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_A), "R_left_A");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_B), "R_left_B");
 
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_6), "r_right_6");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_7), "r_right_7");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_8), "r_right_8");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_9), "r_right_9");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_10), "r_right_10");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_11), "r_right_11");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_12), "r_right_12");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_1), "r_right_1");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_A), "R_right_A");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_B), "R_right_B");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_C), "R_right_C");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_D), "R_right_D");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_E), "R_right_E");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_F), "R_right_F");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_G), "R_right_G");
+            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_H), "R_right_H");
         }
     }
 }
