@@ -85,21 +85,23 @@ public class Elevator extends SubsystemBase {
 
     // also use for climbing
     public Command toHome() {
+        m_atHeight = false;
         return runOnce(
             () -> { 
                 log_elevatorDesiredPosition.accept(0.0);
                 m_right.setControl(m_MMEVRequest.withPosition(0));
             }
-        );
+        ).andThen(() -> invertAtHeight());
     }
 
     public Command toCS() {
+        m_atHeight = false;
         return runOnce(
             () -> {
                 log_elevatorDesiredPosition.accept(1.0);
                 m_right.setControl(m_MMEVRequest.withPosition(1));
             }
-        );
+        ).andThen(() -> invertAtHeight());
     }
 
     /* 

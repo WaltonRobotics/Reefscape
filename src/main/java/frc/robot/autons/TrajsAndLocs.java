@@ -38,8 +38,7 @@ public abstract class TrajsAndLocs {
         REEF_D,
         REEF_E,
         REEF_F,
-        REEF_G,
-        INVALID_LOC;
+        REEF_G;
 
         /* 
          * enums used in autonchooser
@@ -91,7 +90,7 @@ public abstract class TrajsAndLocs {
     public static class Trajectories {
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
         public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
-        
+
         static {
             // fill in maps here
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT) , "HP_A_left");
