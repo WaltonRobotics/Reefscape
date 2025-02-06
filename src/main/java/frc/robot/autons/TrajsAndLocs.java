@@ -88,5 +88,12 @@ public abstract class TrajsAndLocs {
         }
     }
 
-    
+    public static class Trajectories {
+        public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
+        public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
+        
+        static {
+            // fill in maps here
+        }
+    }
 }
