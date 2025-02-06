@@ -15,10 +15,14 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.autons.AutonChooser;
+import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
@@ -55,11 +59,16 @@ public class Robot extends TimedRobot {
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
   private final AutoChooser autoChooser = new AutoChooser();
 
+  private void mapAutonCommands(){
+    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
+    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID_G, "mid_g");
+    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID_H, "mid_h");
+    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
+  }
+
   public Robot() {
     /* autossss */
     autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
-
-    SmartDashboard.putData("Auto Chooser", autoChooser);
 
     configureBindings();
   }
@@ -136,6 +145,11 @@ public class Robot extends TimedRobot {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
 		}
 	}
+
+  @Override
+  public void robotInit(){
+    mapAutonCommands();
+  }
 
   @Override
   public void robotPeriodic() {
