@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
@@ -60,9 +61,11 @@ public class Robot extends TimedRobot {
   private final AutoChooser autoChooser = new AutoChooser();
 
   private void mapAutonCommands(){
+    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID,"mid default ig");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
+    AutonChooser.chooseFirstScoring();
   }
 
   public Robot() {
@@ -147,12 +150,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    mapAutonCommands();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    mapAutonCommands();
   }
 
   @Override
