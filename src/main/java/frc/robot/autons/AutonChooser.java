@@ -17,15 +17,10 @@ public class AutonChooser {
     private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
     private static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
     
-
-    private static Supplier<StartingLocs> wheeeee = () -> startingPositionChooser.getSelected();
-    
-
-
+    private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
 
     static{
-        SmartDashboard.putData("starting position chooser", startingPositionChooser);
-        
+        SmartDashboard.putData("starting position chooser", startingPositionChooser);   
     }
 
     public static void assignPosition(StartingLocs startingLoc, String description){
@@ -42,7 +37,7 @@ public class AutonChooser {
     }
 
     public static void chooseFirstScoring(){
-        if(wheeeee.get().equals(TrajsAndLocs.StartingLocs.MID)){
+        if(startLocChosen.get().equals(TrajsAndLocs.StartingLocs.MID)){
             
             firstScoringChooser = new SendableChooser<ReefLocs>();
             SmartDashboard.putData("first scoring chooser", firstScoringChooser);
@@ -52,7 +47,7 @@ public class AutonChooser {
                     TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i).toString());
             }
 
-        }else if (wheeeee.get().equals(TrajsAndLocs.StartingLocs.LEFT)){
+        }else if (startLocChosen.get().equals(TrajsAndLocs.StartingLocs.LEFT)){
 
             firstScoringChooser = new SendableChooser<ReefLocs>();
             SmartDashboard.putData("first scoring chooser", firstScoringChooser);
