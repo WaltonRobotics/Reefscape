@@ -148,7 +148,8 @@ public class Elevator extends SubsystemBase {
         L3(Units.inchesToMeters(64)),
         L4(Units.inchesToMeters(86)),
         CLIMB_UP(1.5), // this height will move the robot up for climb
-        CLIMB_DOWN(5); //this height will ove robot down for climb
+        CLIMB_DOWN(5), //this height will ove robot down for climb
+        HP(Units.inchesToMeters(36)); //human player station intake height
 
         public final double m_heightMeters;
 
