@@ -54,14 +54,14 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
 
-  public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
+  // public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
   private final AutoChooser autoChooser = new AutoChooser();
 
   private void mapAutonCommands(){
-    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID,"mid default ig");
+    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
@@ -169,7 +169,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    superstructure.autonPreload();
+    // superstructure.autonPreload();
     m_autonomousCommand = autoChooser.selectedCommand();
 
     if (m_autonomousCommand != null) {
@@ -188,7 +188,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    superstructure.resetAfterAuton();
+    // superstructure.resetAfterAuton();
   }
 
   @Override
