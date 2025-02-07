@@ -53,19 +53,19 @@ public abstract class TrajsAndLocs {
         }
         public static ArrayList<ReefLocs> OptimalMidStartCycles = new ArrayList<>();
         static {
-            OptimalLeftStartCycles.add(REEF_E);
-            OptimalLeftStartCycles.add(REEF_F);         
-            OptimalLeftStartCycles.add(REEF_G);
-            OptimalLeftStartCycles.add(REEF_H);
-            OptimalLeftStartCycles.add(REEF_I);
-            OptimalLeftStartCycles.add(REEF_J);
+            OptimalMidStartCycles.add(REEF_E);
+            OptimalMidStartCycles.add(REEF_F);         
+            OptimalMidStartCycles.add(REEF_G);
+            OptimalMidStartCycles.add(REEF_H);
+            OptimalMidStartCycles.add(REEF_I);
+            OptimalMidStartCycles.add(REEF_J);
         }
         public static ArrayList<ReefLocs> OptimalRightStartCycles = new ArrayList<>();
         static {
-            OptimalLeftStartCycles.add(REEF_D);
-            OptimalLeftStartCycles.add(REEF_E);         
-            OptimalLeftStartCycles.add(REEF_F);
-            OptimalLeftStartCycles.add(REEF_G);
+            OptimalRightStartCycles.add(REEF_D);
+            OptimalRightStartCycles.add(REEF_E);         
+            OptimalRightStartCycles.add(REEF_F);
+            OptimalRightStartCycles.add(REEF_G);
         }
     }
 
