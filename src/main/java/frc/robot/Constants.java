@@ -100,6 +100,8 @@ public class Constants {
         public static final double kGearRatio = 27; //TODO: check real gear ratio
         public static final double kSpoolDiameter = 2; //TODO: check real spool diameter
 
+        public static final double kCoralSpeed = 1; //TODO: make frsies
+
         private static final CurrentLimitsConfigs kLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)    
             .withSupplyCurrentLimit(50)
