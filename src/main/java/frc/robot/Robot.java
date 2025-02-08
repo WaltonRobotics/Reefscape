@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
@@ -66,6 +67,8 @@ public class Robot extends TimedRobot {
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
     AutonChooser.chooseFirstScoring();
+    AutonChooser.chooseHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
+    AutonChooser.chooseHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
   }
 
   public Robot() {
