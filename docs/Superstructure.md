@@ -40,16 +40,16 @@ stateDiagram
 
 ### Output Truth Table
 
-|    **State**     | **Coral** |**Elevator** |
-| :--------------: | :-------: | :--------:  |
-|     **IDLE**     | Unrunning |    HOME     |
-|**ELE_TO_INTAKE** | Unrunning |Move->INTAKE |
-|  **INTAKING**    | Running   | INTAKE      |
-|  **INTOOK**      | Unrunning | INTAKE      |
-|  **ELE_TO_SCORE**| Unrunning |Move->SCORE  |
-| **SCORE_READY**  | Unrunning | SCORE       |
-| **SCORE**        | Running   |  SCORE      |
-| **SCORED**       | Unrunning | SCORE       |
+|    **State**     | **Coral** |**Elevator** | **Open Requests**  |
+| :--------------: | :-------: | :--------:  | :----------------: |
+|     **IDLE**     | Unrunning |    HOME     | IntakeReq          |
+|**ELE_TO_INTAKE** | Unrunning |Move->INTAKE | n/a                |
+|  **INTAKING**    | Running   | INTAKE      | n/a                |
+|  **INTOOK**      | Unrunning | INTAKE      | ScoreEleReq        |
+|  **ELE_TO_SCORE**| Unrunning |Move->SCORE  | n/a                |
+| **SCORE_READY**  | Unrunning | SCORE       | ScoreReq           |
+| **SCORE**        | Running   |  SCORE      | n/a                |
+| **SCORED**       | Unrunning | SCORE       | n/a                |
 
 
 
@@ -74,13 +74,13 @@ stateDiagram
 #### Control Signals (Human/Autonomous Requests)
 
 - Auton
-    - Preload Request: goes straight from Idle -> Intook
-        - Only exists during the first scoring iteration in Auton
     - Auton Elevator Requests:
         - Two (HP, Reef)
     Override Requests:
         - Intake Override: goes to Intaking anyway if robot path reaches the HP station without being Intake Ready
         - Score Override: scores anyway if robot has been at the reef for more than a second without being Score Ready
+        - Preload Request: goes straight from Idle -> Intook
+            - Only exists during the first scoring iteration in Auton
 - Teleop (Button Binds)
     - Driver Requests:
         - Elevator Request
@@ -88,4 +88,5 @@ stateDiagram
     - Override Requests:
         - Intake Override (intake is usually automatic)
         - Score Override: scores anyway regardless of state
+        - Elevator Override: moves elevator to various level. Will force state change to either ELE_TO_SCORE or ELE_TO_INTAKE
         - Home Request: moves robot ele to HOME state; will override state machine to return to IDLE
