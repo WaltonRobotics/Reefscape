@@ -36,9 +36,11 @@ public class Elevator extends SubsystemBase {
     // idk why this is PositionVoltage and not MMEV, but Xandra said she got if off Banks' ele code, so Imma just leave it here for now...
     private final PositionVoltage m_MMEVRequest = new PositionVoltage(0);
 
-    private boolean m_atHeight = false;
+    private boolean m_atIntakeHeight = false;
+    private boolean m_atScoreHeight = false;
 
-    public BooleanSupplier bs_atHeight = () -> m_atHeight;
+    public BooleanSupplier bs_atIntakeHeight = () -> m_atIntakeHeight;
+    public BooleanSupplier bs_atScoreHeight = () -> m_atScoreHeight;
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -71,10 +73,6 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putData("Elevator Sim", m_mech2d);
     }
 
-    public void invertAtHeight() {
-        m_atHeight = !m_atHeight;
-    }
-
     public Command setPosition(double heightMeters) {
         return runOnce(
             () -> { 
@@ -85,40 +83,39 @@ public class Elevator extends SubsystemBase {
 
     // also use for climbing
     public Command toHome() {
-        m_atHeight = false;
         return runOnce(
             () -> { 
                 log_elevatorDesiredPosition.accept(0.0);
                 m_right.setControl(m_MMEVRequest.withPosition(0));
             }
-        ).andThen(() -> invertAtHeight());
+        );
     }
 
-    public Command toCS() {
-        m_atHeight = false;
+    public Command toHP() {
+        m_atIntakeHeight = false;
         return runOnce(
             () -> {
                 log_elevatorDesiredPosition.accept(1.0);
                 m_right.setControl(m_MMEVRequest.withPosition(1));
             }
-        ).andThen(() -> invertAtHeight());
+        ).andThen(() -> m_atIntakeHeight = true);
     }
 
     /* 
      * use for scoring
      */
     public Command setPosition(EleHeights heightMeters) {
-        m_atHeight = false;
+        m_atScoreHeight = false;
         return runOnce(
             () -> { 
                 log_elevatorDesiredPosition.accept(heightMeters.m_heightMeters);
                 m_right.setControl(m_MMEVRequest.withPosition(heightMeters.m_heightMeters));}
-        ).andThen(() -> invertAtHeight());
+        ).andThen(() -> m_atScoreHeight = true);
     }
 
     @Override
     public void periodic() {
-        log_eleAtHeight.accept(bs_atHeight);
+        log_eleAtHeight.accept(bs_atScoreHeight);
     }
 
     @Override
@@ -131,7 +128,7 @@ public class Elevator extends SubsystemBase {
         log_elevatorSimPosition.accept(m_elevatorSim.getPositionMeters());
         var elevatorVelocity = 
             metersToRotationVel(m_elevatorSim.getVelocityMetersPerSecond()* kGearRatio);
-        log_eleAtHeight.accept(bs_atHeight);
+        log_eleAtHeight.accept(bs_atScoreHeight);
 
         rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
         rightSim.setRotorVelocity(elevatorVelocity);
