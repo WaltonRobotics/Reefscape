@@ -3,6 +3,7 @@ package frc.robot.autons;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -21,6 +22,26 @@ public class AutonChooser {
 
     private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
     private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+
+     private static Consumer<TrajsAndLocs.ReefLocs> grac = orangeJuice -> {
+        for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalMidStartCycles.size(); i++) {
+                assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i), 
+                    TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i).toString());
+            }
+        };
+    private static Consumer<TrajsAndLocs.ReefLocs> hrehaan = tiramisu -> {
+        for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.size(); i++) {
+            assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i), 
+                TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i).toString());
+        }
+    };
+    private static Consumer<TrajsAndLocs.ReefLocs> scoot = diBoot -> {
+        for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalRightStartCycles.size(); i++) {
+            assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalRightStartCycles.get(i), 
+                TrajsAndLocs.ReefLocs.OptimalRightStartCycles.get(i).toString());
+        }
+    };
+
 
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
