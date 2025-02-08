@@ -12,23 +12,29 @@
 
 ### State Diagram
 
-This diagram is very basic, and I'm sleepy.
+This diagram is very basic, and I'm sleepy. Also at any point, we might go back to IDLE with driver req.
 
 ```mermaid
 stateDiagram
-    state "Idle" as s1
-    state "Intake Ready" as s2
-    state "Intaking" as s3
-    state "Intook" as s4
-    state "Score Ready" as s5
-    state "Scoring" as s6
+    state "IDLE" as s1
+    state "ELE_TO_INTAKE" as s2
+    state "INTAKING" as s3
+    state "INTOOK" as s4
+    state "ELE_TO_SCORE" as s5
+    state "SCORE_READY" as s6
+    state "SCORE" as s7
+    state "SCORED" as s8
 
-    s1 --> s2: EleAtIntakeHeight -> TRUE
-    s2 --> s3: TopSensor -> TRUE
+    s1 --> s2: IntakeReq -> TRUE
+    s1 --> s4: BotSensor -> TRUE
+    s2 --> s3: EleAtIntake -> TRUE
     s3 --> s4: BotSensor -> TRUE
-    s4 --> s5: EleAtScoreHeight -> TRUE
-    s5 --> s6: ScoreReq -> TRUE
-    s6 --> s1: BotSensor -> FALSE
+    s4 --> s5: ScoreEleReq -> TRUE
+    s5 --> s6: EleAtScore -> TRUE
+    s6 --> s7: ScoreReq -> TRUE
+    s7 --> s8: BotSensor -> FALSE && ScoreReq -> FALSE
+    s8 --> s2: Automatic
+    s8 --> s1: ToHomeReq -> TRUE
 
 ```
 
@@ -36,12 +42,15 @@ stateDiagram
 
 |    **State**     | **Coral** |**Elevator** |
 | :--------------: | :-------: | :--------:  |
-|     **Idle**     | Unrunning |  Home       |
-|**Intake Ready**  | Unrunning |  HP Level   |
-|   **Intaking**   | Running   |  HP Level   |
-|  **Intook**      | Unrunning |Moving -> Lvl|
-|  **Score Ready** | Unrunning | Score Level |
-|  **Scoring**     |   Running | Score Level |
+|     **IDLE**     | Unrunning |    HOME     |
+|**ELE_TO_INTAKE** | Unrunning |Move->INTAKE |
+|  **INTAKING**    | Running   | INTAKE      |
+|  **INTOOK**      | Unrunning | INTAKE      |
+|  **ELE_TO_SCORE**| Unrunning |Move->SCORE  |
+| **SCORE_READY**  | Unrunning | SCORE       |
+| **SCORE**        | Running   |  SCORE      |
+| **SCORED**       | Unrunning | SCORE       |
+
 
 
 ## Inputs
@@ -79,3 +88,4 @@ stateDiagram
     - Override Requests:
         - Intake Override (intake is usually automatic)
         - Score Override: scores anyway regardless of state
+        - Home Request: moves robot ele to HOME state; will override state machine to return to IDLE
