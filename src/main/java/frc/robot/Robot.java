@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.Coralk.kCoralSpeed;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -107,7 +108,7 @@ public class Robot extends TimedRobot {
 
         /*TODO: test to see if this actually works */
         // driver controls (not sure abt alignment inputs)
-        driver.rightTrigger().whileTrue(coral.score());
+        driver.rightTrigger().whileTrue(coral.setCoralMotorAction(kCoralSpeed));
         driver.rightTrigger().whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         
         // wrist position controls
@@ -121,7 +122,7 @@ public class Robot extends TimedRobot {
         manipulator.rightTrigger()
           .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         manipulator.leftTrigger().and(manipulator.b())
-          .whileTrue(coral.intake());
+          .whileTrue(coral.setCoralMotorAction(kCoralSpeed));
         
         // elevator controls
         manipulator.leftBumper().onTrue(elevator.toHome());
