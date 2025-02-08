@@ -28,6 +28,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.EleHeights;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
@@ -125,16 +126,17 @@ public class Robot extends TimedRobot {
           .whileTrue(coral.setCoralMotorAction(kCoralSpeed));
         
         // elevator controls
-        manipulator.leftBumper().onTrue(elevator.toHome());
-        manipulator.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        manipulator.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        manipulator.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        manipulator.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        manipulator.rightStick().whileTrue(elevator.setPosition(manipulator.getRightX())); // might need lambda?
+        // todo: superstructur-ize
+        manipulator.leftBumper().onTrue(elevator.toPosition(EleHeights.HOME));
+        manipulator.povDown().onTrue(elevator.toPosition(EleHeights.L1));
+        manipulator.povRight().onTrue(elevator.toPosition(EleHeights.L2));
+        manipulator.povLeft().onTrue(elevator.toPosition(EleHeights.L3));
+        manipulator.povUp().onTrue(elevator.toPosition(EleHeights.L4));
+        // manipulator.rightStick().whileTrue(elevator.toPosition(manipulator.getRightX())); // might need lambda?
 
         // climber controls
-        manipulator.a().and(manipulator.povUp()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        manipulator.a().and(manipulator.povDown()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
+        manipulator.a().and(manipulator.povUp()).onTrue(elevator.toPosition(EleHeights.CLIMB_UP));
+        manipulator.a().and(manipulator.povDown()).onTrue(elevator.toPosition(EleHeights.CLIMB_DOWN));
         
         //testing buttons
         // driver.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));

@@ -24,7 +24,10 @@ import edu.wpi.first.units.measure.Mass;
 //numbers are dummies
 public class Constants {
     /* general */
-    public static boolean kDebugLoggingEnabled = true;
+    public static final  boolean kDebugLoggingEnabled = true;
+ 
+    public static final double kRumbleIntensity = 1.0;
+    public static final double kRumbleTimeoutSecs = 0.5;
 
     // TODO: NONE OF THESE ARE REAL NUMBERS!!!!!!!!!!!!!!!!!
     // BE WARY OF MOTOR NUMBERS - MANY ARE STOLEN FROM ELEVATOR!!!!! (couldn't easily find better ones)
@@ -146,6 +149,7 @@ public class Constants {
         public static final Distance kMinimumHeight = Feet.of(0);
         public static final Distance kMaximumHeight = Meters.of(8);
         public static final Distance kStartingHeightMeters = Feet.of(0);
+        public static final double kTolerancePulleyRotations = metersToRotation(Meters.of(0.01)).in(Rotations);
         //SensorToMechanismRatio = kGearRatio
 
         public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
@@ -154,6 +158,11 @@ public class Constants {
 
         public static Angle metersToRotation(Distance meters){
             return Radians.of(meters.in(Meters) / kSpoolRadius.in(Meters));
+        }
+
+        public static Distance rotationsToMeters(Angle rotations) {
+            // TODO: grac fix/check
+            return kSpoolRadius.times(rotations.in(Radians));
         }
 
         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
