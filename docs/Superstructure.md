@@ -22,7 +22,7 @@ stateDiagram
     state "INTOOK" as s4
     state "ELE_TO_SCORE" as s5
     state "SCORE_READY" as s6
-    state "SCORE" as s7
+    state "SCORING" as s7
     state "SCORED" as s8
 
     s1 --> s2: IntakeReq->T
@@ -48,7 +48,7 @@ stateDiagram
 |  **INTOOK**      | Unrunning | INTAKE      | ScoreEleReq        |
 |  **ELE_TO_SCORE**| Unrunning |Move->SCORE  | n/a                |
 | **SCORE_READY**  | Unrunning | SCORE       | ScoreReq           |
-| **SCORE**        | Running   |  SCORE      | n/a                |
+| **SCORING**        | Running   |  SCORE      | n/a                |
 | **SCORED**       | Unrunning | SCORE       | n/a                |
 
 
