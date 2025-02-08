@@ -103,11 +103,18 @@ public class Superstructure {
         (trg_eleAtScore.and(RobotModeTriggers.autonomous())).onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
         trg_autonScoreReq.onTrue(Commands.runOnce(() -> m_state = State.SCORE));
         (trg_botSensorFalsed.and(RobotModeTriggers.autonomous())).onTrue(Commands.runOnce(() -> m_state = State.SCORED));
-        stateTrg_scored.onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        stateTrg_scored.and(RobotModeTriggers.autonomous()).onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
     }
 
     private void configureTeleopTrgs() {
-        
+        trg_teleopIntakeReq.onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (trg_eleAtIntake.and(RobotModeTriggers.teleop())).onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (trg_botSensor.and(RobotModeTriggers.teleop())).onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        trg_teleopScoreEleReq.onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (trg_eleAtScore.and(RobotModeTriggers.teleop())).onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
+        trg_teleopScoreReq.onTrue(Commands.runOnce(() -> m_state = State.SCORE));
+        (trg_botSensorFalsed.and(RobotModeTriggers.teleop())).onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+        stateTrg_scored.and(RobotModeTriggers.teleop()).onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
     }
 
     private Command driverRumble(double intensity, double secs) {
