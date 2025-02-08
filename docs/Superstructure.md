@@ -25,16 +25,16 @@ stateDiagram
     state "SCORE" as s7
     state "SCORED" as s8
 
-    s1 --> s2: IntakeReq->TRUE
-    s1 --> s4: BotSensor->TRUE
-    s2 --> s3: EleAtIntake->TRUE
-    s3 --> s4: BotSensor->TRUE
-    s4 --> s5: ScoreEleReq->TRUE
-    s5 --> s6: EleAtScore->TRUE
-    s6 --> s7: ScoreReq->TRUE
-    s7 --> s8: BotSensor->FALSE && ScoreReq->FALSE
+    s1 --> s2: IntakeReq->T
+    s1 --> s4: BotSensor->T
+    s2 --> s3: EleAtIntake->T
+    s3 --> s4: BotSensor->T
+    s4 --> s5: ScoreEleReq->T
+    s5 --> s6: EleAtScore->T
+    s6 --> s7: ScoreReq->T
+    s7 --> s8: BotSensor->F & ScoreReq->F
     s8 --> s2: Automatic
-    s8 --> s1: ToHomeReq->TRUE
+    s8 --> s1: ToHomeReq->T
 
 ```
 
