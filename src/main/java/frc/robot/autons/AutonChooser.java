@@ -19,8 +19,12 @@ public class AutonChooser {
     
     private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
 
+    private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
+    private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
+        SmartDashboard.putData("human player station chooser", hpStationChooser);
     }
 
     public static void assignPosition(StartingLocs startingLoc, String description){
@@ -32,8 +36,14 @@ public class AutonChooser {
         firstScoringMap.put(scoringLoc, description);
         firstScoringChooser.addOption(description, scoringLoc);
     }
+
     public static void setDefaultAuton(StartingLocs scoringLoc){
         startingPositionChooser.setDefaultOption("default (mid)", scoringLoc);
+    }
+
+    public static void chooseHPStation(HPStation hpstation, String description){
+        hpStationMap.put(hpstation, description);
+        hpStationChooser.addOption(description, hpstation);
     }
 
     public static void chooseFirstScoring(){
@@ -67,4 +77,5 @@ public class AutonChooser {
             }
         }   
     }
+    
 }
