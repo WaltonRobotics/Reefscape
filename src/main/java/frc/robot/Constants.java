@@ -157,12 +157,11 @@ public class Constants {
         }
 
         public static Angle metersToRotation(Distance meters){
-            return Radians.of(meters.in(Meters) / kSpoolRadius.in(Meters));
+            return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
         }
 
         public static Distance rotationsToMeters(Angle rotations) {
-            // man idk if this is right HALP
-            return Meters.of((metersToRotation(Meters.of(kSpoolRadius.in(Meters))).times(rotations.in(Radians))).magnitude());
+            return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
         }
 
         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
