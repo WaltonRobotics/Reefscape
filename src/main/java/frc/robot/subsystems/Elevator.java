@@ -5,13 +5,12 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -35,8 +34,7 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_right = new TalonFX(kRightCANID, TunerConstants.kCANBus);
     private final TalonFX m_left = new TalonFX(kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
-    // idk why this is PositionVoltage and not MMEV, but Xandra said she got if off Banks' ele code, so Imma just leave it here for now...
-    private PositionVoltage m_MMEVRequest = new PositionVoltage(0);
+    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
