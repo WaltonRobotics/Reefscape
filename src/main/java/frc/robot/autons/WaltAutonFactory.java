@@ -45,13 +45,13 @@ public class WaltAutonFactory {
                     new Elastic.Notification(
                         Elastic.Notification.NotificationLevel.ERROR, 
                         "Invalid reef to HP AutonCycle", 
-                        "UR AUTON SUX AND HAS AN INVALID REEF-TO-HP YOU DUMB funnel cake"
+                        "UR AUTON is unworking AND HAS AN INVALID REEF-TO-HP YOU rlly smart funnel cake"
                     );
         Elastic.Notification hpToReefError = 
                         new Elastic.Notification(
                             Elastic.Notification.NotificationLevel.ERROR, 
                             "Invalid HP to reef AutonCycle", 
-                            "UR AUTON SUX AND HAS AN INVALID HP-TO-REEF YOU DUMB funnel cake");
+                            "UR AUTON is unworking AND HAS AN INVALID HP-TO-REEF YOU rlly smart funnel cake");
     
         public AutonCycle(ReefLocs _reef, EleHeight _height, HPStation _hp) {
             reefLoc = _reef;
