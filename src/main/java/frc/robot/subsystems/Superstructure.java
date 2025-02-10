@@ -1,20 +1,15 @@
 package frc.robot.subsystems;
 
 import static frc.robot.Constants.Coralk.kCoralSpeed;
-import static frc.robot.Constants.RobotK.*;
 
 import java.util.function.DoubleConsumer;
 
-import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.util.WaltLogger;
-import frc.util.WaltLogger.IntLogger;
 
 public class Superstructure {
     private final Coral m_coral;
@@ -28,9 +23,6 @@ public class Superstructure {
     private boolean autonIntakeReq = false;
     private boolean autonScoreEleReq = false;
     private boolean autonScoreReq = false;
-
-    private boolean driverRumbled = false;
-    private boolean manipRumbled = false;
 
     private boolean teleopCanScoreReq = false;
 
@@ -57,9 +49,6 @@ public class Superstructure {
     public final Trigger trg_botSensorFalsed;
 
     private final Trigger trg_eleNearSetpoint;
-
-    public final Trigger trg_driverRumbled = new Trigger(() -> driverRumbled);
-    public final Trigger trg_manipRumbled = new Trigger(() -> manipRumbled);
 
     public final Trigger trg_teleopIntakeEleOverride = new Trigger(() -> teleopIntakeEleOverride);
     public final Trigger trg_teleopIntakeOverride = new Trigger(() -> teleopIntakeOverride);
@@ -157,25 +146,13 @@ public class Superstructure {
     }
 
     private Command driverRumble(double intensity, double secs) {
-        return Commands.startEnd(
-            () -> {
-                if(!driverRumbled) {
-                    m_driverRumbler.accept(intensity);
-                    driverRumbled = true;
-                }
-            },
-            () -> m_driverRumbler.accept(0)
+        return Commands.run(
+           () -> m_driverRumbler.accept(0)
         ).withTimeout(secs);
     }
 
     private Command manipRumble(double intensity, double secs) {
-        return Commands.startEnd(
-            () -> {
-                if(!manipRumbled) {
-                    m_manipRumbler.accept(intensity);
-                    manipRumbled = true;
-                }
-            },
+        return Commands.run(
             () -> m_manipRumbler.accept(0)
         ).withTimeout(secs);
     }
