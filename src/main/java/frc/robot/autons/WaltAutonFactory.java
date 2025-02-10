@@ -3,21 +3,16 @@ package frc.robot.autons;
 import java.util.ArrayList;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.Idle;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import choreo.trajectory.Trajectory;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.autons.TrajsAndLocs.HPReefPair;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefHPPair;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.util.Elastic;
