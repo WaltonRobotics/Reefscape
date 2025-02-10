@@ -100,6 +100,14 @@ public class Superstructure {
     }
 
     private void configureAutonTrgs() {
+        // these are treated kinda differently in auton than in teleop so i differentiated them again
+        (stateTrg_idle.and(trg_autonIntakeReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
+        (stateTrg_intook.and(trg_autonScoreEleReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_scoreReady.and(trg_autonScoreReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        
         // overrides
         (trg_preloadOverride.and(stateTrg_idle)).onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (trg_autonIntakeOverride).onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
@@ -107,6 +115,13 @@ public class Superstructure {
     }
 
     private void configureTeleopTrgs() {
+        (stateTrg_idle.and(trg_teleopIntakeReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (stateTrg_intook.and(trg_teleopScoreEleReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_scoreReady.and(trg_teleopScoreReq))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+
         // overrides
         (trg_toHomeOverride).onTrue(Commands.runOnce(() -> m_state = State.IDLE));
         (trg_teleopIntakeEleOverride).onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
@@ -116,18 +131,12 @@ public class Superstructure {
     }
 
     private void configureStateTransitions() {
-        (stateTrg_idle.and(trg_teleopIntakeReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
         (stateTrg_eleToIntake.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(trg_botSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intook.and(trg_teleopScoreEleReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
-        (stateTrg_scoreReady.and(trg_teleopScoreReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         (stateTrg_score.and(trg_botSensorFalsed))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
         (stateTrg_scored)
@@ -176,8 +185,28 @@ public class Superstructure {
         ).withTimeout(secs);
     }
 
-    public Command requestToScore(EleHeight height) {
+    public void requestIsPreload(boolean preload) {
+        preloadOverride = preload;
+    }
+
+    public Command autonRequestEleToScore(EleHeight height) {
+        return requestEleToScore(height).alongWith(Commands.runOnce(() -> autonScoreEleReq = true));
+    }
+
+    public Command requestEleToScore(EleHeight height) {
         return Commands.runOnce(() -> m_curHeightReq = height);
+    }
+
+    public Command autonScoreReq() {
+        return Commands.runOnce(() -> autonScoreReq = true);
+    }
+
+    public Command autonRequestToIntake() {
+        return requestToIntake().alongWith(Commands.runOnce(() -> autonIntakeReq = true));
+    }
+
+    public Command requestToIntake() {
+        return Commands.runOnce(() -> m_curHeightReq = EleHeight.HP);
     }
 
     public int getStateIdx() {
