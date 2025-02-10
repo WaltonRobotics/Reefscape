@@ -29,8 +29,6 @@ public class Coral extends SubsystemBase {
     private final TalonFXS m_fingerMotor = new TalonFXS(kFingerMotorCANID);
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
 
-    private boolean m_coralIsRunning = false;
-
     private boolean m_coralIsCoast = false;
     private GenericEntry nte_coralIsCoast;
     private boolean m_fingerIsCoast = false;
@@ -43,8 +41,6 @@ public class Coral extends SubsystemBase {
     public final BooleanSupplier bs_topBeamBreak = () -> m_topBeamBreak.get();
     public final BooleanSupplier bs_botBeamBreak = () -> m_botBeamBreak.get();
 
-    public final BooleanSupplier bs_coralMotorRunning = () -> m_coralIsRunning;
-
     private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
     private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
 
@@ -55,7 +51,7 @@ public class Coral extends SubsystemBase {
                   .add("coral coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
-        nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
+        nte_fingerIsCoast = Shuffleboard.getTab(kLogTab)
                   .add("finger coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
@@ -69,28 +65,15 @@ public class Coral extends SubsystemBase {
         m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    private void falsifyCoralIsRunning() {
-        m_coralIsRunning = false;
-    }
-
     /**
      * @param destinationVelocity Units in percent max velocity [-1.0, 1.0]
      * @return A Command which sets the intake to go to the specificed velocity
      */
     public Command setCoralMotorAction(double destinationVelocity) {
-        m_coralIsRunning = true;
         return Commands.runEnd(
             () -> m_coralMotor.set(destinationVelocity),
             () -> m_coralMotor.set(0)
-        ).andThen(() -> falsifyCoralIsRunning());
-    }
-
-    public Command intake() {
-        return setCoralMotorAction(1).until(bs_botBeamBreak);
-    }
-
-    public Command score() {
-        return setCoralMotorAction(-1).until(() -> bs_botBeamBreak.getAsBoolean() == false);
+        );
     }
 
     public Command fingerOut() {

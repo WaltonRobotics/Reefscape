@@ -2,14 +2,16 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -21,8 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import static frc.robot.Constants.ElevatorK.*;
 
-import java.util.function.BooleanSupplier;
-
+import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
@@ -33,12 +34,7 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_right = new TalonFX(kRightCANID, TunerConstants.kCANBus);
     private final TalonFX m_left = new TalonFX(kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
-    // idk why this is PositionVoltage and not MMEV, but Xandra said she got if off Banks' ele code, so Imma just leave it here for now...
-    private final PositionVoltage m_MMEVRequest = new PositionVoltage(0);
-
-    private boolean m_atHeight = false;
-
-    public BooleanSupplier bs_atHeight = () -> m_atHeight;
+    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -71,54 +67,38 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putData("Elevator Sim", m_mech2d);
     }
 
-    public void invertAtHeight() {
-        m_atHeight = !m_atHeight;
+    public boolean nearSetpoint() {
+        return nearSetpoint(kTolerancePulleyRotations);
     }
 
-    public Command setPosition(double heightMeters) {
-        return runOnce(
-            () -> { 
-                log_elevatorDesiredPosition.accept(heightMeters);
-                m_right.setControl(m_MMEVRequest.withPosition(heightMeters));
-        });
+    public boolean nearSetpoint(double tolerancePulleyRotations) {
+        double diff = m_MMEVRequest.Position - getPulleyRotations();
+        return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
-    // also use for climbing
-    public Command toHome() {
-        m_atHeight = false;
-        return runOnce(
-            () -> { 
-                log_elevatorDesiredPosition.accept(0.0);
-                m_right.setControl(m_MMEVRequest.withPosition(0));
-            }
-        ).andThen(() -> invertAtHeight());
+    private double getPulleyRotations() {
+        return m_right.getPosition().getValueAsDouble();
     }
 
-    public Command toCS() {
-        m_atHeight = false;
-        return runOnce(
-            () -> {
-                log_elevatorDesiredPosition.accept(1.0);
-                m_right.setControl(m_MMEVRequest.withPosition(1));
-            }
-        ).andThen(() -> invertAtHeight());
+    private Distance getPositionMeters() {
+        return ElevatorK.rotationsToMeters(m_right.getPosition().getValue());
     }
 
     /* 
      * use for scoring
      */
-    public Command setPosition(EleHeights heightMeters) {
-        m_atHeight = false;
+    public Command toPosition(EleHeight heightMeters) {
         return runOnce(
-            () -> { 
-                log_elevatorDesiredPosition.accept(heightMeters.m_heightMeters);
-                m_right.setControl(m_MMEVRequest.withPosition(heightMeters.m_heightMeters));}
-        ).andThen(() -> invertAtHeight());
+            () -> {
+                m_MMEVRequest = m_MMEVRequest.withPosition(heightMeters.pulleyRotations);
+                log_elevatorDesiredPosition.accept(heightMeters.meters);
+                m_right.setControl(m_MMEVRequest);}
+        ).until(() -> nearSetpoint());
     }
 
     @Override
     public void periodic() {
-        log_eleAtHeight.accept(bs_atHeight);
+        log_eleAtHeight.accept(nearSetpoint());
     }
 
     @Override
@@ -131,7 +111,6 @@ public class Elevator extends SubsystemBase {
         log_elevatorSimPosition.accept(m_elevatorSim.getPositionMeters());
         var elevatorVelocity = 
             metersToRotationVel(m_elevatorSim.getVelocityMetersPerSecond()* kGearRatio);
-        log_eleAtHeight.accept(bs_atHeight);
 
         rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
         rightSim.setRotorVelocity(elevatorVelocity);
@@ -141,7 +120,7 @@ public class Elevator extends SubsystemBase {
 
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
-    public enum EleHeights {
+    public enum EleHeight {
         HOME(Units.inchesToMeters(14.542)),
         L1(Units.inchesToMeters(37)),
         L2(Units.inchesToMeters(48.041)),
@@ -151,10 +130,12 @@ public class Elevator extends SubsystemBase {
         CLIMB_DOWN(5), //this height will ove robot down for climb
         HP(Units.inchesToMeters(36)); //human player station intake height
 
-        public final double m_heightMeters;
+        public final double meters;
+        public final double pulleyRotations;
 
-       private EleHeights(double heightMeters){
-            m_heightMeters = heightMeters;
+       private EleHeight(double heightMeters){
+            this.meters = heightMeters;
+            pulleyRotations = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
         }
     }
 

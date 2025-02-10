@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.Coralk.kCoralSpeed;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -20,6 +21,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -28,6 +30,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
@@ -54,6 +57,7 @@ public class Robot extends TimedRobot {
   private final Algae algae = new Algae();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
+  private final Superstructure superstructure;
 
   // public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
 
@@ -76,6 +80,22 @@ public class Robot extends TimedRobot {
   public Robot() {
     /* autossss */
     // autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
+
+    // all score request buttons must be OR'd here
+    // TODO: make named triggers for each for reuse
+    Trigger eleHeightReq = 
+      manipulator.povDown()
+      .or(manipulator.povUp())
+      .or(manipulator.povLeft())
+      .or(manipulator.povRight());
+
+    // TODO: review intake/score reqs with drivers
+    superstructure = new Superstructure(
+      coral, elevator, 
+      manipulator.x(), 
+      eleHeightReq, driver.leftTrigger(), 
+      this::driverRumble, this::manipRumble
+    );
 
     configureBindings();
   }
@@ -112,7 +132,7 @@ public class Robot extends TimedRobot {
 
         /*TODO: test to see if this actually works */
         // driver controls (not sure abt alignment inputs)
-        driver.rightTrigger().whileTrue(coral.score());
+        driver.rightTrigger().whileTrue(coral.setCoralMotorAction(kCoralSpeed));
         driver.rightTrigger().whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         
         // wrist position controls
@@ -126,19 +146,21 @@ public class Robot extends TimedRobot {
         manipulator.rightTrigger()
           .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
         manipulator.leftTrigger().and(manipulator.b())
-          .whileTrue(coral.intake());
+          .whileTrue(coral.setCoralMotorAction(kCoralSpeed));
         
         // elevator controls
-        manipulator.leftBumper().onTrue(elevator.toHome());
-        manipulator.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        manipulator.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        manipulator.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        manipulator.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        manipulator.rightStick().whileTrue(elevator.setPosition(manipulator.getRightX())); // might need lambda?
-
+        // todo: leftBumper, home request
+        manipulator.leftBumper().onTrue(elevator.toPosition(EleHeight.HOME));
+        
+        manipulator.povDown().onTrue(superstructure.requestToScore(EleHeight.L1));
+        manipulator.povRight().onTrue(superstructure.requestToScore(EleHeight.L2));
+        manipulator.povLeft().onTrue(superstructure.requestToScore(EleHeight.L3));
+        manipulator.povUp().onTrue(superstructure.requestToScore(EleHeight.L4));
+        
         // climber controls
-        manipulator.a().and(manipulator.povUp()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        manipulator.a().and(manipulator.povDown()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
+        // TODO: ask superstructure if in idle first
+        manipulator.a().and(manipulator.povUp()).onTrue(elevator.toPosition(EleHeight.CLIMB_UP));
+        manipulator.a().and(manipulator.povDown()).onTrue(elevator.toPosition(EleHeight.CLIMB_DOWN));
         
         //testing buttons
         // driver.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
@@ -150,6 +172,12 @@ public class Robot extends TimedRobot {
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
+		}
+	}
+
+  private void manipRumble(double intensity) {
+		if (!DriverStation.isAutonomous()) {
+			manipulator.getHID().setRumble(RumbleType.kBothRumble, intensity);
 		}
 	}
 
