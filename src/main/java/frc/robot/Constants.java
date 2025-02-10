@@ -161,8 +161,8 @@ public class Constants {
         }
 
         public static Distance rotationsToMeters(Angle rotations) {
-            // TODO: grac fix/check
-            return kSpoolRadius.times(rotations.in(Radians));
+            // man idk if this is right HALP
+            return Meters.of((metersToRotation(Meters.of(kSpoolRadius.in(Meters))).times(rotations.in(Radians))).magnitude());
         }
 
         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
