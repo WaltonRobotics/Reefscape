@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
-import frc.robot.subsystems.Elevator.EleHeights;
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.IntLogger;
 
@@ -31,6 +31,8 @@ public class Superstructure {
 
     private boolean driverRumbled = false;
     private boolean manipRumbled = false;
+
+    private boolean teleopCanScoreReq = false;
 
     // overrides
     private boolean teleopIntakeEleOverride = false; // manip only
@@ -78,7 +80,15 @@ public class Superstructure {
     public final Trigger stateTrg_score = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
 
-    public Superstructure(Coral coral, Elevator ele, Trigger teleopIntakeReq, Trigger teleopEleHeightReq, Trigger teleopScoreReq, DoubleConsumer drivRumble, DoubleConsumer manipRumble) {
+    private EleHeight m_curHeightReq = EleHeight.HOME;
+
+    public Superstructure(
+        Coral coral, Elevator ele, 
+        Trigger teleopIntakeReq,
+        Trigger teleopEleHeightReq, 
+        Trigger teleopScoreReq, 
+        DoubleConsumer drivRumble, DoubleConsumer manipRumble
+    ) {
         m_coral = coral;
         m_ele = ele;
 
@@ -88,7 +98,7 @@ public class Superstructure {
         trg_teleopIntakeReq = teleopIntakeReq;
         trg_botSensor = new Trigger(m_coral.bs_botBeamBreak);
         trg_teleopScoreEleReq = teleopEleHeightReq;
-        trg_teleopScoreReq = teleopScoreReq;
+        trg_teleopScoreReq = new Trigger(() -> teleopScoreReq.getAsBoolean() && teleopCanScoreReq);
         trg_eleNearSetpoint = new Trigger(() -> m_ele.nearSetpoint());
         trg_botSensorFalsed = new Trigger(() -> !m_coral.bs_botBeamBreak.getAsBoolean());
         
@@ -121,9 +131,9 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
         (stateTrg_eleToIntake.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (trg_botSensor.and(stateTrg_intaking))
+        (stateTrg_intaking.and(trg_botSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (trg_teleopScoreEleReq.and(stateTrg_intook))
+        (stateTrg_intook.and(trg_teleopScoreEleReq))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
@@ -136,11 +146,14 @@ public class Superstructure {
     }
 
     private void configureStateActions() {
-        (stateTrg_idle).onTrue(m_ele.toPosition(EleHeights.HOME));
-        (stateTrg_eleToIntake).onTrue(m_ele.toPosition(EleHeights.HP));
+        (stateTrg_idle).onTrue(m_ele.toPosition(EleHeight.HOME));
+        (stateTrg_eleToIntake).onTrue(m_ele.toPosition(EleHeight.HP));
         (stateTrg_intaking).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
         (stateTrg_intook).onTrue(m_coral.setCoralMotorAction(0).andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
-        // (stateTrg_eleToScore).onTrue();
+        (stateTrg_eleToScore).onTrue(m_ele.toPosition(m_curHeightReq));
+        (stateTrg_scoreReady).onTrue(Commands.runOnce(() -> teleopCanScoreReq = true).andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
+        (stateTrg_score).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+        (stateTrg_scored).onTrue(m_coral.setCoralMotorAction(0).alongWith(Commands.runOnce(() -> teleopCanScoreReq = false)));
     }
 
     private Command driverRumble(double intensity, double secs) {
@@ -167,7 +180,13 @@ public class Superstructure {
         ).withTimeout(secs);
     }
 
+    public Command requestToScore(EleHeight height) {
+        return Commands.runOnce(() -> m_curHeightReq = height);
+    }
 
+    public int getStateIdx() {
+        return m_state.idx;
+    }
 
     public enum State {
         IDLE(0),
@@ -180,7 +199,7 @@ public class Superstructure {
         SCORED(7);
 
         public final int idx;
-
+  
         private State(int index) {
             idx = index;
         }

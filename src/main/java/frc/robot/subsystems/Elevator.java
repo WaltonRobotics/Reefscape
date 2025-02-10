@@ -89,7 +89,7 @@ public class Elevator extends SubsystemBase {
     /* 
      * use for scoring
      */
-    public Command toPosition(EleHeights heightMeters) {
+    public Command toPosition(EleHeight heightMeters) {
         return runOnce(
             () -> {
                 m_MMEVRequest = m_MMEVRequest.withPosition(heightMeters.pulleyRotations);
@@ -122,7 +122,7 @@ public class Elevator extends SubsystemBase {
 
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
-    public enum EleHeights {
+    public enum EleHeight {
         HOME(Units.inchesToMeters(14.542)),
         L1(Units.inchesToMeters(37)),
         L2(Units.inchesToMeters(48.041)),
@@ -135,7 +135,7 @@ public class Elevator extends SubsystemBase {
         public final double meters;
         public final double pulleyRotations;
 
-       private EleHeights(double heightMeters){
+       private EleHeight(double heightMeters){
             this.meters = heightMeters;
             pulleyRotations = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
         }
