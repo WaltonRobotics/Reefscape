@@ -63,12 +63,14 @@ public class Robot extends TimedRobot {
 
   private void mapAutonCommands(){
     AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
+    AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
     AutonChooser.chooseFirstScoring();
-    AutonChooser.chooseHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
-    AutonChooser.chooseHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
+    AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
+    AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
+    AutonChooser.chooseHPtoReef();
   }
 
   public Robot() {
