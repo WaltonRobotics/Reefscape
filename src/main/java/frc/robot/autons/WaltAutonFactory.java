@@ -3,6 +3,7 @@ package frc.robot.autons;
 import java.util.ArrayList;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.Idle;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -25,15 +26,13 @@ import frc.robot.autons.TrajsAndLocs.Trajectories;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autonFactory;
-    private final SequentialCommandGroup m_fullCmdSequence;
     private final AutoRoutine m_routine;
 
     private final SwerveRequest.SwerveDriveBrake m_brake = new SwerveRequest.SwerveDriveBrake();
 
-    public WaltAutonFactory(AutoFactory autonFactory, Swerve swerve, Elevator ele) {
+    public WaltAutonFactory(AutoFactory autonFactory) {
         m_autonFactory = autonFactory;
         m_routine = m_autonFactory.newRoutine("auton");
-        m_fullCmdSequence = new SequentialCommandGroup();
     }
 
     class AutonCycle {
@@ -78,24 +77,88 @@ public class WaltAutonFactory {
         }
     }
 
-    // public Command generateAuton(Swerve drivetrain, Superstructure superstructure, ArrayList<AutonCycle> cycles) { // im assuming that autoncycle will include 1st iteration
-    //     // iterate AutonCycles and validate all HP->Score and Score->HP pairs
-    //     for (AutonCycle autonCycle : cycles) {
-    //         if(!autonCycle.isLegit()) {
-    //             return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
-    //         }
-    //     }
+    /*
+     * cycles start from the first time u get to an hp
+     */
+    public Command generateAuton(
+        Swerve drivetrain, 
+        Superstructure superstructure, 
+        AutonChooser firstStartToReef, 
+        AutonChooser firstReefToHP, 
+        EleHeight firstHeight, 
+        ArrayList<AutonCycle> cycles
+    ) { // the autonchooser schtuffs are dummy vars until sohan and xandra figure it out
+        // iterate AutonCycles and validate all HP->Score and Score->HP pairs
+        for (AutonCycle autonCycle : cycles) {
+            if(!autonCycle.isLegit()) {
+                return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
+            }
+        }
 
-    //     AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycles.get(0).reefHPPair));
-    //     AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycles.get(0).hpReefPair));
+        AutoTrajectory firstScoreTraj = m_routine.trajectory("start to reef");
+        AutoTrajectory firstLoadTraj = m_routine.trajectory("reef to hp");
 
-    //     m_routine.active().onTrue(
-    //         Commands.sequence(
-    //             firstScoreTraj.resetOdometry(),
-    //             firstScoreTraj.cmd()
-    //         )
-    //     );
+        m_routine.active().onTrue(
+            Commands.sequence(
+                firstScoreTraj.resetOdometry(),
+                firstScoreTraj.cmd()
+            )
+        );
 
-    //     firstScoreTraj.atTime("eleUp").onTrue()
-    // }
+        firstScoreTraj.atTime("eleUp")
+            .onTrue(Commands.runOnce(() -> superstructure.requestIsPreload(true))
+            .andThen(superstructure.autonRequestEleToScore(firstHeight))
+            .andThen(Commands.runOnce(() -> superstructure.requestIsPreload(false))));
+        firstScoreTraj.done().onTrue(
+            Commands.sequence(
+                Commands.parallel(
+                    drivetrain.applyRequest(() -> m_brake),
+                    superstructure.autonScoreReq()
+                ),
+                firstLoadTraj.cmd()
+            )
+        );
+        firstLoadTraj.atTime("intake")
+            .onTrue(superstructure.autonRequestToIntake()
+            .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+        // now ur at the HP
+
+        // list of traj start cmds
+        ArrayList<AutoTrajectory> trajList = new ArrayList<>();
+        for (int cycleIdx = 0; cycleIdx < cycles.size(); cycleIdx++) {
+            // remember, ur at HP rn
+            AutonCycle cycle = cycles.get(cycleIdx);
+
+            var hpToReefTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycle.hpReefPair));
+            var reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycle.reefHPPair));
+
+            trajList.add(hpToReefTraj);
+            // attach this cycle's first traj to the end of the last cycle's last traj
+            if(cycles.size() > 1 && cycleIdx > 0) {
+                var lastCycleDone = trajList.get(cycleIdx - 1).done();
+                
+                lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
+            }
+
+            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycles.get(cycleIdx).height));
+            
+            hpToReefTraj.done().onTrue(
+                Commands.sequence(
+                    Commands.parallel(
+                        drivetrain.applyRequest(() -> m_brake),
+                        superstructure.autonScoreReq()
+                    ),
+                    reefToHpTraj.cmd()
+                )
+            );
+
+            reefToHpTraj.atTime("intake")
+                .onTrue(superstructure.autonRequestToIntake()
+                .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+        }
+
+        firstLoadTraj.done().onTrue(trajList.get(0).cmd());
+
+        return m_routine.cmd();
+    }
 }
