@@ -3,6 +3,7 @@ package frc.robot.autons;
 import java.util.ArrayList;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.Idle;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
