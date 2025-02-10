@@ -29,13 +29,6 @@ public class Superstructure {
 
     private boolean teleopCanScoreReq = false;
 
-    // overrides
-    private boolean teleopIntakeEleOverride = false; // manip only
-    private boolean teleopIntakeOverride = false; // manip only
-    private boolean teleopScoreOverride = false; // drive only
-    private boolean teleopScoreEleOverride = false; // manip only
-    private boolean toHomeReq = false; // manip only
-
     private boolean preloadOverride = false;
     private boolean autonIntakeOverride = false;
     private boolean autonScoreOverride = false;
