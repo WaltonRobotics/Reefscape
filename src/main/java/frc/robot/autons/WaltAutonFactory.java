@@ -20,7 +20,7 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.util.Elastic;
-import frc.robot.subsystems.Elevator.EleHeights;
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.autons.TrajsAndLocs.Trajectories;
 
 public class WaltAutonFactory {
@@ -38,7 +38,7 @@ public class WaltAutonFactory {
 
     class AutonCycle {
         public final ReefLocs reefLoc;
-        public final EleHeights height;
+        public final EleHeight height;
         public final HPStation hpStation;
         public final ReefHPPair reefHPPair;
         public final HPReefPair hpReefPair;
@@ -54,7 +54,7 @@ public class WaltAutonFactory {
                             "Invalid HP to reef AutonCycle", 
                             "UR AUTON SUX AND HAS AN INVALID HP-TO-REEF YOU DUMB funnel cake");
     
-        public AutonCycle(ReefLocs _reef, EleHeights _height, HPStation _hp) {
+        public AutonCycle(ReefLocs _reef, EleHeight _height, HPStation _hp) {
             reefLoc = _reef;
             height = _height;
             hpStation = _hp;
