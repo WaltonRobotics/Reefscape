@@ -62,12 +62,13 @@ public class Robot extends TimedRobot {
   // public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
+  //private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
   private final AutoChooser autoChooser = new AutoChooser();
 
   private void mapAutonCommands(){
     AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
     AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
+    // AutonChooser.setDefaultReefScoring(TrajsAndLocs.ReefLocs.REEF_A);
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
@@ -75,6 +76,7 @@ public class Robot extends TimedRobot {
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
     AutonChooser.chooseHPtoReef();
+    AutonChooser.chooseReefToHP();
   }
 
   public Robot() {
@@ -152,10 +154,10 @@ public class Robot extends TimedRobot {
         // todo: leftBumper, home request
         manipulator.leftBumper().onTrue(elevator.toPosition(EleHeight.HOME));
         
-        manipulator.povDown().onTrue(superstructure.requestToScore(EleHeight.L1));
-        manipulator.povRight().onTrue(superstructure.requestToScore(EleHeight.L2));
-        manipulator.povLeft().onTrue(superstructure.requestToScore(EleHeight.L3));
-        manipulator.povUp().onTrue(superstructure.requestToScore(EleHeight.L4));
+        // manipulator.povDown().onTrue(superstructure.requestToScore(EleHeight.L1));
+        // manipulator.povRight().onTrue(superstructure.requestToScore(EleHeight.L2));
+        // manipulator.povLeft().onTrue(superstructure.requestToScore(EleHeight.L3));
+        // manipulator.povUp().onTrue(superstructure.requestToScore(EleHeight.L4));
         
         // climber controls
         // TODO: ask superstructure if in idle first
