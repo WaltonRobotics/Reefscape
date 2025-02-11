@@ -22,12 +22,12 @@ public class AutonChooser {
     private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
     private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
 
-    private static Supplier<ReefLocs> reefChosen = () -> firstScoringChooser.getSelected();
-
     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
     private static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
     
     private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
+    private static Supplier<ReefLocs> reefChosen = () -> hpToReefChooser.getSelected();
+
 
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
     private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
@@ -55,6 +55,10 @@ public class AutonChooser {
         hpStationChooser.setDefaultOption("default(left)", hpStation);
     }
 
+    // public static void setDefaultReefScoring(ReefLocs reefLocs){
+    //     hpToReefChooser.setDefaultOption("default(A)", reefLocs);
+    // }
+
     public static void assignHPStation(HPStation hpstation, String description){
         hpStationMap.put(hpstation, description);
         hpStationChooser.addOption(description, hpstation);
@@ -62,6 +66,11 @@ public class AutonChooser {
     public static void assignReefScoring(ReefLocs reefLocs, String description){
         hpToReefMap.put(reefLocs, description);
         hpToReefChooser.addOption(description, reefLocs);
+    }
+
+    public static void assignReeftoHPScoring(HPStation hpStation, String description){
+        reefToHPMap.put(hpStation, description);
+        reefToHPChooser.addOption(description, hpStation);
     }
 
     /**
@@ -119,15 +128,58 @@ public class AutonChooser {
         SmartDashboard.updateValues();
     }
     
-
+/**
+ * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
+ */
     public static void chooseReefToHP(){
         reefToHPChooser = new SendableChooser<HPStation>();
+        
+        if(reefChosen.get() != null){
+            if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_A)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-        if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_A)){
-            for (int i = 0; i < TrajsAndLocs.Trajectories.ReefToHPTrajs.size(); i++) {
-                
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_B)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_C)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_D)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right"); //D-f only right and g and h are both
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_E)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_F)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_G)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_H)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_I)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_J)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+
+            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_K)){
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+
+            } else{
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
+
             }
         }
+
+        SmartDashboard.putData("Reef to HP Chooser", reefToHPChooser);
+        SmartDashboard.updateValues();
     }
     
     
