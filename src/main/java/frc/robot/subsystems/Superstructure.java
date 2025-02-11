@@ -9,7 +9,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
+import static frc.robot.Constants.AlgaeK.kLogTab;
+
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
     private final Coral m_coral;
@@ -70,6 +73,8 @@ public class Superstructure {
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
 
     private EleHeight m_curHeightReq = EleHeight.HOME;
+
+    private StringLogger m_stateLogger = new StringLogger(kLogTab, "Superstructure State");
 
     public Superstructure(
         Coral coral, Elevator ele, 
@@ -145,32 +150,24 @@ public class Superstructure {
 
     private void configureStateActions() {
         (stateTrg_idle)
-            .onTrue(m_ele.toPosition(EleHeight.HOME)
-            .alongWith(Commands.print("superstructure state IDLE")));
+            .onTrue(m_ele.toPosition(EleHeight.HOME));
         (stateTrg_eleToIntake)
-            .onTrue(m_ele.toPosition(EleHeight.HP)
-            .alongWith(Commands.print("superstructure state ELE_TO_INTAKE")));
+            .onTrue(m_ele.toPosition(EleHeight.HP));
         (stateTrg_intaking)
-            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed)
-            .alongWith(Commands.print("superstructure state INTAKING")));
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
         (stateTrg_intook)
             .onTrue(m_coral.setCoralMotorAction(0)
-            .andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs))
-            .alongWith(Commands.print("superstructure state INTOOK")));
+            .andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
         (stateTrg_eleToScore)
-            .onTrue(m_ele.toPosition(m_curHeightReq)
-            .alongWith(Commands.print("superstructure state ELE_TO_SCORE")));
+            .onTrue(m_ele.toPosition(m_curHeightReq));
         (stateTrg_scoreReady)
             .onTrue(Commands.runOnce(() -> teleopCanScoreReq = true)
-            .andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs))
-            .alongWith(Commands.print("superstructure state SCORE_READY")));
+            .andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
         (stateTrg_score)
-            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed)
-            .alongWith(Commands.print("superstructure state SCORE")));
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
         (stateTrg_scored)
             .onTrue(m_coral.setCoralMotorAction(0)
-            .alongWith(Commands.runOnce(() -> teleopCanScoreReq = false))
-            .alongWith(Commands.print("superstructure state SCORED")));
+            .alongWith(Commands.runOnce(() -> teleopCanScoreReq = false)));
     }
 
     private Command driverRumble(double intensity, double secs) {
@@ -211,6 +208,12 @@ public class Superstructure {
 
     public int getStateIdx() {
         return m_state.idx;
+    }
+
+    // TODO: implement this in Robot.java
+    // ALSO TODO: add the state graph thingy
+    public void superstructureLogger() {
+        m_stateLogger.accept(m_state.toString());
     }
 
     public enum State {
