@@ -47,29 +47,26 @@ public class Superstructure {
 
     public final EventLoop stateEventLoop = new EventLoop();
 
-    public final Trigger trg_autonIntakeReq = new Trigger(() -> autonIntakeReq);
-    public final Trigger trg_teleopIntakeReq;
-    public final Trigger trg_botSensor;
-    public final Trigger trg_autonScoreEleReq = new Trigger(() -> autonScoreEleReq);
-    public final Trigger trg_teleopScoreEleReq;
-    public final Trigger trg_autonScoreReq = new Trigger(() -> autonScoreReq);
-    public final Trigger trg_teleopScoreReq;
-    public final Trigger trg_botSensorFalsed;
+    private final Trigger trg_autonIntakeReq = new Trigger(() -> autonIntakeReq);
+    private final Trigger trg_teleopIntakeReq;
+    private final Trigger trg_botSensor;
+    private final Trigger trg_autonScoreEleReq = new Trigger(() -> autonScoreEleReq);
+    private final Trigger trg_teleopScoreEleReq;
+    private final Trigger trg_autonScoreReq = new Trigger(() -> autonScoreReq);
+    private final Trigger trg_teleopScoreReq;
+    private final Trigger trg_botSensorFalsed;
 
     private final Trigger trg_eleNearSetpoint;
 
-    public final Trigger trg_driverRumbled = new Trigger(() -> driverRumbled);
-    public final Trigger trg_manipRumbled = new Trigger(() -> manipRumbled);
+    private final Trigger trg_teleopIntakeEleOverride = new Trigger(() -> teleopIntakeEleOverride);
+    private final Trigger trg_teleopIntakeOverride = new Trigger(() -> teleopIntakeOverride);
+    private final Trigger trg_teleopScoreOverride = new Trigger(() -> teleopScoreOverride);
+    private final Trigger trg_teleopScoreEleOverride = new Trigger(() -> teleopScoreEleOverride);
+    private final Trigger trg_toHomeOverride = new Trigger(() -> toHomeReq);
 
-    public final Trigger trg_teleopIntakeEleOverride = new Trigger(() -> teleopIntakeEleOverride);
-    public final Trigger trg_teleopIntakeOverride = new Trigger(() -> teleopIntakeOverride);
-    public final Trigger trg_teleopScoreOverride = new Trigger(() -> teleopScoreOverride);
-    public final Trigger trg_teleopScoreEleOverride = new Trigger(() -> teleopScoreEleOverride);
-    public final Trigger trg_toHomeOverride = new Trigger(() -> toHomeReq);
-
-    public final Trigger trg_preloadOverride = new Trigger(() -> preloadOverride);
-    public final Trigger trg_autonIntakeOverride = new Trigger(() -> autonIntakeOverride);
-    public final Trigger trg_autonScoreOverride = new Trigger(() -> autonScoreOverride);
+    private final Trigger trg_preloadOverride = new Trigger(() -> preloadOverride);
+    private final Trigger trg_autonIntakeOverride = new Trigger(() -> autonIntakeOverride);
+    private final Trigger trg_autonScoreOverride = new Trigger(() -> autonScoreOverride);
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_eleToIntake = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_INTAKE);
