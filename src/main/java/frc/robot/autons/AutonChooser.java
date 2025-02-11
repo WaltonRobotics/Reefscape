@@ -1,5 +1,6 @@
 package frc.robot.autons;
 
+import java.io.ObjectOutputStream.PutField;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +11,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.autons.TrajsAndLocs.*; 
 
 public class AutonChooser {
+    public static enum NumCycles {
+        CYCLE_1(1),
+        CYCLE_2(2),
+        CYCLE_3(3),
+        CYCLE_4(4);
+
+        public int m_cycles;
+
+        private NumCycles(int cycles){
+            m_cycles = cycles;
+        }
+        
+    }
 
     private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
     private static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
@@ -32,10 +46,27 @@ public class AutonChooser {
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
     private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
 
+    private static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
+
+    private static EnumMap<NumCycles, String> cyclesMap = new EnumMap<>(NumCycles.class);
+    private static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
+
+    private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
+
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
         SmartDashboard.putData("human player station chooser", hpStationChooser);
+        SmartDashboard.putData("number of cycles chooser", cyclesChooser);
     }
+
+    public static void assignNumCycles(NumCycles numCycles, String description){
+        cyclesMap.put(numCycles, description);
+        cyclesChooser.addOption(description, numCycles);
+    }
+
+    // public static void setDefaultCycles(NumCycles numCycles){
+    //     cyclesChooser.setDefaultOption("default (1)", numCycles);
+    // }
 
     public static void assignPosition(StartingLocs startingLoc, String description){
         startingLocMap.put(startingLoc, description);
@@ -109,7 +140,7 @@ public class AutonChooser {
     /**
      * given that an HP Station is selected, creates NT that shows all possible(optimal?) routes to certain reefs
      */
-    public static void chooseHPtoReef(){
+    public static void chooseHPtoReef(String description){
         hpToReefChooser = new SendableChooser<ReefLocs>();
         
 
@@ -124,14 +155,14 @@ public class AutonChooser {
                 TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i).toString());
             }
         }
-        SmartDashboard.putData("HP to Reef chooser",hpToReefChooser);
+        SmartDashboard.putData(description, hpToReefChooser);
         SmartDashboard.updateValues();
     }
     
 /**
  * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
  */
-    public static void chooseReefToHP(){
+    public static void chooseReefToHP(String description){
         reefToHPChooser = new SendableChooser<HPStation>();
         
         if(reefChosen.get() != null){
@@ -147,7 +178,7 @@ public class AutonChooser {
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
             } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_D)){
-                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right"); //D-f only right and g and h are both
+                assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right"); 
 
             } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_E)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
@@ -178,9 +209,21 @@ public class AutonChooser {
             }
         }
 
-        SmartDashboard.putData("Reef to HP Chooser", reefToHPChooser);
+        SmartDashboard.putData(description, reefToHPChooser);
         SmartDashboard.updateValues();
     }
-    
-    
+
+    public static void cycleIterations(){
+
+        //TODO: figure out int string wowzers funsies
+
+        if(cyclesChosen.get() != null){
+
+            for(int i = 1; i <= Integer.parseInt(cyclesChosen.get().toString()); i++){
+                chooseHPtoReef("HP to Reef Chooser " + i);
+                chooseReefToHP("Reef to HP Chooser " + i);
+                chooseReefToHP("HP to Reef Chooser");
+            }
+        }
+    }
 }
