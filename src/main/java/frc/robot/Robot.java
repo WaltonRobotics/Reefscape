@@ -28,6 +28,7 @@ import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
+import frc.robot.autons.AutonChooser.NumCycles;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -66,17 +67,23 @@ public class Robot extends TimedRobot {
   private final AutoChooser autoChooser = new AutoChooser();
 
   private void mapAutonCommands(){
+    // AutonChooser.setDefaultCycles(AutonChooser.NumCycles.CYCLE_1);
     AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
     AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
     // AutonChooser.setDefaultReefScoring(TrajsAndLocs.ReefLocs.REEF_A);
+    AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
+    AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
+    AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
+    AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
     AutonChooser.chooseFirstScoring();
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
-    AutonChooser.chooseHPtoReef();
-    AutonChooser.chooseReefToHP();
+    // AutonChooser.chooseHPtoReef("HP to Reef chooser 1");
+    // AutonChooser.chooseReefToHP("HP to Reef chooser 1");
+    AutonChooser.cycleIterations();
   }
 
   public Robot() {
