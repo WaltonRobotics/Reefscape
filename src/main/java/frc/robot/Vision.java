@@ -88,7 +88,7 @@ public class Vision {
             // TODO: update these values to reflect the real camera
             cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
             cameraProp.setCalibError(0.35, 0.10);
-            cameraProp.setFPS(15);
+            cameraProp.setFPS(60);
             cameraProp.setAvgLatencyMs(50);
             cameraProp.setLatencyStdDevMs(15);
 
@@ -155,7 +155,7 @@ public class Vision {
 
     // TODO: someone else please sanity check me; i believe this actually returns robot position
     public VisMeas3dEx getFlatbotCamPoseEst() {
-        var result = m_flatbotCam.getLatestResult();
+        var result = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
         var estimateOpt = m_flatbotCam_poseEstimator.update(result);
         if (estimateOpt.isEmpty()) return new VisMeas3dEx(result.hasTargets(), Optional.empty());
         log_flatbotCamRawEstimate.accept(estimateOpt.get().estimatedPose);
@@ -175,7 +175,8 @@ public class Vision {
 
     public Supplier<Optional<List<VisionMeasurement2d>>> shooterDataSupplier() {
         return () -> {
-            var result = m_flatbotCam.getLatestResult();
+            var result = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
+
             if (result.hasTargets()) {
                 var targets = result.getTargets();
                 var measurements = new ArrayList<VisionMeasurement2d>();
@@ -192,8 +193,9 @@ public class Vision {
 
     public Supplier<Optional<PhotonMeasurement>> speakerTargetSupplier() {
         return () -> {
-            var result = m_flatbotCam.getLatestResult();
-            if (result.hasTargets()) {
+        var result = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
+
+        if (result.hasTargets()) {
                 for (var target : result.targets) {
                     if(target.getFiducialId() == getMiddleSpeakerId()) {
                         log_speakerTag.accept(target.getBestCameraToTarget());
@@ -211,7 +213,7 @@ public class Vision {
      * @return whether or not the target with fiducial id tagNum is visible
      */
     public boolean isTagVisible(int tagNum) {
-        var results = m_flatbotCam.getLatestResult();
+        var results = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
 
         if (results.hasTargets()) {
             for (var target : results.getTargets()) {
@@ -248,7 +250,7 @@ public class Vision {
      */
     public Optional<Double> getTagYaw(int tagNum) {
         Optional<Double> tagYaw = Optional.empty();
-        var results = m_flatbotCam.getLatestResult();
+        var results = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
 
         if (results.hasTargets()) {
             for (var target : results.getTargets()) {
@@ -268,7 +270,7 @@ public class Vision {
      */
     public Optional<Double> getTagXDiff(int tagNum) {
         Optional<Double> tagXDiff = Optional.empty();
-        var results = m_flatbotCam.getLatestResult();
+        var results = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
 
         if (results.hasTargets()) {
             for (var target : results.getTargets()) {
@@ -289,7 +291,7 @@ public class Vision {
      */
     public Optional<Double> getTagYDiff(int tagNum) {
         Optional<Double> tagYDiff = Optional.empty();
-        var results = m_flatbotCam.getLatestResult();
+        var results = m_flatbotCam.getAllUnreadResults().get(m_flatbotCam.getAllUnreadResults().size() - 1);
 
         if (results.hasTargets()) {
             for (var target : results.getTargets()) {

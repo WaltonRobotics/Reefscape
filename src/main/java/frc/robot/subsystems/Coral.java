@@ -55,7 +55,7 @@ public class Coral extends SubsystemBase {
                   .add("coral coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
-        nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
+        nte_fingerIsCoast = Shuffleboard.getTab(kLogTab)
                   .add("finger coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
