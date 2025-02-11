@@ -135,14 +135,33 @@ public class Superstructure {
     }
 
     private void configureStateActions() {
-        (stateTrg_idle).onTrue(m_ele.toPosition(EleHeight.HOME));
-        (stateTrg_eleToIntake).onTrue(m_ele.toPosition(EleHeight.HP));
-        (stateTrg_intaking).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
-        (stateTrg_intook).onTrue(m_coral.setCoralMotorAction(0).andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
-        (stateTrg_eleToScore).onTrue(m_ele.toPosition(m_curHeightReq));
-        (stateTrg_scoreReady).onTrue(Commands.runOnce(() -> teleopCanScoreReq = true).andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
-        (stateTrg_score).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
-        (stateTrg_scored).onTrue(m_coral.setCoralMotorAction(0).alongWith(Commands.runOnce(() -> teleopCanScoreReq = false)));
+        (stateTrg_idle)
+            .onTrue(m_ele.toPosition(EleHeight.HOME)
+            .alongWith(Commands.print("superstructure state IDLE")));
+        (stateTrg_eleToIntake)
+            .onTrue(m_ele.toPosition(EleHeight.HP)
+            .alongWith(Commands.print("superstructure state ELE_TO_INTAKE")));
+        (stateTrg_intaking)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed)
+            .alongWith(Commands.print("superstructure state INTAKING")));
+        (stateTrg_intook)
+            .onTrue(m_coral.setCoralMotorAction(0)
+            .andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs))
+            .alongWith(Commands.print("superstructure state INTOOK")));
+        (stateTrg_eleToScore)
+            .onTrue(m_ele.toPosition(m_curHeightReq)
+            .alongWith(Commands.print("superstructure state ELE_TO_SCORE")));
+        (stateTrg_scoreReady)
+            .onTrue(Commands.runOnce(() -> teleopCanScoreReq = true)
+            .andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs))
+            .alongWith(Commands.print("superstructure state SCORE_READY")));
+        (stateTrg_score)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed)
+            .alongWith(Commands.print("superstructure state SCORE")));
+        (stateTrg_scored)
+            .onTrue(m_coral.setCoralMotorAction(0)
+            .alongWith(Commands.runOnce(() -> teleopCanScoreReq = false))
+            .alongWith(Commands.print("superstructure state SCORED")));
     }
 
     private Command driverRumble(double intensity, double secs) {
