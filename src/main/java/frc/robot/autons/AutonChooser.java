@@ -28,20 +28,22 @@ public class AutonChooser {
     private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
     private static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
 
+    private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
+
     private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
     private static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
     
-    private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected(); //need to constant check if val of startloc changed
-
+    private static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
+   
     private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
     private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+
+    private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
 
     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
     private static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
     
-    private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
     private static Supplier<ReefLocs> reefChosen = () -> hpToReefChooser.getSelected();
-
 
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
     private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
@@ -215,14 +217,30 @@ public class AutonChooser {
 
     public static void cycleIterations(){
 
-        //TODO: figure out int string wowzers funsies
+        int amount = 1;
 
         if(cyclesChosen.get() != null){
 
-            for(int i = 1; i <= Integer.parseInt(cyclesChosen.get().toString()); i++){
+            if(cyclesChosen.get().equals(NumCycles.CYCLE_2)){
+                amount = 2;
+            } else if(cyclesChosen.get().equals(NumCycles.CYCLE_3)){
+                amount = 3;
+            } else if(cyclesChosen.get().equals(NumCycles.CYCLE_4)){
+                amount = 4;
+            }  
+
+            if(hpStationChosen != null && startLocChosen != null && firstScoringChosen != null){
+                startingPositionChooser.close();
+                firstScoringChooser.close();
+                hpStationChooser.close();
+            }
+
+            for(int i = 1; i <= amount; i++){
                 chooseHPtoReef("HP to Reef Chooser " + i);
                 chooseReefToHP("Reef to HP Chooser " + i);
                 chooseReefToHP("HP to Reef Chooser");
+
+                ;
             }
         }
     }
