@@ -75,9 +75,9 @@ public class Robot extends TimedRobot {
     AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
     AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
     AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
-    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.MID, "mid");
-    AutonChooser.assignPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
+    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
+    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.MID, "mid");
+    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
     AutonChooser.chooseFirstScoring();
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
