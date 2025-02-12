@@ -22,7 +22,10 @@ public class AutonChooser {
         private NumCycles(int cycles){
             m_cycles = cycles;
         }
-        
+        @Override
+        public String toString() {
+            return String.valueOf(m_cycles);
+        }
     }
 
     private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
@@ -43,7 +46,7 @@ public class AutonChooser {
     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
     private static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
     
-    private static Supplier<ReefLocs> reefChosen = () -> hpToReefChooser.getSelected();
+    private static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
 
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
     private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
@@ -66,11 +69,7 @@ public class AutonChooser {
         cyclesChooser.addOption(description, numCycles);
     }
 
-    // public static void setDefaultCycles(NumCycles numCycles){
-    //     cyclesChooser.setDefaultOption("default (1)", numCycles);
-    // }
-
-    public static void assignPosition(StartingLocs startingLoc, String description){
+    public static void assignStartingPosition(StartingLocs startingLoc, String description){
         startingLocMap.put(startingLoc, description);
         startingPositionChooser.addOption(description, startingLoc);
     }
@@ -167,42 +166,42 @@ public class AutonChooser {
     public static void chooseReefToHP(String description){
         reefToHPChooser = new SendableChooser<HPStation>();
         
-        if(reefChosen.get() != null){
-            if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_A)){
+        if(hpToReefChosen.get() != null){
+            if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_A)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_B)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_B)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_C)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_C)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_D)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_D)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right"); 
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_E)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_E)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_F)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_F)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_G)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_G)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_H)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_H)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_I)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_I)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_J)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_J)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
 
-            } else if(reefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_K)){
+            } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_K)){
                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
 
             } else{
@@ -217,30 +216,38 @@ public class AutonChooser {
 
     public static void cycleIterations(){
 
-        int amount = 1;
+        NumCycles selectedCycles = cyclesChosen.get();
 
         if(cyclesChosen.get() != null){
 
-            if(cyclesChosen.get().equals(NumCycles.CYCLE_2)){
-                amount = 2;
-            } else if(cyclesChosen.get().equals(NumCycles.CYCLE_3)){
-                amount = 3;
-            } else if(cyclesChosen.get().equals(NumCycles.CYCLE_4)){
-                amount = 4;
-            }  
+            int numIterations = selectedCycles.m_cycles;
 
-            if(hpStationChosen != null && startLocChosen != null && firstScoringChosen != null){
+            if(hpStationChosen != null  && startLocChosen != null && firstScoringChosen != null){
+
+                final StartingLocs finalStartingLocs = startingPositionChooser.getSelected();
+                final ReefLocs finalFirstScoringLocs = firstScoringChooser.getSelected();
+                final HPStation finalFirstHPStation = hpStationChooser.getSelected();
+                final NumCycles finalCyclesChosen = cyclesChooser.getSelected();
+
                 startingPositionChooser.close();
                 firstScoringChooser.close();
                 hpStationChooser.close();
+                cyclesChooser.close();
+
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+                System.out.println(finalStartingLocs);
+                System.out.println(finalFirstScoringLocs);
+                System.out.println(finalFirstHPStation);
+                System.out.println(finalCyclesChosen);
+                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
             }
 
-            for(int i = 1; i <= amount; i++){
+            for(int i = 1; i <= numIterations; i++){ 
                 chooseHPtoReef("HP to Reef Chooser " + i);
                 chooseReefToHP("Reef to HP Chooser " + i);
-                chooseReefToHP("HP to Reef Chooser");
 
-                ;
+                SmartDashboard.updateValues();
+                
             }
         }
     }
