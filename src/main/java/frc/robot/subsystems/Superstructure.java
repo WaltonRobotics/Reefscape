@@ -49,15 +49,14 @@ public class Superstructure {
     private final Trigger trg_teleopScoreEleReq;
     private final Trigger trg_autonScoreReq = new Trigger(() -> autonScoreReq);
     private final Trigger trg_teleopScoreReq;
-    private final Trigger trg_botSensorFalsed;
 
     private final Trigger trg_eleNearSetpoint;
 
-    private final Trigger trg_teleopIntakeEleOverride = new Trigger(() -> teleopIntakeEleOverride);
-    private final Trigger trg_teleopIntakeOverride = new Trigger(() -> teleopIntakeOverride);
-    private final Trigger trg_teleopScoreOverride = new Trigger(() -> teleopScoreOverride);
-    private final Trigger trg_teleopScoreEleOverride = new Trigger(() -> teleopScoreEleOverride);
-    private final Trigger trg_toHomeOverride = new Trigger(() -> toHomeReq);
+    private final Trigger trg_teleopIntakeEleOverride;
+    private final Trigger trg_teleopIntakeOverride;
+    private final Trigger trg_teleopScoreOverride;
+    private final Trigger trg_teleopScoreEleOverride;
+    private final Trigger trg_toHomeOverride;
 
     private final Trigger trg_preloadOverride = new Trigger(() -> preloadOverride);
     private final Trigger trg_autonIntakeOverride = new Trigger(() -> autonIntakeOverride);
@@ -81,6 +80,11 @@ public class Superstructure {
         Trigger teleopIntakeReq,
         Trigger teleopEleHeightReq, 
         Trigger teleopScoreReq, 
+        Trigger teleopIntakeEleOverride,
+        Trigger teleopIntakeOverride,
+        Trigger teleopScoreEleOverride,
+        Trigger teleopScoreOverride,
+        Trigger toHomeOverride,
         DoubleConsumer drivRumble, DoubleConsumer manipRumble
     ) {
         m_coral = coral;
@@ -94,7 +98,12 @@ public class Superstructure {
         trg_teleopScoreEleReq = teleopEleHeightReq;
         trg_teleopScoreReq = new Trigger(() -> teleopScoreReq.getAsBoolean() && teleopCanScoreReq);
         trg_eleNearSetpoint = new Trigger(() -> m_ele.nearSetpoint());
-        trg_botSensorFalsed = new Trigger(() -> !m_coral.bs_botBeamBreak.getAsBoolean());
+
+        trg_teleopIntakeEleOverride = teleopIntakeEleOverride;
+        trg_teleopIntakeOverride = teleopIntakeOverride;
+        trg_teleopScoreOverride = teleopScoreOverride;
+        trg_teleopScoreEleOverride = teleopScoreEleOverride;
+        trg_toHomeOverride = toHomeOverride;
         
         m_state = State.IDLE;
 
@@ -142,9 +151,9 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
-        (stateTrg_score.and(trg_botSensorFalsed))
+        (stateTrg_score.and(trg_botSensor.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
-        (stateTrg_scored)
+        (stateTrg_scored.and(trg_toHomeOverride.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
     }
 
