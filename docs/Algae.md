@@ -39,7 +39,7 @@ stateDiagram
     s10 --> s1: Automatic
     s11 --> s2: GroundReq->T
     s11 --> s4: IntakeReq->T
-    s11 --> s8: ProcessorReq->T
+    s11 --> s7: ProcessorReq->T
     s11 --> s9: ShootReq->T
 
 ```
