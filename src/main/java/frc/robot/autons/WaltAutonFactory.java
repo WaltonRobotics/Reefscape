@@ -102,9 +102,13 @@ public class WaltAutonFactory {
         );
 
         firstScoreTraj.atTime("eleUp")
-            .onTrue(Commands.runOnce(() -> superstructure.requestIsPreload(true))
-            .andThen(superstructure.autonRequestEleToScore(firstHeight))
-            .andThen(Commands.runOnce(() -> superstructure.requestIsPreload(false))));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> superstructure.requestIsPreload(true)),
+                    superstructure.autonRequestEleToScore(firstHeight),
+                    Commands.runOnce(() -> superstructure.requestIsPreload(false))
+                )
+            );
         firstScoreTraj.done().onTrue(
             Commands.sequence(
                 Commands.parallel(
