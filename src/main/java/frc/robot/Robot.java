@@ -78,12 +78,12 @@ public class Robot extends TimedRobot {
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
-    AutonChooser.chooseFirstScoring();
+    //AutonChooser.chooseFirstScoring();
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
     // AutonChooser.chooseHPtoReef("HP to Reef chooser 1");
     // AutonChooser.chooseReefToHP("HP to Reef chooser 1");
-    AutonChooser.cycleIterations();
+    //AutonChooser.cycleIterations();
   }
 
   public Robot() {
@@ -192,12 +192,19 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
+    mapAutonCommands();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    mapAutonCommands();
+    if(AutonChooser.firstScoringChosen.get() == null){
+      AutonChooser.chooseFirstScoring();
+    }
+    if(AutonChooser.hpToReefChosen.get() == null || AutonChooser.reefToHPChosen.get() == null){
+      AutonChooser.cycleIterations();
+    }
+  
   }
 
   @Override

@@ -36,7 +36,7 @@ public class AutonChooser {
     private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
     private static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
     
-    private static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
+    public static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
    
     private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
     private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
@@ -46,12 +46,12 @@ public class AutonChooser {
     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
     private static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
     
-    private static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
+    public static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
 
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
     private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
 
-    private static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
+    public static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
 
     private static EnumMap<NumCycles, String> cyclesMap = new EnumMap<>(NumCycles.class);
     private static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
@@ -222,33 +222,35 @@ public class AutonChooser {
 
             int numIterations = selectedCycles.m_cycles;
 
-            if(hpStationChosen != null  && startLocChosen != null && firstScoringChosen != null){
+            // if(hpStationChosen != null  && startLocChosen != null && firstScoringChosen != null){
 
-                final StartingLocs finalStartingLocs = startingPositionChooser.getSelected();
-                final ReefLocs finalFirstScoringLocs = firstScoringChooser.getSelected();
-                final HPStation finalFirstHPStation = hpStationChooser.getSelected();
-                final NumCycles finalCyclesChosen = cyclesChooser.getSelected();
+            //     final StartingLocs finalStartingLocs = startingPositionChooser.getSelected();
+            //     final ReefLocs finalFirstScoringLocs = firstScoringChooser.getSelected();
+            //     final HPStation finalFirstHPStation = hpStationChooser.getSelected();
+            //     final NumCycles finalCyclesChosen = cyclesChooser.getSelected();
 
-                startingPositionChooser.close();
-                firstScoringChooser.close();
-                hpStationChooser.close();
-                cyclesChooser.close();
+            //     startingPositionChooser.close();
+            //     firstScoringChooser.close();
+            //     hpStationChooser.close();
+            //     cyclesChooser.close();
 
-                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-                System.out.println(finalStartingLocs);
-                System.out.println(finalFirstScoringLocs);
-                System.out.println(finalFirstHPStation);
-                System.out.println(finalCyclesChosen);
-                System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            }
+            //     System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            //     System.out.println(finalStartingLocs);
+            //     System.out.println(finalFirstScoringLocs);
+            //     System.out.println(finalFirstHPStation);
+            //     System.out.println(finalCyclesChosen);
+            //     System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            // }
 
             for(int i = 1; i <= numIterations; i++){ 
+
                 chooseHPtoReef("HP to Reef Chooser " + i);
                 chooseReefToHP("Reef to HP Chooser " + i);
 
                 SmartDashboard.updateValues();
                 
             }
+
         }
     }
 }
