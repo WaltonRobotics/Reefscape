@@ -3,7 +3,6 @@ package frc.robot.autons;
 import java.util.ArrayList;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.Idle;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -140,7 +139,7 @@ public class WaltAutonFactory {
                 lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
             }
 
-            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycles.get(cycleIdx).height));
+            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycle.height));
             
             hpToReefTraj.done().onTrue(
                 Commands.sequence(
