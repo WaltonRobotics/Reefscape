@@ -7,6 +7,7 @@ import java.util.function.DoubleConsumer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
 import static frc.robot.Constants.AlgaeK.kLogTab;
@@ -14,7 +15,6 @@ import static frc.robot.Constants.AlgaeK.kLogTab;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.IntLogger;
-import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
     private final Coral m_coral;
@@ -110,11 +110,11 @@ public class Superstructure {
 
     private void configureAutonTrgs() {
         // these are treated kinda differently in auton than in teleop so i differentiated them again
-        (stateTrg_idle.and(trg_autonIntakeReq))
+        (stateTrg_idle.and(trg_autonIntakeReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
-        (stateTrg_intook.and(trg_autonScoreEleReq))
+        (stateTrg_intook.and(trg_autonScoreEleReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (stateTrg_scoreReady.and(trg_autonScoreReq))
+        (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         
         // overrides
@@ -176,13 +176,13 @@ public class Superstructure {
 
     private Command driverRumble(double intensity, double secs) {
         return Commands.run(
-           () -> m_driverRumbler.accept(0)
+           () -> m_driverRumbler.accept(intensity)
         ).withTimeout(secs);
     }
 
     private Command manipRumble(double intensity, double secs) {
         return Commands.run(
-            () -> m_manipRumbler.accept(0)
+            () -> m_manipRumbler.accept(intensity)
         ).withTimeout(secs);
     }
 
