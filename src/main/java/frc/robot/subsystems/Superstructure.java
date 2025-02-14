@@ -12,6 +12,8 @@ import static frc.robot.Constants.*;
 import static frc.robot.Constants.AlgaeK.kLogTab;
 
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.IntLogger;
 import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
@@ -66,7 +68,7 @@ public class Superstructure {
 
     private EleHeight m_curHeightReq = EleHeight.HOME;
 
-    private StringLogger m_stateLogger = new StringLogger(kLogTab, "Superstructure State");
+    private IntLogger log_state = WaltLogger.logInt(kLogTab, "state");
 
     public Superstructure(
         Coral coral, Elevator ele, 
@@ -208,14 +210,8 @@ public class Superstructure {
         return Commands.runOnce(() -> m_curHeightReq = EleHeight.HP);
     }
 
-    public int getStateIdx() {
-        return m_state.idx;
-    }
-
-    // TODO: implement this in Robot.java
-    // ALSO TODO: add the state graph thingy
-    public void superstructureLogger() {
-        m_stateLogger.accept(m_state.toString());
+    public void logState() {
+        log_state.accept(m_state.idx);
     }
 
     public enum State {

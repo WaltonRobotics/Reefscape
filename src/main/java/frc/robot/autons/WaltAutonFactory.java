@@ -118,8 +118,7 @@ public class WaltAutonFactory {
             )
         );
         firstLoadTraj.atTime("intake")
-            .onTrue(superstructure.autonRequestToIntake()
-            .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+            .onTrue(superstructure.autonRequestToIntake());
         // now ur at the HP
 
         // list of traj start cmds
