@@ -61,6 +61,7 @@ public class AutonChooser {
     private static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
 
 
+
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
         SmartDashboard.putData("human player station chooser", hpStationChooser);
@@ -225,6 +226,9 @@ public class AutonChooser {
         SmartDashboard.updateValues();
     }
 
+    /**
+     * choose ele height
+     */
     public static void chooseEleHeight(String description){
         eleHeightChooser = new SendableChooser<EleHeight>();
 
@@ -237,7 +241,7 @@ public class AutonChooser {
     }
 
     /**
-     * depending on how many cycles you choose, will display each cycle's choosers (hp to reef to hp)
+     * depending on how many cycles you choose, will display each cycle's choosers: hp to reef, reef to hp, and ele height
      */
     public static void cycleIterations(){
 
@@ -257,8 +261,7 @@ public class AutonChooser {
                 } else{
                     chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
                     chooseReefToHP("Reef to HP Chooser " + i);
-                }
-                
+                }  
             }  
 
             SmartDashboard.updateValues();
