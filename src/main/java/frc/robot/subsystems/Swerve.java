@@ -61,9 +61,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /* TODO: gotta tune */
     private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
-    private final PIDController m_pathXController = new PIDController(10, 0, 0);
-    private final PIDController m_pathYController = new PIDController(10, 0, 0);
-    private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
+    private final PIDController m_pathXController = new PIDController(10, 0, 10);
+    private final PIDController m_pathYController = new PIDController(10, 0, 10);
+    private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -286,6 +286,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 .withWheelForceFeedforwardsX(sample.moduleForcesX())
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
+
     }
 
     /**
@@ -310,10 +311,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    public Pose2d[] getModulePoses() {
-        SwerveDriveState state = getState();
-        SwerveModule<TalonFX, TalonFX, CANcoder>[] swerveMods = getModules();
-        Translation2d[] moduleTransformations = {
+    public Pose2d[] extractModulePoses(SwerveDriveState state) {
+        Translation2d[] moduleTranslations = {
             new Translation2d(TunerConstants.kFrontLeftXPos.in(Meters), TunerConstants.kFrontLeftYPos.in(Meters)),
             new Translation2d(TunerConstants.kFrontRightXPos.in(Meters), TunerConstants.kFrontRightYPos.in(Meters)),
             new Translation2d(TunerConstants.kBackLeftXPos.in(Meters), TunerConstants.kBackLeftYPos.in(Meters)),
@@ -321,10 +320,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         };
         Pose2d[] modulePoses = new Pose2d[getModules().length];
         for (int i = 0; i < getModules().length; i++) {
-            SwerveModule<TalonFX, TalonFX, CANcoder> module = swerveMods[i];
             modulePoses[i] = 
                 state.Pose.transformBy(new Transform2d(
-                    moduleTransformations[i], state.ModulePositions[i].angle)
+                    moduleTranslations[i], state.ModulePositions[i].angle)
                 );
         }
         return modulePoses;
