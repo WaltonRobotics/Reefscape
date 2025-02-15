@@ -1,14 +1,13 @@
 package frc.robot.autons;
 
-import java.io.ObjectOutputStream.PutField;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.autons.TrajsAndLocs.*; 
+import frc.robot.autons.TrajsAndLocs.*;
+import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Elevator.EleHeight; 
 
 public class AutonChooser {
     public static enum NumCycles {
@@ -58,11 +57,18 @@ public class AutonChooser {
 
     private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
 
+    private static EnumMap<EleHeight, String> eleHeightMap = new EnumMap<>(Elevator.EleHeight.class);
+    private static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
+
+
     static{
         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
         SmartDashboard.putData("human player station chooser", hpStationChooser);
         SmartDashboard.putData("number of cycles chooser", cyclesChooser);
+        SmartDashboard.putData("starting height chooser", eleHeightChooser);
     }
+
+
 
     public static void assignNumCycles(NumCycles numCycles, String description){
         cyclesMap.put(numCycles, description);
@@ -79,22 +85,11 @@ public class AutonChooser {
         firstScoringChooser.addOption(description, scoringLoc);
     }
 
-    public static void setDefaultAuton(StartingLocs scoringLoc){
-        startingPositionChooser.setDefaultOption("default (mid)", scoringLoc);
-    }
-
-    public static void setDefaultHPStation(HPStation hpStation){
-        hpStationChooser.setDefaultOption("default(left)", hpStation);
-    }
-
-    // public static void setDefaultReefScoring(ReefLocs reefLocs){
-    //     hpToReefChooser.setDefaultOption("default(A)", reefLocs);
-    // }
-
     public static void assignHPStation(HPStation hpstation, String description){
         hpStationMap.put(hpstation, description);
         hpStationChooser.addOption(description, hpstation);
     }
+
     public static void assignReefScoring(ReefLocs reefLocs, String description){
         hpToReefMap.put(reefLocs, description);
         hpToReefChooser.addOption(description, reefLocs);
@@ -104,6 +99,23 @@ public class AutonChooser {
         reefToHPMap.put(hpStation, description);
         reefToHPChooser.addOption(description, hpStation);
     }
+
+    public static void assignEleHeight(EleHeight eleHeight, String description){
+        eleHeightMap.put(eleHeight, description);
+        eleHeightChooser.addOption(description, eleHeight);
+    }
+
+
+
+    public static void setDefaultAuton(StartingLocs scoringLoc){
+        startingPositionChooser.setDefaultOption("default (mid)", scoringLoc);
+    }
+
+    public static void setDefaultHPStation(HPStation hpStation){
+        hpStationChooser.setDefaultOption("default(left)", hpStation);
+    }
+
+
 
     /**
      * depending on certain starting location, displays the optimal path for said starting + scoring path
@@ -159,9 +171,9 @@ public class AutonChooser {
         SmartDashboard.updateValues();
     }
     
-/**
- * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
- */
+    /**
+    * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
+    */
     public static void chooseReefToHP(String description){
         reefToHPChooser = new SendableChooser<HPStation>();
         
@@ -213,6 +225,20 @@ public class AutonChooser {
         SmartDashboard.updateValues();
     }
 
+    public static void chooseEleHeight(String description){
+        eleHeightChooser = new SendableChooser<EleHeight>();
+
+        AutonChooser.assignEleHeight(Elevator.EleHeight.L1, "L1");
+        AutonChooser.assignEleHeight(Elevator.EleHeight.L2, "L2");
+        AutonChooser.assignEleHeight(Elevator.EleHeight.L3, "L3");
+        AutonChooser.assignEleHeight(Elevator.EleHeight.L4, "L4");
+
+        SmartDashboard.putData(description, eleHeightChooser);
+    }
+
+    /**
+     * depending on how many cycles you choose, will display each cycle's choosers (hp to reef to hp)
+     */
     public static void cycleIterations(){
 
         NumCycles selectedCycles = cyclesChosen.get();
@@ -223,19 +249,19 @@ public class AutonChooser {
 
             for(int i = 1; i <= numIterations; i++){ 
 
+                chooseEleHeight("ele height chooser " + i);
+
                 if(reefToHPChosen.get() != null){
                     chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen);
                     chooseReefToHP("Reef to HP Chooser " + i);
                 } else{
-                    
-                chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
-                chooseReefToHP("Reef to HP Chooser " + i);
+                    chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
+                    chooseReefToHP("Reef to HP Chooser " + i);
                 }
                 
             }  
 
             SmartDashboard.updateValues();
-
         }
     }
 }

@@ -67,23 +67,22 @@ public class Robot extends TimedRobot {
   private final AutoChooser autoChooser = new AutoChooser();
 
   private void mapAutonCommands(){
-    // AutonChooser.setDefaultCycles(AutonChooser.NumCycles.CYCLE_1);
+
     AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
     AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
-    // AutonChooser.setDefaultReefScoring(TrajsAndLocs.ReefLocs.REEF_A);
+
     AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
     AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
     AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
     AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
+
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
-    //AutonChooser.chooseFirstScoring();
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
-    // AutonChooser.chooseHPtoReef("HP to Reef chooser 1");
-    // AutonChooser.chooseReefToHP("HP to Reef chooser 1");
-    //AutonChooser.cycleIterations();
+
+   AutonChooser.chooseEleHeight("starting height chooser");
   }
 
   public Robot() {
