@@ -141,11 +141,10 @@ public class AutonChooser {
     /**
      * given that an HP Station is selected, creates NT that shows all possible(optimal?) routes to certain reefs
      */
-    public static void chooseHPtoReef(String description){
+    public static void chooseHPtoReef(String description, Supplier<HPStation> hpChosen){
         hpToReefChooser = new SendableChooser<ReefLocs>();
         
-
-        if(hpStationChosen.get().equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
+        if(hpChosen.get().equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
             for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
                 assignReefScoring(TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i), 
                 TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i).toString());
@@ -222,34 +221,20 @@ public class AutonChooser {
 
             int numIterations = selectedCycles.m_cycles;
 
-            // if(hpStationChosen != null  && startLocChosen != null && firstScoringChosen != null){
-
-            //     final StartingLocs finalStartingLocs = startingPositionChooser.getSelected();
-            //     final ReefLocs finalFirstScoringLocs = firstScoringChooser.getSelected();
-            //     final HPStation finalFirstHPStation = hpStationChooser.getSelected();
-            //     final NumCycles finalCyclesChosen = cyclesChooser.getSelected();
-
-            //     startingPositionChooser.close();
-            //     firstScoringChooser.close();
-            //     hpStationChooser.close();
-            //     cyclesChooser.close();
-
-            //     System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            //     System.out.println(finalStartingLocs);
-            //     System.out.println(finalFirstScoringLocs);
-            //     System.out.println(finalFirstHPStation);
-            //     System.out.println(finalCyclesChosen);
-            //     System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            // }
-
             for(int i = 1; i <= numIterations; i++){ 
 
-                chooseHPtoReef("HP to Reef Chooser " + i);
+                if(reefToHPChosen.get() != null){
+                    chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen);
+                    chooseReefToHP("Reef to HP Chooser " + i);
+                } else{
+                    
+                chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
                 chooseReefToHP("Reef to HP Chooser " + i);
-
-                SmartDashboard.updateValues();
+                }
                 
-            }
+            }  
+
+            SmartDashboard.updateValues();
 
         }
     }
