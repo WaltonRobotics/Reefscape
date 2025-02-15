@@ -39,7 +39,9 @@ public class Constants {
 
         // motor configuration section
         // wrist motor
+        public static final double kMaxAngleDeg = 90; //dummy num
         public static final int kWristGearRatio = 10;
+        public static final double kAngleTolerance = 3; // dum
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)
@@ -65,11 +67,11 @@ public class Constants {
             .withSlot0(kWristSlot0Configs);
 
         // intake motor
-        public static final int kIntakeGearRatio = 10;
+       public static final int kIntakeGearRatio = 10;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
         private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(100)
-            .withSupplyCurrentLimit(50)
+            .withStatorCurrentLimit(55)
+            .withSupplyCurrentLimit(35)
             .withStatorCurrentLimitEnable(true);
         private static final FeedbackConfigs kIntakeFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kIntakeSensorToMechanismRatio);
@@ -89,8 +91,6 @@ public class Constants {
             .withFeedback(kIntakeFeedbackConfigs)
             .withMotionMagic(kIntakeMagicConfigs)
             .withSlot0(kIntakeSlot0Configs);
-
-        public static final double kMaxAngleDeg = 10; //dummy num
     }
 
     public class Coralk {
