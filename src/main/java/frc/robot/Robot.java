@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -187,12 +188,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void simulationPeriodic() {
-    drivetrain.simulationPeriodic();
-    Pose2d robotPose = drivetrain.getState().Pose;
+    SwerveDriveState robotState = drivetrain.getState();
+    Pose2d robotPose = robotState.Pose;
     vision.simulationPeriodic(robotPose);
+    drivetrain.simulationPeriodic();
 
     Field2d debugField = vision.getSimDebugField();
     debugField.getObject("EstimatedRobot").setPose(robotPose);
-    debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.getModulePoses());
+    debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
   }
 }
