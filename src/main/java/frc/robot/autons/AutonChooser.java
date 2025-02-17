@@ -1,5 +1,6 @@
 package frc.robot.autons;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.function.Supplier;
 
@@ -60,6 +61,8 @@ public class AutonChooser {
     private static EnumMap<EleHeight, String> eleHeightMap = new EnumMap<>(Elevator.EleHeight.class);
     private static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
 
+    public static ArrayList<HPStation> hpStationArray = new ArrayList<HPStation>();
+    public static ArrayList<ReefLocs> scoringLocationArray = new ArrayList<ReefLocs>();
 
 
     static{
@@ -256,15 +259,46 @@ public class AutonChooser {
                 chooseEleHeight("ele height chooser " + i);
 
                 if(reefToHPChosen.get() != null){
+                    
                     chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen);
+
                     chooseReefToHP("Reef to HP Chooser " + i);
+
+                    // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){
+                    //     scoringLocationArray.add(hpToReefChosen.get());
+                    // }
+
                 } else{
                     chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
                     chooseReefToHP("Reef to HP Chooser " + i);
-                }  
+
+                    // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){
+                    //     scoringLocationArray.add(hpToReefChosen.get());
+                    // }
+                }
+                 
             }  
 
             SmartDashboard.updateValues();
         }
+    }
+
+    public static void getSelectedValues(){
+
+        StartingLocs startingPosition = startingPositionChooser.getSelected();
+        ReefLocs firstScoringLoc = firstScoringChooser.getSelected();
+        HPStation hpStation = hpStationChooser.getSelected();
+
+            // for(int i = 0; i < scoringLocationArray.size(); i++){
+            //     System.out.println(scoringLocationArray.get(i));
+            // }
+
+            // if(!(hpStationArray.contains(reefToHPChosen.get()))){
+            //     hpStationArray.add(reefToHPChooser.getSelected());
+            // }
+
+            // for(int i = 0; i < hpStationArray.size(); i++){
+            //     System.out.println(hpStationArray.get(i));
+            // }
     }
 }

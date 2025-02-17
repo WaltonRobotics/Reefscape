@@ -203,6 +203,9 @@ public class Robot extends TimedRobot {
     if(AutonChooser.hpToReefChosen.get() == null || AutonChooser.reefToHPChosen.get() == null){
       AutonChooser.cycleIterations();
     }
+    if(AutonChooser.hpToReefChosen.get() != null && AutonChooser.reefToHPChosen.get() != null){
+      AutonChooser.getSelectedValues();
+    }
   
   }
 
