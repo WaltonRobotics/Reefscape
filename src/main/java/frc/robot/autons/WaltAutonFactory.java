@@ -151,8 +151,7 @@ public class WaltAutonFactory {
             );
 
             reefToHpTraj.atTime("intake")
-                .onTrue(superstructure.autonRequestToIntake()
-                .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+                .onTrue(superstructure.autonRequestToIntake());
         }
 
         firstLoadTraj.done().onTrue(trajList.get(0).cmd());
