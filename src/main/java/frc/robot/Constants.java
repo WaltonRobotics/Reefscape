@@ -42,6 +42,7 @@ public class Constants {
         public static final double kMaxAngleDeg = 90; //dummy num
         public static final int kWristGearRatio = 10;
         public static final double kAngleTolerance = 3; // dum
+        public static final double kLowTorqueMode = 10; // dum
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)
@@ -67,7 +68,8 @@ public class Constants {
             .withSlot0(kWristSlot0Configs);
 
         // intake motor
-       public static final int kIntakeGearRatio = 10;
+        public static final double kHasAlgaeCurrent = 10; // dummy
+        public static final int kIntakeGearRatio = 10;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
         private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(55)
