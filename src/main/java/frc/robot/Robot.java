@@ -61,6 +61,8 @@ public class Robot extends TimedRobot {
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
 
   private final Trigger trg_teleopEleHeightReq;
+  // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
+  private final Trigger trg_eleOverride;
   // override button
   private final Trigger trg_manipDanger;
   private final Trigger trg_driverDanger;
@@ -71,6 +73,11 @@ public class Robot extends TimedRobot {
       .or(manipulator.povRight()) // L2
       .or(manipulator.povLeft()) // L3
       .or(manipulator.povUp()); // L4
+
+    trg_eleOverride = 
+      manipulator.rightBumper().negate()
+      .and(manipulator.leftTrigger().negate())
+      .and(trg_teleopEleHeightReq.negate());
     
     trg_manipDanger = manipulator.b();
     trg_driverDanger = driver.b();
@@ -85,7 +92,11 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(manipulator.leftTrigger()), 
       trg_manipDanger.and(trg_teleopEleHeightReq),
       trg_driverDanger.and(driver.rightTrigger()), 
-      manipulator.leftBumper(), 
+      manipulator.leftBumper(),
+      manipulator.a().and(manipulator.povUp()),
+      manipulator.a().and(manipulator.povDown()),
+      trg_manipDanger.and(trg_eleOverride),
+      () -> manipulator.getLeftY(),
       (intensity) -> driverRumble(intensity), 
       (intensity) -> manipRumble(intensity));
 
