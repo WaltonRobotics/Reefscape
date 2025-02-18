@@ -90,10 +90,7 @@ public class Constants {
             .withKI(0)
             .withKD(0.5);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kIntakeCurrentLimitConfigs)
-            .withFeedback(kIntakeFeedbackConfigs)
-            .withMotionMagic(kIntakeMagicConfigs)
-            .withSlot0(kIntakeSlot0Configs);
+            .withCurrentLimits(kIntakeCurrentLimitConfigs);
     }
 
     public class Coralk {
