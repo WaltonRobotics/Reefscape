@@ -7,12 +7,14 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.autons.TrajsAndLocs.HPReefPair;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefHPPair;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.util.Elastic;
@@ -78,9 +80,10 @@ public class WaltAutonFactory {
     public Command generateAuton(
         Swerve drivetrain, 
         Superstructure superstructure, 
-        AutonChooser firstStartToReef, 
-        AutonChooser firstReefToHP, 
+        StartingLocs startLoc,
+        ReefLocs firstReefLoc,
         EleHeight firstHeight, 
+        HPStation firstHPStation,
         ArrayList<AutonCycle> cycles
     ) { // the autonchooser schtuffs are dummy vars until sohan and xandra figure it out
         // iterate AutonCycles and validate all HP->Score and Score->HP pairs
@@ -89,9 +92,8 @@ public class WaltAutonFactory {
                 return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
             }
         }
-
-        AutoTrajectory firstScoreTraj = m_routine.trajectory("start to reef");
-        AutoTrajectory firstLoadTraj = m_routine.trajectory("reef to hp");
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.StartToReefTrajs.get(new Pair<StartingLocs, ReefLocs>(startLoc, firstReefLoc)));
+        AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(firstReefLoc, firstHPStation)));
 
         m_routine.active().onTrue(
             Commands.sequence(

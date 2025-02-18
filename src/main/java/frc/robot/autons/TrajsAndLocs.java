@@ -114,11 +114,29 @@ public abstract class TrajsAndLocs {
     }
 
     public static class Trajectories {
+        public static HashMap<Pair<StartingLocs, ReefLocs>, String> StartToReefTrajs = new HashMap<>();
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
         public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
 
         static {
             // fill in maps here
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_H) , "Start_left_H");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_I) , "Start_left_I");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_J) , "Start_left_J");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_K) , "Start_left_K");
+
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_E) , "Start_mid_E");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_F) , "Start_mid_F");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_G) , "Start_mid_G");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_H) , "Start_mid_H");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_I) , "Start_mid_I");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID, ReefLocs.REEF_J) , "Start_mid_J");
+
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_D) , "Start_right_D");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_E) , "Start_right_E");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_F) , "Start_right_F");
+            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_G) , "Start_right_G");
+
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT) , "HP_A_left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_LEFT) , "HP_B_left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_LEFT) , "HP_G_left");
