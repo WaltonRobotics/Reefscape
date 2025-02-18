@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
 
@@ -27,8 +26,8 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
  
 public class Algae extends SubsystemBase {
-    private final TalonFX m_wrist = new TalonFX(kWristCANID, TunerConstants.kCANBus); // I KNOW this is not a wrist its a shoulder, but im going to call it a wrist.
-    private final TalonFX m_intake = new TalonFX(kIntakeCANID, TunerConstants.kCANBus);
+    private final TalonFX m_wrist = new TalonFX(kWristCANID); // I KNOW this is not a wrist its a shoulder, but im going to call it a wrist.
+    private final TalonFX m_intake = new TalonFX(kIntakeCANID);
 
     private boolean m_wristIsCoast = false; 
     private GenericEntry nte_wristIsCoast;
