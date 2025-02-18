@@ -1,146 +1,313 @@
 package frc.robot.subsystems;
 
-import static frc.robot.Constants.RobotK.*;
+import static frc.robot.Constants.Coralk.kCoralSpeed;
 
 import java.util.function.DoubleConsumer;
+import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import static frc.robot.Constants.*;
+import static frc.robot.Constants.AlgaeK.kLogTab;
+
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.IntLogger;
 
 public class Superstructure {
-    public Coral m_coral;
-    public Elevator m_ele;
+    private final Coral m_coral;
+    private final Elevator m_ele;
 
-    private CoralState m_coralState;
-    private boolean m_driverRumbled = false;
+    private final DoubleConsumer m_driverRumbler, m_manipRumbler;
 
-    private boolean m_preload = false;
-    private boolean m_autonScoreReq = false;
+    private State m_state;
+
+    // reqs
+    private boolean autonIntakeReq = false;
+    private boolean autonScoreEleReq = false;
+    private boolean autonScoreReq = false;
+
+    private boolean teleopCanScoreReq = false;
+
+    private boolean preloadOverride = false;
+    private boolean autonIntakeOverride = false;
+    private boolean autonScoreOverride = false;
 
     public final EventLoop stateEventLoop = new EventLoop();
 
-    private final DoubleConsumer m_driverRumbler; // when SCORE_READY
+    private final Trigger trg_autonIntakeReq = new Trigger(() -> autonIntakeReq);
+    private final Trigger trg_teleopIntakeReq;
+    private final Trigger trg_botSensor;
+    private final Trigger trg_autonScoreEleReq = new Trigger(() -> autonScoreEleReq);
+    private final Trigger trg_teleopScoreEleReq;
+    private final Trigger trg_autonScoreReq = new Trigger(() -> autonScoreReq);
+    private final Trigger trg_teleopScoreReq;
 
-    private final Trigger trg_preloadReq = new Trigger(() -> m_preload).and(RobotModeTriggers.autonomous());
-    private final Trigger trg_driverScoreReq;
-    private final Trigger trg_autonScoreReq = new Trigger(() -> m_autonScoreReq).and(RobotModeTriggers.autonomous());
+    private final Trigger trg_climbUpReq;
+    private final Trigger trg_climbDownReq;
 
-    /* NOTE: sensor trigs are in Coral.java */
-    public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.IDLE));
-    public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.INTAKING));
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.INTOOK));
-    public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.SCORE_READY));
-    public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_coralState.equals(CoralState.SCORING));
+    private final Trigger trg_eleOverride;
 
-    private final IntLogger log_state = WaltLogger.logInt(kLogTab, "state", PubSubOption.sendAll(true));
-    
-    public Superstructure(Algae algae, Coral coral, Elevator ele, DoubleConsumer driverRumbler, Trigger shooting) {
+    private final Trigger trg_eleNearSetpoint;
+
+    private final Trigger trg_teleopIntakeEleOverride;
+    private final Trigger trg_teleopIntakeOverride;
+    private final Trigger trg_teleopScoreOverride;
+    private final Trigger trg_teleopScoreEleOverride;
+    private final Trigger trg_toHomeOverride;
+
+    private final Trigger trg_preloadOverride = new Trigger(() -> preloadOverride);
+    private final Trigger trg_autonIntakeOverride = new Trigger(() -> autonIntakeOverride);
+    private final Trigger trg_autonScoreOverride = new Trigger(() -> autonScoreOverride);
+
+    public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
+    public final Trigger stateTrg_eleToIntake = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_INTAKE);
+    public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
+    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
+    public final Trigger stateTrg_eleToScore = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_SCORE);
+    public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_state == State.SCORE_READY);
+    public final Trigger stateTrg_score = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
+    public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
+
+    public final Trigger stateTrg_eleToClimb = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_CLIMB);
+    public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
+    public final Trigger stateTrg_climbing = new Trigger(stateEventLoop, () -> m_state == State.CLIMBING);
+    public final Trigger stateTrg_climbed = new Trigger(stateEventLoop, () -> m_state == State.CLIMBED);
+
+    public final Trigger stateTrg_eleOverride = new Trigger(stateEventLoop, () -> m_state == State.ELE_OVERRIDE);
+    private final DoubleSupplier m_eleOverrideSupplier;
+
+    private EleHeight m_curHeightReq = EleHeight.HOME;
+
+    private IntLogger log_state = WaltLogger.logInt(kLogTab, "state");
+
+    public Superstructure(
+        Coral coral, Elevator ele, 
+        Trigger teleopIntakeReq,
+        Trigger teleopEleHeightReq, 
+        Trigger teleopScoreReq, 
+        Trigger teleopIntakeEleOverride,
+        Trigger teleopIntakeOverride,
+        Trigger teleopScoreEleOverride,
+        Trigger teleopScoreOverride,
+        Trigger toHomeOverride,
+        Trigger climbUpReq,
+        Trigger climbDownReq,
+        Trigger override,
+        DoubleSupplier eleOverrideSupplier,
+        DoubleConsumer drivRumble, DoubleConsumer manipRumble
+    ) {
         m_coral = coral;
-        m_ele = ele; 
+        m_ele = ele;
 
-        m_driverRumbler = driverRumbler;
-        trg_driverScoreReq = shooting;
-        m_coralState = CoralState.IDLE;
+        m_driverRumbler = drivRumble;
+        m_manipRumbler = manipRumble;
 
-        log_state.accept(m_coralState.m_index);
+        trg_teleopIntakeReq = teleopIntakeReq;
+        trg_botSensor = new Trigger(m_coral.bs_botBeamBreak);
+        trg_teleopScoreEleReq = teleopEleHeightReq;
+        trg_teleopScoreReq = new Trigger(() -> teleopScoreReq.getAsBoolean() && teleopCanScoreReq);
+        trg_eleNearSetpoint = new Trigger(() -> m_ele.nearSetpoint());
 
-        configStateTrigs();
+        trg_teleopIntakeEleOverride = teleopIntakeEleOverride;
+        trg_teleopIntakeOverride = teleopIntakeOverride;
+        trg_teleopScoreOverride = teleopScoreOverride;
+        trg_teleopScoreEleOverride = teleopScoreEleOverride;
+        trg_toHomeOverride = toHomeOverride;
+
+        trg_climbUpReq = climbUpReq;
+        trg_climbDownReq = climbDownReq;
+
+        trg_eleOverride = override;
+        m_eleOverrideSupplier = eleOverrideSupplier;
+        
+        m_state = State.IDLE;
+
+        configureAutonTrgs();
+        configureTeleopTrgs();
+        configureStateTransitions();
+        configureStateActions();
     }
 
-    private void configStateTrigs() {
-        // stateTrg_idle
-        if(RobotModeTriggers.autonomous().getAsBoolean()) {
-            (stateTrg_scoring.and(() -> !m_coral.bs_coralMotorRunning.getAsBoolean()))
-                .onTrue(Commands.runOnce(() -> m_coralState = CoralState.IDLE).andThen(Commands.runOnce(() -> m_autonScoreReq = false)));
-        } else {
-            (stateTrg_scoring.and(() -> !m_coral.bs_coralMotorRunning.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.IDLE));
-        }
-
-        // stateTrg_intaking
-        ((stateTrg_idle.or(trg_preloadReq)).and(m_coral.bs_topBeamBreak).and(() -> !m_coral.bs_botBeamBreak.getAsBoolean()))
-            .onTrue(Commands.runOnce(() -> m_coralState = CoralState.INTAKING));
-        stateTrg_intaking.onTrue(m_coral.intake());
-    
-        // stateTrg_intook
-        (stateTrg_intaking.and(() -> !m_coral.bs_botBeamBreak.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.INTOOK));
-
-        // stateTrg_scoreReady
-        ((stateTrg_intook.and(m_ele.bs_atHeight)))
-            .onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORE_READY).alongWith(Commands.runOnce(() -> m_preload = false)));
-        stateTrg_intook.onTrue(driverRumble(1, 0.5));
-
-        // stateTrg_scoring
-        (stateTrg_scoreReady.and(trg_driverScoreReq)).onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORING));
-        (stateTrg_scoreReady.and(trg_autonScoreReq)).onTrue(Commands.runOnce(() -> m_coralState = CoralState.SCORING));
-        stateTrg_scoring.onTrue(m_coral.score().andThen(() -> m_ele.invertAtHeight()));
-
-        // bypass intaking for autons
-        (stateTrg_idle.and(() -> trg_preloadReq.getAsBoolean())).onTrue(Commands.runOnce(() -> m_coralState = CoralState.INTOOK));
+    private void configureAutonTrgs() {
+        // these are treated kinda differently in auton than in teleop so i differentiated them again
+        (stateTrg_idle.and(trg_autonIntakeReq).and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
+        (stateTrg_intook.and(trg_autonScoreEleReq).and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        
+        // overrides
+        (trg_preloadOverride.and(stateTrg_idle).and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        (trg_autonIntakeOverride.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (trg_autonScoreOverride.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
     }
 
-    public void resetAfterAuton() {
-        m_preload = false;
-        m_autonScoreReq = false;
+    private void configureTeleopTrgs() {
+        (stateTrg_idle.and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (stateTrg_intook.and(trg_teleopScoreEleReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_scoreReady.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        (stateTrg_idle.and(trg_climbUpReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_CLIMB));
+        (stateTrg_eleToClimb.and(trg_eleNearSetpoint).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMB_READY));
+        (stateTrg_climbReady.and(trg_climbDownReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMBING));
+        (stateTrg_climbing.and(trg_eleNearSetpoint).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMBED));
+
+        // overrides
+        (trg_toHomeOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
+        (trg_teleopIntakeEleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (trg_teleopIntakeOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (trg_teleopScoreEleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (trg_teleopScoreOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+
+        (trg_eleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_OVERRIDE));
+        (stateTrg_eleOverride.and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (stateTrg_eleOverride.and(trg_teleopScoreEleReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_eleOverride.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
     }
 
-    public void autonPreload() {
-        m_preload = true;
+    private void configureStateTransitions() {
+        (stateTrg_eleToIntake.and(trg_eleNearSetpoint))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (stateTrg_intaking.and(trg_botSensor))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        (stateTrg_eleToScore.and(trg_eleNearSetpoint))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
+        (stateTrg_score.and(trg_botSensor.negate()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+        (stateTrg_scored.and(trg_toHomeOverride.negate()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
     }
 
-    public void autonScore() {
-        m_autonScoreReq = true;
+    private void configureStateActions() {
+        (stateTrg_idle)
+            .onTrue(m_ele.toHeight(EleHeight.HOME));
+        (stateTrg_eleToIntake)
+            .onTrue(m_ele.toHeight(EleHeight.HP));
+        (stateTrg_intaking)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+        (stateTrg_intook)
+            .onTrue(
+                Commands.sequence(
+                    m_coral.setCoralMotorAction(0),
+                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                )
+            );
+        (stateTrg_eleToScore)
+            .onTrue(m_ele.toHeight(m_curHeightReq));
+        (stateTrg_scoreReady)
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> teleopCanScoreReq = true),
+                    driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                )
+            );
+        (stateTrg_score)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+        (stateTrg_scored)
+            .onTrue(
+                Commands.sequence(
+                    m_coral.setCoralMotorAction(0),
+                    Commands.runOnce(() -> teleopCanScoreReq = false)
+                )
+            );
+        
+        (stateTrg_eleToClimb)
+            .onTrue(m_ele.toHeight(EleHeight.CLIMB_UP));
+        (stateTrg_climbReady)
+            .onTrue(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs));
+        (stateTrg_climbing)
+            .onTrue(m_ele.toHeight(EleHeight.CLIMB_DOWN));
+        (stateTrg_climbed)
+            .onTrue(Commands.print("yippeee we done we done"));
+        
+        (stateTrg_eleOverride)
+            .onTrue(m_ele.overrideToHeight(m_eleOverrideSupplier.getAsDouble()));
     }
 
     private Command driverRumble(double intensity, double secs) {
-        return Commands.startEnd(
-            () -> {
-                if(!m_driverRumbled) {
-                    m_driverRumbler.accept(intensity);
-                    m_driverRumbled = true;
-                }
-            },
-            () -> m_driverRumbler.accept(0)
+        return Commands.run(
+           () -> m_driverRumbler.accept(intensity)
         ).withTimeout(secs);
     }
 
-    private Command changeState(CoralState newState) {
-        return Commands.runOnce(() -> {
-            if(m_coralState.equals(newState)) {
-                return;
-            }
-            CoralState prevState = m_coralState;
-            m_coralState = newState;
-            Commands.print("state change from " + prevState + " to " + m_coralState);
-        }).withName("stateChange_to" + newState);
+    private Command manipRumble(double intensity, double secs) {
+        return Commands.run(
+            () -> m_manipRumbler.accept(intensity)
+        ).withTimeout(secs);
     }
 
-    public Command forceStateChange(CoralState state) {
-        return Commands.parallel(
-            changeState(state)
-        );
+    public void requestIsPreload(boolean preload) {
+        preloadOverride = preload;
     }
 
-    public CoralState getCoralState() {
-        return m_coralState;
+    public Command autonRequestEleToScore(EleHeight height) {
+        return requestEleToScore(height).alongWith(Commands.runOnce(() -> autonScoreEleReq = true));
     }
 
-    public enum CoralState {
-        IDLE(0), // nothing's in there (like my brain)
-        INTAKING(1), // wheels are running to secure the coral. runs between topBeamBreak breaking and botBeamBreak breaking
-        INTOOK(2), // coral is secure, but ele isn't in place
-        SCORE_READY(3), // ele at the right scoring height
-        SCORING(4); // wheels are running to expel the coral. returns to idle when botBeamBreak unbreaks
+    public Command requestEleToScore(EleHeight height) {
+        return Commands.runOnce(() -> m_curHeightReq = height);
+    }
 
-        public int m_index;
+    public Command autonScoreReq() {
+        return Commands.runOnce(() -> autonScoreReq = true);
+    }
 
-        private CoralState(int index) {
-            m_index = index;
+    public Command autonRequestToIntake() {
+        return requestToIntake().alongWith(Commands.runOnce(() -> autonIntakeReq = true));
+    }
+
+    public Command requestToIntake() {
+        return Commands.runOnce(() -> m_curHeightReq = EleHeight.HP);
+    }
+
+    public void logState() {
+        log_state.accept(m_state.idx);
+    }
+
+    public enum State {
+        IDLE(0),
+        ELE_TO_INTAKE(1),
+        INTAKING(2),
+        INTOOK(3),
+        ELE_TO_SCORE(4),
+        SCORE_READY(5),
+        SCORING(6),
+        SCORED(7),
+
+        ELE_TO_CLIMB(8),
+        CLIMB_READY(9),
+        CLIMBING(10),
+        CLIMBED(11),
+
+        ELE_OVERRIDE(12);
+
+        public final int idx;
+  
+        private State(int index) {
+            idx = index;
         }
     }
 }

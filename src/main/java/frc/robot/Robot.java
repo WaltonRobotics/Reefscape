@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.Coralk.kCoralSpeed;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -15,13 +16,20 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.autons.AutonChooser;
+import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
@@ -45,90 +53,89 @@ public class Robot extends TimedRobot {
   private final CommandXboxController manipulator = new CommandXboxController(1);
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
-  private final Algae algae = new Algae();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
-
-  public final Superstructure superstructure =  new Superstructure(algae, coral, elevator, (intensity) -> driverRumble(intensity), driver.rightTrigger());
+  private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory, drivetrain, elevator);
-  private final AutoChooser autoChooser = new AutoChooser();
+  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+
+  private final Trigger trg_teleopEleHeightReq;
+  // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
+  private final Trigger trg_eleOverride;
+  // override button
+  private final Trigger trg_manipDanger;
+  private final Trigger trg_driverDanger;
 
   public Robot() {
-    /* autossss */
-    autoChooser.addRoutine("auton", () -> waltAutonFactory.getAuton());
+    // pov is the same thing as dpad right?
+    trg_teleopEleHeightReq = manipulator.povDown() //L1
+      .or(manipulator.povRight()) // L2
+      .or(manipulator.povLeft()) // L3
+      .or(manipulator.povUp()); // L4
 
-    SmartDashboard.putData("Auto Chooser", autoChooser);
+    trg_eleOverride = 
+      manipulator.rightBumper().negate()
+      .and(manipulator.leftTrigger().negate())
+      .and(trg_teleopEleHeightReq.negate());
+    
+    trg_manipDanger = manipulator.b();
+    trg_driverDanger = driver.b();
+
+    superstructure = new Superstructure(
+      coral, 
+      elevator, 
+      manipulator.rightBumper(), 
+      trg_teleopEleHeightReq,
+      driver.rightTrigger(), 
+      trg_manipDanger.and(manipulator.rightBumper()),
+      trg_manipDanger.and(manipulator.leftTrigger()), 
+      trg_manipDanger.and(trg_teleopEleHeightReq),
+      trg_driverDanger.and(driver.rightTrigger()), 
+      manipulator.leftBumper(),
+      manipulator.a().and(manipulator.povUp()),
+      manipulator.a().and(manipulator.povDown()),
+      trg_manipDanger.and(trg_eleOverride),
+      () -> manipulator.getLeftY(),
+      (intensity) -> driverRumble(intensity), 
+      (intensity) -> manipRumble(intensity));
 
     configureBindings();
   }
 
   private void configureBindings() {
-        // Note that X is defined as forward according to WPILib convention,
-        // and Y is defined as to the left according to WPILib convention.
-        drivetrain.setDefaultCommand(
-            // Drivetrain will execute this command periodically
-            drivetrain.applyRequest(() ->
-                drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                    .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-            )
-        );
+      // Note that X is defined as forward according to WPILib convention,
+      // and Y is defined as to the left according to WPILib convention.
+      drivetrain.setDefaultCommand(
+          // Drivetrain will execute this command periodically
+          drivetrain.applyRequest(() ->
+              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+          )
+      );
 
-        driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-        driver.b().whileTrue(drivetrain.applyRequest(() ->
-            point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-        ));
+      driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+      driver.y().whileTrue(drivetrain.applyRequest(() ->
+          point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+      ));
+      driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-        // Run SysId routines when holding back/start and X/Y.
-        // Note that each routine should be run exactly once in a single log.
-        //joystick.back().and(joystick.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-        //joystick.back().and(joystick.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-        //joystick.start().and(joystick.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-        //joystick.start().and(joystick.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+      /* 
+       * programmer buttons
+       * make sure u comment out when not in use
+       */
+      // Run SysId routines when holding back/start and X/Y.
+      // Note that each routine should be run exactly once in a single log.
+      //driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+      //driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+      //driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+      //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+      //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+      //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-        // reset the field-centric heading on left bumper press
-        driver.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+      drivetrain.registerTelemetry(logger::telemeterize);
 
-        //joystick.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-        //joystick.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-
-        /*TODO: test to see if this actually works */
-        // driver controls (not sure abt alignment inputs)
-        driver.rightTrigger().whileTrue(coral.score());
-        driver.rightTrigger().whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
-        
-        // wrist position controls
-        manipulator.a().onTrue(algae.toAngle(Algae.WristPosition.HOME));
-        manipulator.x().onTrue(algae.toAngle(Algae.WristPosition.INTAKE));
-        manipulator.y().onTrue(algae.toAngle(Algae.WristPosition.PROCESSOR_SHOOT));
-
-        // intake controls
-        manipulator.leftTrigger()
-          .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.INTAKE));
-        manipulator.rightTrigger()
-          .whileTrue(algae.setWheelAction(Algae.IntakeSpeed.PROCESSOR_SHOOT));
-        manipulator.leftTrigger().and(manipulator.b())
-          .whileTrue(coral.intake());
-        
-        // elevator controls
-        manipulator.leftBumper().onTrue(elevator.toHome());
-        manipulator.povDown().onTrue(elevator.setPosition(Elevator.EleHeights.L1));
-        manipulator.povRight().onTrue(elevator.setPosition(Elevator.EleHeights.L2));
-        manipulator.povLeft().onTrue(elevator.setPosition(Elevator.EleHeights.L3));
-        manipulator.povUp().onTrue(elevator.setPosition(Elevator.EleHeights.L4));
-        manipulator.rightStick().whileTrue(elevator.setPosition(manipulator.getRightX())); // might need lambda?
-
-        // climber controls
-        manipulator.a().and(manipulator.povUp()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_UP));
-        manipulator.a().and(manipulator.povDown()).onTrue(elevator.setPosition(Elevator.EleHeights.CLIMB_DOWN));
-        
-        //testing buttons
-        // driver.rightBumper().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-        // driver.rightTrigger().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-
-        drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   private void driverRumble(double intensity) {
@@ -136,6 +143,16 @@ public class Robot extends TimedRobot {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
 		}
 	}
+
+  private void manipRumble(double intensity) {
+		if (!DriverStation.isAutonomous()) {
+			manipulator.getHID().setRumble(RumbleType.kBothRumble, intensity);
+		}
+	}
+
+  @Override
+  public void robotInit(){
+  }
 
   @Override
   public void robotPeriodic() {
@@ -153,8 +170,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    superstructure.autonPreload();
-    m_autonomousCommand = autoChooser.selectedCommand();
+    m_autonomousCommand = null; // TODO: fill out
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -172,7 +188,7 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    superstructure.resetAfterAuton();
+
   }
 
   @Override
