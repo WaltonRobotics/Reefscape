@@ -86,9 +86,7 @@ public class Constants {
             .withKS(0.25)
             .withKV(0.12)
             .withKA(0.01)
-            .withKP(60)
-            .withKI(0)
-            .withKD(0.5);
+            .withKP(60);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kIntakeCurrentLimitConfigs);
     }
