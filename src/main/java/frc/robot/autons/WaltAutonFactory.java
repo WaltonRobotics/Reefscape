@@ -40,13 +40,13 @@ public class WaltAutonFactory {
                     new Elastic.Notification(
                         Elastic.Notification.NotificationLevel.ERROR, 
                         "Invalid reef to HP AutonCycle", 
-                        "UR AUTON SUX AND HAS AN INVALID REEF-TO-HP YOU DUMB funnel cake"
+                        "INVALID REEF-TO-HP: if this auton was a cat, you just killed it."
                     );
         Elastic.Notification hpToReefError = 
                         new Elastic.Notification(
                             Elastic.Notification.NotificationLevel.ERROR, 
                             "Invalid HP to reef AutonCycle", 
-                            "UR AUTON SUX AND HAS AN INVALID HP-TO-REEF YOU DUMB funnel cake");
+                            "INVALID HP-TO-REEF: if this auton was a cat, you just killed it.");
     
         public AutonCycle(ReefLocs _reef, EleHeight _height, HPStation _hp) {
             reefLoc = _reef;
@@ -101,9 +101,13 @@ public class WaltAutonFactory {
         );
 
         firstScoreTraj.atTime("eleUp")
-            .onTrue(Commands.runOnce(() -> superstructure.requestIsPreload(true))
-            .andThen(superstructure.autonRequestEleToScore(firstHeight))
-            .andThen(Commands.runOnce(() -> superstructure.requestIsPreload(false))));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> superstructure.requestIsPreload(true)),
+                    superstructure.autonRequestEleToScore(firstHeight),
+                    Commands.runOnce(() -> superstructure.requestIsPreload(false))
+                )
+            );
         firstScoreTraj.done().onTrue(
             Commands.sequence(
                 Commands.parallel(
@@ -114,8 +118,7 @@ public class WaltAutonFactory {
             )
         );
         firstLoadTraj.atTime("intake")
-            .onTrue(superstructure.autonRequestToIntake()
-            .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+            .onTrue(superstructure.autonRequestToIntake());
         // now ur at the HP
 
         // list of traj start cmds
@@ -135,7 +138,7 @@ public class WaltAutonFactory {
                 lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
             }
 
-            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycles.get(cycleIdx).height));
+            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycle.height));
             
             hpToReefTraj.done().onTrue(
                 Commands.sequence(
@@ -148,8 +151,7 @@ public class WaltAutonFactory {
             );
 
             reefToHpTraj.atTime("intake")
-                .onTrue(superstructure.autonRequestToIntake()
-                .alongWith(Commands.print("RunTheIntakePleaseeeeeeeeeeeeee")));
+                .onTrue(superstructure.autonRequestToIntake());
         }
 
         firstLoadTraj.done().onTrue(trajList.get(0).cmd());
