@@ -67,6 +67,32 @@ public abstract class TrajsAndLocs {
             OptimalRightStartCycles.add(REEF_F);
             OptimalRightStartCycles.add(REEF_G);
         }
+
+        /*
+         * just to make looping throuugh and displaying all the different ReefLocs easier? will check if good ltr!
+         */
+        public static ArrayList<ReefLocs> OptimalLeftHPCycles = new ArrayList<>();
+        static{
+            OptimalLeftHPCycles.add(REEF_A);
+            OptimalLeftHPCycles.add(REEF_B);
+            OptimalLeftHPCycles.add(REEF_G);
+            OptimalLeftHPCycles.add(REEF_H);
+            OptimalLeftHPCycles.add(REEF_I);
+            OptimalLeftHPCycles.add(REEF_J);
+            OptimalLeftHPCycles.add(REEF_K);
+            OptimalLeftHPCycles.add(REEF_L);
+        }
+        public static ArrayList<ReefLocs> OptimalRightHPCycles = new ArrayList<>();
+        static{
+            OptimalRightHPCycles.add(REEF_A);
+            OptimalRightHPCycles.add(REEF_B);
+            OptimalRightHPCycles.add(REEF_C);
+            OptimalRightHPCycles.add(REEF_D);
+            OptimalRightHPCycles.add(REEF_E);
+            OptimalRightHPCycles.add(REEF_F);
+            OptimalRightHPCycles.add(REEF_G);
+            OptimalRightHPCycles.add(REEF_H);
+        }
     }
 
     // will get put on autonchooser

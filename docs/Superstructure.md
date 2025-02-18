@@ -12,7 +12,7 @@
 
 ### State Diagram
 
-This diagram is very basic, and I'm sleepy. Also at any point, we might go back to IDLE with driver req.
+This diagram is very basic, and I'm sleepy. Also at any point, we might go back to IDLE with driver req. Also also an OVERRIDE request may happen at any time. This will let the manipulator move the elevator freely. You can exit OVERRIDE with any driver request except climb requests.
 
 ```mermaid
 stateDiagram
@@ -24,6 +24,11 @@ stateDiagram
     state "SCORE_READY" as s6
     state "SCORING" as s7
     state "SCORED" as s8
+    state "ELE_TO_CLIMB" as s9
+    state "CLIMB_READY" as s10
+    state "CLIMBING" as s11
+    state "CLIMBED" as s12
+    state "OVERRIDE" as s13
 
     s1 --> s2: IntakeReq->T
     s1 --> s4: BotSensor->T
@@ -35,21 +40,29 @@ stateDiagram
     s7 --> s8: BotSensor->F & ScoreReq->F
     s8 --> s2: Automatic
     s8 --> s1: ToHomeReq->T
+    s1 --> s9: ClimbUpReq->T
+    s9 --> s10: EleAtClimb->T
+    s10 --> s11: ClimbDownReq->T
+    s11 --> s12: EleAtHome->T
 
 ```
 
 ### Output Truth Table
 
-|    **State**     | **Coral** |**Elevator** | **Open Requests**  |
-| :--------------: | :-------: | :--------:  | :----------------: |
-|     **IDLE**     | Unrunning |    HOME     | IntakeReq          |
-|**ELE_TO_INTAKE** | Unrunning |Move->INTAKE | n/a                |
-|  **INTAKING**    | Running   | INTAKE      | n/a                |
-|  **INTOOK**      | Unrunning | INTAKE      | ScoreEleReq        |
-|  **ELE_TO_SCORE**| Unrunning |Move->SCORE  | n/a                |
-| **SCORE_READY**  | Unrunning | SCORE       | ScoreReq           |
-| **SCORING**        | Running   |  SCORE      | n/a                |
-| **SCORED**       | Unrunning | SCORE       | n/a                |
+|    **State**     | **Coral** |**Elevator**   | **Open Requests**  |
+| :--------------: | :-------: | :-----------: | :----------------: |
+|     **IDLE**     | Unrunning |    HOME       | IntakeReq, ClimbReq|
+|**ELE_TO_INTAKE** | Unrunning |Move->INTAKE   | n/a                |
+|  **INTAKING**    | Running   | INTAKE        | n/a                |
+|  **INTOOK**      | Unrunning | INTAKE        | ScoreEleReq        |
+|  **ELE_TO_SCORE**| Unrunning |Move->SCORE    | n/a                |
+| **SCORE_READY**  | Unrunning | SCORE         | ScoreReq           |
+| **SCORING**      | Running   |  SCORE        | n/a                |
+| **SCORED**       | Unrunning | SCORE         | n/a                |
+| **ELE_TO_CLIMB** | Unrunning |Move->CLIMBUP  | n/a                |
+| **CLIMB_READY**  | Unrunning | CLIMBUP       | ClimbDownReq       |
+| **CLIMBING**     | Unrunning |Move->CLIMBDOWN| n/a                |
+| **CLIMBED**      | Unrunning | HOME          | n/a                |     
 
 
 

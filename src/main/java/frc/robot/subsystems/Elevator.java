@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import static frc.robot.Constants.ElevatorK.*;
 
@@ -35,6 +36,8 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_left = new TalonFX(kLeftCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
+
+    private double m_desiredHeight = 0;
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -87,13 +90,34 @@ public class Elevator extends SubsystemBase {
     /* 
      * use for scoring
      */
-    public Command toPosition(EleHeight heightMeters) {
+    public Command toHeight(EleHeight heightMeters) {
+        return toHeight(heightMeters.meters);
+    }
+
+    private Command toHeight(double heightMeters) {
+        m_desiredHeight = heightMeters;
+        double heightRots = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
         return runOnce(
             () -> {
-                m_MMEVRequest = m_MMEVRequest.withPosition(heightMeters.pulleyRotations);
-                log_elevatorDesiredPosition.accept(heightMeters.meters);
-                m_right.setControl(m_MMEVRequest);}
+                m_MMEVRequest = m_MMEVRequest.withPosition(heightRots);
+                log_elevatorDesiredPosition.accept(Meters.of(heightMeters).magnitude());
+                m_right.setControl(m_MMEVRequest);
+            }
         ).until(() -> nearSetpoint());
+    }
+
+    public Command overrideToHeight(double input) {
+        if(input > 0) {
+            return Commands.sequence(
+                Commands.runOnce(() -> m_desiredHeight += Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's increaseAngle() method in Aim
+                toHeight(m_desiredHeight)
+            );
+        } else if(input < 0) {
+            return Commands.sequence(
+                Commands.runOnce(() -> m_desiredHeight -= Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's decreaseAngle() method in Aim
+                toHeight(m_desiredHeight)
+            );
+        } else { return Commands.none();}
     }
 
     @Override
@@ -131,11 +155,9 @@ public class Elevator extends SubsystemBase {
         HP(Units.inchesToMeters(36)); //human player station intake height
 
         public final double meters;
-        public final double pulleyRotations;
 
        private EleHeight(double heightMeters){
             this.meters = heightMeters;
-            pulleyRotations = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
         }
     }
 
