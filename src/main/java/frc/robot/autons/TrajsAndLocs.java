@@ -1,5 +1,7 @@
 package frc.robot.autons;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,9 +18,9 @@ public abstract class TrajsAndLocs {
      */
     public static enum StartingLocs {
         // TODO: fill out the Real Values
-        LEFT(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
-        MID(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
-        RIGHT(new Pose2d(1, 2, Rotation2d.fromDegrees(0)));
+        LEFT(new Pose2d(Meters.of(7.25), Meters.of(5.73), Rotation2d.fromDegrees(0))),
+        MID(new Pose2d(Meters.of(7.25), Meters.of(4.025), Rotation2d.fromDegrees(0))),
+        RIGHT(new Pose2d(Meters.of(7.25), Meters.of(2.42), Rotation2d.fromDegrees(0)));
 
         public final Pose2d pose;
         private StartingLocs(Pose2d _pose) {
@@ -27,19 +29,25 @@ public abstract class TrajsAndLocs {
     }
 
     public static enum ReefLocs {
-        REEF_H,
-        REEF_I,
-        REEF_J,
-        REEF_K,
-        REEF_L,
-        REEF_A,
-        REEF_B,
-        REEF_C,
-        REEF_D,
-        REEF_E,
-        REEF_F,
-        REEF_G;
+        REEF_A(new Pose2d(Meters.of(2.91), Meters.of(4.22), Rotation2d.fromRadians(0))),
+        REEF_B(new Pose2d(Meters.of(2.88), Meters.of(3.89), Rotation2d.fromRadians(0))),
+        REEF_C(new Pose2d(Meters.of(3.55), Meters.of(2.73), Rotation2d.fromRadians(1.01))),
+        REEF_D(new Pose2d(Meters.of(3.82), Meters.of(2.57), Rotation2d.fromRadians(1.01))),
+        REEF_E(new Pose2d(Meters.of(5.16), Meters.of(2.52), Rotation2d.fromRadians(2.11))),
+        REEF_F(new Pose2d(Meters.of(5.41), Meters.of(2.72), Rotation2d.fromRadians(2.11))),
+        REEF_G(new Pose2d(Meters.of(6.10), Meters.of(3.86), Rotation2d.fromRadians(3.14))),
+        REEF_H(new Pose2d(Meters.of(6.10), Meters.of(4.17), Rotation2d.fromRadians(3.14))),
+        REEF_I(new Pose2d(Meters.of(5.43), Meters.of(5.28), Rotation2d.fromRadians(-2.12))),
+        REEF_J(new Pose2d(Meters.of(5.10), Meters.of(5.42), Rotation2d.fromRadians(-2.12))),
+        REEF_K(new Pose2d(Meters.of(3.87), Meters.of(5.42), Rotation2d.fromRadians(-1.03))),
+        REEF_L(new Pose2d(Meters.of(3.54), Meters.of(5.30), Rotation2d.fromRadians(-1.03)));
 
+
+        public final Pose2d pose;
+        private ReefLocs(Pose2d _pose) {
+            pose = _pose;
+        }
+        
         /* 
          * enums used in autonchooser
          * list of best possible next locs given the start cycle u were just at
@@ -97,8 +105,13 @@ public abstract class TrajsAndLocs {
 
     // will get put on autonchooser
     public static enum HPStation {
-        HP_LEFT,
-        HP_RIGHT;
+        HP_LEFT(new Pose2d(Meters.of(1.45), Meters.of(6.89), Rotation2d.fromRadians(-0.90))),
+        HP_RIGHT(new Pose2d(Meters.of(1.53), Meters.of(1.16), Rotation2d.fromRadians(0.92)));
+
+        public final Pose2d pose;
+        private HPStation(Pose2d _pose) {
+            pose = _pose;
+        }
     }
 
     public static class ReefHPPair extends Pair<ReefLocs, HPStation> {
