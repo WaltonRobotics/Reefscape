@@ -1,17 +1,18 @@
 package frc.robot.subsystems;
 
 import static frc.robot.Constants.Coralk.kCoralSpeed;
-import static frc.robot.Constants.RobotK.*;
 
 import java.util.function.DoubleConsumer;
+import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
+import static frc.robot.Constants.AlgaeK.kLogTab;
+
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.IntLogger;
@@ -29,17 +30,7 @@ public class Superstructure {
     private boolean autonScoreEleReq = false;
     private boolean autonScoreReq = false;
 
-    private boolean driverRumbled = false;
-    private boolean manipRumbled = false;
-
     private boolean teleopCanScoreReq = false;
-
-    // overrides
-    private boolean teleopIntakeEleOverride = false; // manip only
-    private boolean teleopIntakeOverride = false; // manip only
-    private boolean teleopScoreOverride = false; // drive only
-    private boolean teleopScoreEleOverride = false; // manip only
-    private boolean toHomeReq = false; // manip only
 
     private boolean preloadOverride = false;
     private boolean autonIntakeOverride = false;
@@ -54,15 +45,19 @@ public class Superstructure {
     private final Trigger trg_teleopScoreEleReq;
     private final Trigger trg_autonScoreReq = new Trigger(() -> autonScoreReq);
     private final Trigger trg_teleopScoreReq;
-    private final Trigger trg_botSensorFalsed;
+
+    private final Trigger trg_climbUpReq;
+    private final Trigger trg_climbDownReq;
+
+    private final Trigger trg_eleOverride;
 
     private final Trigger trg_eleNearSetpoint;
 
-    private final Trigger trg_teleopIntakeEleOverride = new Trigger(() -> teleopIntakeEleOverride);
-    private final Trigger trg_teleopIntakeOverride = new Trigger(() -> teleopIntakeOverride);
-    private final Trigger trg_teleopScoreOverride = new Trigger(() -> teleopScoreOverride);
-    private final Trigger trg_teleopScoreEleOverride = new Trigger(() -> teleopScoreEleOverride);
-    private final Trigger trg_toHomeOverride = new Trigger(() -> toHomeReq);
+    private final Trigger trg_teleopIntakeEleOverride;
+    private final Trigger trg_teleopIntakeOverride;
+    private final Trigger trg_teleopScoreOverride;
+    private final Trigger trg_teleopScoreEleOverride;
+    private final Trigger trg_toHomeOverride;
 
     private final Trigger trg_preloadOverride = new Trigger(() -> preloadOverride);
     private final Trigger trg_autonIntakeOverride = new Trigger(() -> autonIntakeOverride);
@@ -77,13 +72,32 @@ public class Superstructure {
     public final Trigger stateTrg_score = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
 
+    public final Trigger stateTrg_eleToClimb = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_CLIMB);
+    public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
+    public final Trigger stateTrg_climbing = new Trigger(stateEventLoop, () -> m_state == State.CLIMBING);
+    public final Trigger stateTrg_climbed = new Trigger(stateEventLoop, () -> m_state == State.CLIMBED);
+
+    public final Trigger stateTrg_eleOverride = new Trigger(stateEventLoop, () -> m_state == State.ELE_OVERRIDE);
+    private final DoubleSupplier m_eleOverrideSupplier;
+
     private EleHeight m_curHeightReq = EleHeight.HOME;
+
+    private IntLogger log_state = WaltLogger.logInt(kLogTab, "state");
 
     public Superstructure(
         Coral coral, Elevator ele, 
         Trigger teleopIntakeReq,
         Trigger teleopEleHeightReq, 
         Trigger teleopScoreReq, 
+        Trigger teleopIntakeEleOverride,
+        Trigger teleopIntakeOverride,
+        Trigger teleopScoreEleOverride,
+        Trigger teleopScoreOverride,
+        Trigger toHomeOverride,
+        Trigger climbUpReq,
+        Trigger climbDownReq,
+        Trigger override,
+        DoubleSupplier eleOverrideSupplier,
         DoubleConsumer drivRumble, DoubleConsumer manipRumble
     ) {
         m_coral = coral;
@@ -97,7 +111,18 @@ public class Superstructure {
         trg_teleopScoreEleReq = teleopEleHeightReq;
         trg_teleopScoreReq = new Trigger(() -> teleopScoreReq.getAsBoolean() && teleopCanScoreReq);
         trg_eleNearSetpoint = new Trigger(() -> m_ele.nearSetpoint());
-        trg_botSensorFalsed = new Trigger(() -> !m_coral.bs_botBeamBreak.getAsBoolean());
+
+        trg_teleopIntakeEleOverride = teleopIntakeEleOverride;
+        trg_teleopIntakeOverride = teleopIntakeOverride;
+        trg_teleopScoreOverride = teleopScoreOverride;
+        trg_teleopScoreEleOverride = teleopScoreEleOverride;
+        trg_toHomeOverride = toHomeOverride;
+
+        trg_climbUpReq = climbUpReq;
+        trg_climbDownReq = climbDownReq;
+
+        trg_eleOverride = override;
+        m_eleOverrideSupplier = eleOverrideSupplier;
         
         m_state = State.IDLE;
 
@@ -109,33 +134,58 @@ public class Superstructure {
 
     private void configureAutonTrgs() {
         // these are treated kinda differently in auton than in teleop so i differentiated them again
-        (stateTrg_idle.and(trg_autonIntakeReq))
+        (stateTrg_idle.and(trg_autonIntakeReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
-        (stateTrg_intook.and(trg_autonScoreEleReq))
+        (stateTrg_intook.and(trg_autonScoreEleReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (stateTrg_scoreReady.and(trg_autonScoreReq))
+        (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         
         // overrides
-        (trg_preloadOverride.and(stateTrg_idle)).onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (trg_autonIntakeOverride).onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (trg_autonScoreOverride).onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        (trg_preloadOverride.and(stateTrg_idle).and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        (trg_autonIntakeOverride.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (trg_autonScoreOverride.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
     }
 
     private void configureTeleopTrgs() {
-        (stateTrg_idle.and(trg_teleopIntakeReq))
+        (stateTrg_idle.and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
-        (stateTrg_intook.and(trg_teleopScoreEleReq))
+        (stateTrg_intook.and(trg_teleopScoreEleReq).and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (stateTrg_scoreReady.and(trg_teleopScoreReq))
+        (stateTrg_scoreReady.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        (stateTrg_idle.and(trg_climbUpReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_CLIMB));
+        (stateTrg_eleToClimb.and(trg_eleNearSetpoint).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMB_READY));
+        (stateTrg_climbReady.and(trg_climbDownReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMBING));
+        (stateTrg_climbing.and(trg_eleNearSetpoint).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.CLIMBED));
 
         // overrides
-        (trg_toHomeOverride).onTrue(Commands.runOnce(() -> m_state = State.IDLE));
-        (trg_teleopIntakeEleOverride).onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
-        (trg_teleopIntakeOverride).onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (trg_teleopScoreEleOverride).onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (trg_teleopScoreOverride).onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+        (trg_toHomeOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
+        (trg_teleopIntakeEleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (trg_teleopIntakeOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        (trg_teleopScoreEleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (trg_teleopScoreOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+
+        (trg_eleOverride.and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_OVERRIDE));
+        (stateTrg_eleOverride.and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+        (stateTrg_eleOverride.and(trg_teleopScoreEleReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
+        (stateTrg_eleOverride.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()))
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
     }
 
     private void configureStateTransitions() {
@@ -145,44 +195,67 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
-        (stateTrg_score.and(trg_botSensorFalsed))
+        (stateTrg_score.and(trg_botSensor.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
-        (stateTrg_scored)
+        (stateTrg_scored.and(trg_toHomeOverride.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
     }
 
     private void configureStateActions() {
-        (stateTrg_idle).onTrue(m_ele.toPosition(EleHeight.HOME));
-        (stateTrg_eleToIntake).onTrue(m_ele.toPosition(EleHeight.HP));
-        (stateTrg_intaking).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
-        (stateTrg_intook).onTrue(m_coral.setCoralMotorAction(0).andThen(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
-        (stateTrg_eleToScore).onTrue(m_ele.toPosition(m_curHeightReq));
-        (stateTrg_scoreReady).onTrue(Commands.runOnce(() -> teleopCanScoreReq = true).andThen(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)));
-        (stateTrg_score).onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
-        (stateTrg_scored).onTrue(m_coral.setCoralMotorAction(0).alongWith(Commands.runOnce(() -> teleopCanScoreReq = false)));
+        (stateTrg_idle)
+            .onTrue(m_ele.toHeight(EleHeight.HOME));
+        (stateTrg_eleToIntake)
+            .onTrue(m_ele.toHeight(EleHeight.HP));
+        (stateTrg_intaking)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+        (stateTrg_intook)
+            .onTrue(
+                Commands.sequence(
+                    m_coral.setCoralMotorAction(0),
+                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                )
+            );
+        (stateTrg_eleToScore)
+            .onTrue(m_ele.toHeight(m_curHeightReq));
+        (stateTrg_scoreReady)
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> teleopCanScoreReq = true),
+                    driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                )
+            );
+        (stateTrg_score)
+            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+        (stateTrg_scored)
+            .onTrue(
+                Commands.sequence(
+                    m_coral.setCoralMotorAction(0),
+                    Commands.runOnce(() -> teleopCanScoreReq = false)
+                )
+            );
+        
+        (stateTrg_eleToClimb)
+            .onTrue(m_ele.toHeight(EleHeight.CLIMB_UP));
+        (stateTrg_climbReady)
+            .onTrue(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs));
+        (stateTrg_climbing)
+            .onTrue(m_ele.toHeight(EleHeight.CLIMB_DOWN));
+        (stateTrg_climbed)
+            .onTrue(Commands.print("yippeee we done we done"));
+        
+        (stateTrg_eleOverride)
+            .onTrue(m_ele.overrideToHeight(m_eleOverrideSupplier.getAsDouble()));
     }
 
     private Command driverRumble(double intensity, double secs) {
-        return Commands.startEnd(
-            () -> {
-                if(!driverRumbled) {
-                    m_driverRumbler.accept(intensity);
-                    driverRumbled = true;
-                }
-            },
-            () -> m_driverRumbler.accept(0)
+        return Commands.run(
+           () -> m_driverRumbler.accept(intensity)
         ).withTimeout(secs);
     }
 
     private Command manipRumble(double intensity, double secs) {
-        return Commands.startEnd(
-            () -> {
-                if(!manipRumbled) {
-                    m_manipRumbler.accept(intensity);
-                    manipRumbled = true;
-                }
-            },
-            () -> m_manipRumbler.accept(0)
+        return Commands.run(
+            () -> m_manipRumbler.accept(intensity)
         ).withTimeout(secs);
     }
 
@@ -210,8 +283,8 @@ public class Superstructure {
         return Commands.runOnce(() -> m_curHeightReq = EleHeight.HP);
     }
 
-    public int getStateIdx() {
-        return m_state.idx;
+    public void logState() {
+        log_state.accept(m_state.idx);
     }
 
     public enum State {
@@ -222,7 +295,14 @@ public class Superstructure {
         ELE_TO_SCORE(4),
         SCORE_READY(5),
         SCORING(6),
-        SCORED(7);
+        SCORED(7),
+
+        ELE_TO_CLIMB(8),
+        CLIMB_READY(9),
+        CLIMBING(10),
+        CLIMBED(11),
+
+        ELE_OVERRIDE(12);
 
         public final int idx;
   
