@@ -2,6 +2,8 @@ package frc.robot.autons;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import choreo.auto.AutoFactory;
@@ -35,49 +37,52 @@ public class AutonChooser {
                 return String.valueOf(m_cycles);
             }
         }
-    
+        //TODO: change suppliers to consumers/listeners
         private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
-        private static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
-    
-        private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
+        public static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
+        //private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
+        public static StartingLocs startLocChosen = startingPositionChooser.getSelected();
     
         private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
-        private static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
-        
-        public static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
+        public static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
+        //private static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
+        public static ReefLocs firstScoringChosen = firstScoringChooser.getSelected();
        
         private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
-        private static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
-    
-        private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
+        public static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+        //private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
+        public static HPStation hpStationChosen = hpStationChooser.getSelected();
     
         private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
-        private static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
-        
-        public static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
+        public static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
+        //private static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
+        public static ReefLocs hpToReefChosen = hpToReefChooser.getSelected();
     
         private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class); 
-        private static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
-    
-        public static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
+        public static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
+        //private static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
+        public static HPStation reefToHPChosen = reefToHPChooser.getSelected();
     
         private static EnumMap<NumCycles, String> cyclesMap = new EnumMap<>(NumCycles.class);
-        private static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
-    
-        private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
+        public static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
+        //private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
+        public static NumCycles cyclesChosen = cyclesChooser.getSelected();
+
+        private static EnumMap<EleHeight, String> startingHeightMap = new EnumMap<>(Elevator.EleHeight.class);
+        public static SendableChooser<EleHeight> startingHeightChooser = new SendableChooser<EleHeight>();
+        //private static Supplier<EleHeight> eleHeightChosen = () -> eleHeightChooser.getSelected();
+        public static EleHeight startingHeightChosen = startingHeightChooser.getSelected();
     
         private static EnumMap<EleHeight, String> eleHeightMap = new EnumMap<>(Elevator.EleHeight.class);
-        private static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
-    
-        private static Supplier<EleHeight> eleHeightChosen = () -> eleHeightChooser.getSelected();
-    
-    
+        public static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
+        //private static Supplier<EleHeight> eleHeightChosen = () -> eleHeightChooser.getSelected();
+        public static EleHeight eleHeightChosen = eleHeightChooser.getSelected();
     
         static{
             SmartDashboard.putData("starting position chooser", startingPositionChooser);   
             SmartDashboard.putData("human player station chooser", hpStationChooser);
             SmartDashboard.putData("number of cycles chooser", cyclesChooser);
-            SmartDashboard.putData("starting height chooser", eleHeightChooser);
+            SmartDashboard.putData("starting height chooser", startingHeightChooser);
         }
     
     
@@ -111,6 +116,11 @@ public class AutonChooser {
             reefToHPMap.put(hpStation, description);
             reefToHPChooser.addOption(description, hpStation);
         }
+
+        public static void assignStartingHeight(EleHeight startingHeight, String description){
+            startingHeightMap.put(startingHeight, description);
+            startingHeightChooser.addOption(description, startingHeight);
+        }
     
         public static void assignEleHeight(EleHeight eleHeight, String description){
             eleHeightMap.put(eleHeight, description);
@@ -135,14 +145,14 @@ public class AutonChooser {
         public static void chooseFirstScoring(){
             firstScoringChooser = new SendableChooser<ReefLocs>();
     
-            if(startLocChosen.get().equals(TrajsAndLocs.StartingLocs.MID)){
+            if(startLocChosen.equals(TrajsAndLocs.StartingLocs.MID)){
     
                 for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalMidStartCycles.size(); i++) {
                     assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i), 
                         TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i).toString());
                 }
     
-            }else if (startLocChosen.get().equals(TrajsAndLocs.StartingLocs.LEFT)){
+            }else if (startLocChosen.equals(TrajsAndLocs.StartingLocs.LEFT)){
     
                 for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.size(); i++) {
                     assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i), 
@@ -165,10 +175,10 @@ public class AutonChooser {
         /**
          * given that an HP Station is selected, creates NT that shows all possible(optimal?) routes to certain reefs
          */
-        public static void chooseHPtoReef(String description, Supplier<HPStation> hpChosen){
+        public static void chooseHPtoReef(String description, HPStation hpChosen){
             hpToReefChooser = new SendableChooser<ReefLocs>();
             
-            if(hpChosen.get().equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
+            if(hpChosen.equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
                 for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
                     assignReefScoring(TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i), 
                     TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i).toString());
@@ -189,42 +199,42 @@ public class AutonChooser {
         public static void chooseReefToHP(String description){
             reefToHPChooser = new SendableChooser<HPStation>();
             
-            if(hpToReefChosen.get() != null){
-                if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_A)){
+            if(hpToReefChosen != null){
+                if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_A)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_B)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_B)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_C)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_C)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_D)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_D)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right"); 
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_E)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_E)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_F)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_F)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_G)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_G)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_H)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_H)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_I)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_I)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_J)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_J)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
     
-                } else if(hpToReefChosen.get().equals(TrajsAndLocs.ReefLocs.REEF_K)){
+                } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_K)){
                     assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left");
     
                 } else{
@@ -242,7 +252,7 @@ public class AutonChooser {
          */
         public static void chooseEleHeight(String description){
             eleHeightChooser = new SendableChooser<EleHeight>();
-    
+
             AutonChooser.assignEleHeight(Elevator.EleHeight.L1, "L1");
             AutonChooser.assignEleHeight(Elevator.EleHeight.L2, "L2");
             AutonChooser.assignEleHeight(Elevator.EleHeight.L3, "L3");
@@ -255,10 +265,9 @@ public class AutonChooser {
          * depending on how many cycles you choose, will display each cycle's choosers: hp to reef, reef to hp, and ele height
          */
         public static void cycleIterations(){
+            NumCycles selectedCycles = cyclesChosen;
     
-            NumCycles selectedCycles = cyclesChosen.get();
-    
-            if(cyclesChosen.get() != null){
+            if(cyclesChosen != null){
     
                 int numIterations = selectedCycles.m_cycles;
     
@@ -266,7 +275,7 @@ public class AutonChooser {
     
                     chooseEleHeight("ele height chooser " + i);
     
-                    if(reefToHPChosen.get() != null){
+                    if(reefToHPChosen != null){
                         
                         chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen);
     
@@ -313,15 +322,19 @@ public class AutonChooser {
         
     
         public static StartingLocs getChosenStart(){
-            return startLocChosen.get();
+            return startLocChosen;
         }
     
         public static ReefLocs getChosenFirstReef(){
-            return firstScoringChosen.get();
+            return firstScoringChosen;
         }
     
         public static HPStation getChosenFirstHP(){
-            return hpStationChosen.get();
+            return hpStationChosen;
+        }
+
+        public static EleHeight getStartingHeight(){
+            return startingHeightChosen;
         }
     
         public static ArrayList<AutonCycle> getCycles(){
@@ -329,9 +342,9 @@ public class AutonChooser {
             ArrayList<AutonCycle> arrayCycles = new ArrayList<AutonCycle>();
             AutonCycle cycle;
     
-            for(int i = 1; i <= cyclesChosen.get().m_cycles; i++){
+            for(int i = 1; i <= cyclesChosen.m_cycles; i++){
                 cycle = autonFactory.new AutonCycle(
-                    hpToReefChosen.get(), eleHeightChosen.get(), reefToHPChosen.get());
+                    hpToReefChosen, eleHeightChosen, reefToHPChosen);
 
                 arrayCycles.add(cycle);
             }

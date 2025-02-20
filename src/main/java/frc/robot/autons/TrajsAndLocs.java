@@ -18,34 +18,39 @@ public abstract class TrajsAndLocs {
      */
     public static enum StartingLocs {
         // TODO: fill out the Real Values
-        LEFT(new Pose2d(Meters.of(7.25), Meters.of(5.73), Rotation2d.fromDegrees(0))),
-        MID(new Pose2d(Meters.of(7.25), Meters.of(4.025), Rotation2d.fromDegrees(0))),
-        RIGHT(new Pose2d(Meters.of(7.25), Meters.of(2.42), Rotation2d.fromDegrees(0)));
+        LEFT(new Pose2d(Meters.of(7.25), Meters.of(5.73), Rotation2d.fromDegrees(0)), "Start_left"),
+        MID(new Pose2d(Meters.of(7.25), Meters.of(4.025), Rotation2d.fromDegrees(0)), "Start_mid"),
+        RIGHT(new Pose2d(Meters.of(7.25), Meters.of(2.42), Rotation2d.fromDegrees(0)), "Start_right");
 
         public final Pose2d pose;
-        private StartingLocs(Pose2d _pose) {
+        public final String str;
+        private StartingLocs(Pose2d _pose,String _str ) {
             pose = _pose;
+            str = _str;
+
         }
     }
 
     public static enum ReefLocs {
-        REEF_A(new Pose2d(Meters.of(2.91), Meters.of(4.22), Rotation2d.fromRadians(0))),
-        REEF_B(new Pose2d(Meters.of(2.88), Meters.of(3.89), Rotation2d.fromRadians(0))),
-        REEF_C(new Pose2d(Meters.of(3.55), Meters.of(2.73), Rotation2d.fromRadians(1.01))),
-        REEF_D(new Pose2d(Meters.of(3.82), Meters.of(2.57), Rotation2d.fromRadians(1.01))),
-        REEF_E(new Pose2d(Meters.of(5.16), Meters.of(2.52), Rotation2d.fromRadians(2.11))),
-        REEF_F(new Pose2d(Meters.of(5.41), Meters.of(2.72), Rotation2d.fromRadians(2.11))),
-        REEF_G(new Pose2d(Meters.of(6.10), Meters.of(3.86), Rotation2d.fromRadians(3.14))),
-        REEF_H(new Pose2d(Meters.of(6.10), Meters.of(4.17), Rotation2d.fromRadians(3.14))),
-        REEF_I(new Pose2d(Meters.of(5.43), Meters.of(5.28), Rotation2d.fromRadians(-2.12))),
-        REEF_J(new Pose2d(Meters.of(5.10), Meters.of(5.42), Rotation2d.fromRadians(-2.12))),
-        REEF_K(new Pose2d(Meters.of(3.87), Meters.of(5.42), Rotation2d.fromRadians(-1.03))),
-        REEF_L(new Pose2d(Meters.of(3.54), Meters.of(5.30), Rotation2d.fromRadians(-1.03)));
+        REEF_A(new Pose2d(Meters.of(2.91), Meters.of(4.22), Rotation2d.fromRadians(0)), "A"),
+        REEF_B(new Pose2d(Meters.of(2.88), Meters.of(3.89), Rotation2d.fromRadians(0)), "B"),
+        REEF_C(new Pose2d(Meters.of(3.55), Meters.of(2.73), Rotation2d.fromRadians(1.01)), "C"),
+        REEF_D(new Pose2d(Meters.of(3.82), Meters.of(2.57), Rotation2d.fromRadians(1.01)), "D"),
+        REEF_E(new Pose2d(Meters.of(5.16), Meters.of(2.52), Rotation2d.fromRadians(2.11)), "E"),
+        REEF_F(new Pose2d(Meters.of(5.41), Meters.of(2.72), Rotation2d.fromRadians(2.11)), "F"),
+        REEF_G(new Pose2d(Meters.of(6.10), Meters.of(3.86), Rotation2d.fromRadians(3.14)), "G"),
+        REEF_H(new Pose2d(Meters.of(6.10), Meters.of(4.17), Rotation2d.fromRadians(3.14)), "H"),
+        REEF_I(new Pose2d(Meters.of(5.43), Meters.of(5.28), Rotation2d.fromRadians(-2.12)), "I"),
+        REEF_J(new Pose2d(Meters.of(5.10), Meters.of(5.42), Rotation2d.fromRadians(-2.12)), "J"),
+        REEF_K(new Pose2d(Meters.of(3.87), Meters.of(5.42), Rotation2d.fromRadians(-1.03)), "K"),
+        REEF_L(new Pose2d(Meters.of(3.54), Meters.of(5.30), Rotation2d.fromRadians(-1.03)), "L");
 
 
         public final Pose2d pose;
-        private ReefLocs(Pose2d _pose) {
+        public final String str;
+        private ReefLocs(Pose2d _pose, String _str) {
             pose = _pose;
+            str = _str;
         }
         
         /* 
@@ -105,12 +110,14 @@ public abstract class TrajsAndLocs {
 
     // will get put on autonchooser
     public static enum HPStation {
-        HP_LEFT(new Pose2d(Meters.of(1.45), Meters.of(6.89), Rotation2d.fromRadians(-0.90))),
-        HP_RIGHT(new Pose2d(Meters.of(1.53), Meters.of(1.16), Rotation2d.fromRadians(0.92)));
+        HP_LEFT(new Pose2d(Meters.of(1.45), Meters.of(6.89), Rotation2d.fromRadians(-0.90)), "left"),
+        HP_RIGHT(new Pose2d(Meters.of(1.53), Meters.of(1.16), Rotation2d.fromRadians(0.92)), "right");
 
         public final Pose2d pose;
-        private HPStation(Pose2d _pose) {
+        public final String str;
+        private HPStation(Pose2d _pose, String _str) {
             pose = _pose;
+            str = _str;
         }
     }
 
