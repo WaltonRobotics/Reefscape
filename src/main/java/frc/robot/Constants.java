@@ -39,7 +39,10 @@ public class Constants {
 
         // motor configuration section
         // wrist motor
+        public static final double kMaxAngleDeg = 90; //dummy num
         public static final int kWristGearRatio = 10;
+        public static final double kAngleTolerance = 3; // dum
+        public static final double kLowTorqueMode = 10; // dum
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)
@@ -65,32 +68,22 @@ public class Constants {
             .withSlot0(kWristSlot0Configs);
 
         // intake motor
+        public static final double kHasAlgaeCurrent = 10; // dummy
         public static final int kIntakeGearRatio = 10;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
         private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(100)
-            .withSupplyCurrentLimit(50)
-            .withStatorCurrentLimitEnable(true);
+            .withStatorCurrentLimit(55)
+            .withSupplyCurrentLimit(35)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimitEnable(true);
         private static final FeedbackConfigs kIntakeFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kIntakeSensorToMechanismRatio);
         private static final MotionMagicConfigs kIntakeMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
             .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
-        private static final Slot0Configs kIntakeSlot0Configs = new Slot0Configs()
-            .withKS(0.25)
-            .withKV(0.12)
-            .withKA(0.01)
-            .withKP(60)
-            .withKI(0)
-            .withKD(0.5);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kIntakeCurrentLimitConfigs)
-            .withFeedback(kIntakeFeedbackConfigs)
-            .withMotionMagic(kIntakeMagicConfigs)
-            .withSlot0(kIntakeSlot0Configs);
-
-        public static final double kMaxAngleDeg = 10; //dummy num
+            .withCurrentLimits(kIntakeCurrentLimitConfigs);
     }
 
     public class Coralk {
