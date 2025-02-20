@@ -117,7 +117,6 @@ public class Superstructure {
         trg_teleopScoreOverride = teleopScoreOverride;
         trg_teleopScoreEleOverride = teleopScoreEleOverride;
         trg_toHomeOverride = toHomeOverride;
-
         trg_climbUpReq = climbUpReq;
         trg_climbDownReq = climbDownReq;
 
