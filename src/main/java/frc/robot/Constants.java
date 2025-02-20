@@ -82,11 +82,6 @@ public class Constants {
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
             .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
-        private static final Slot0Configs kIntakeSlot0Configs = new Slot0Configs()
-            .withKS(0.25)
-            .withKV(0.12)
-            .withKA(0.01)
-            .withKP(60);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kIntakeCurrentLimitConfigs);
     }
