@@ -34,7 +34,7 @@ public class Constants {
     public static class AlgaeK {
         public static final String kLogTab = "AlgaeSubsys";
         
-        public static final int kWristCANID = 12;
+        public static final int kWristCANID = 6;
         public static final int kIntakeCANID = 13;
 
         // motor configuration section
@@ -88,8 +88,8 @@ public class Constants {
 
     public class Coralk {
         public static final String kLogTab = "EleSubsys";
-        public static final int kCoralMotorCANID = 1; //TODO: check real CANID
-        public static final int kFingerMotorCANID = 2;
+        public static final int kCoralMotorCANID = 31;
+        public static final int kFingerMotorCANID = 32;
         public static final int kTopBeamBreakChannel = 3;
         public static final int kBotBeamBreakChannel = 4;
 
@@ -128,8 +128,8 @@ public class Constants {
     public class ElevatorK{
         public static final String kLogTab = "EleSubsys";
 
-        public static final int kLeftCANID = 10;
-        public static final int kRightCANID = 11;
+        public static final int kFrontCANID = 9;
+        public static final int kBackCANID = 10; 
 
         public static final double kGearRatio = 50.0/11.0;
         public static final Distance kSpoolRadius = Inches.of(1);
