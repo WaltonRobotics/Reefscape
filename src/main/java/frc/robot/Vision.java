@@ -38,8 +38,8 @@ public class Vision {
     //Constants
     private String kCameraName = "cam";
     private final Transform3d kRoboToCam = new Transform3d(
-        Units.inchesToMeters(-13.562), Units.inchesToMeters(11.562), Units.inchesToMeters(8.13), 
-        new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(20), Units.degreesToRadians(-45))
+        Units.inchesToMeters(8.238), Units.inchesToMeters(4.81), Units.inchesToMeters(32), 
+        new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
     );
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(1.5, 1.5, 6.24);
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 6.24);
