@@ -252,10 +252,10 @@ public class Constants {
 
     public class Coralk {
         public static final String kLogTab = "EleSubsys";
-        public static final int kCoralMotorCANID = 1; //TODO: check real CANID
-        public static final int kFingerMotorCANID = 2;
-        public static final int kTopBeamBreakChannel = 3;
-        public static final int kBotBeamBreakChannel = 4;
+        public static final int kCoralMotorCANID = 14; //TODO: check real CANID
+        public static final int kFingerMotorCANID = 15;
+        public static final int kTopBeamBreakChannel = 16;
+        public static final int kBotBeamBreakChannel = 17;
 
         public static final double kGearRatio = 27; //TODO: check real gear ratio
         public static final double kSpoolDiameter = 2; //TODO: check real spool diameter
