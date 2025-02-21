@@ -1,5 +1,5 @@
-//PHOTONVISIONs Vision class
-//ISSUE TO SOLVE: The module directions are wacky
+//PHOTONVISIONs Example Vision class
+//ISSUE TO SOLVE: the 4th module is always schizo and perpendicularly jitters
 
 package frc.robot;
 
@@ -51,12 +51,13 @@ public class Vision {
                 new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, kRoboToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
-        // ----- Simulation
+        // Simulation
         if (Robot.isSimulation()) {
             // Create the vision system simulation which handles cameras and targets on the field.
             m_visionSim = new VisionSystemSim("main");
             // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
             m_visionSim.addAprilTags(kTagLayout);
+
             // TODO: set properties to actual values 
             var cameraProp = new SimCameraProperties();
             cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
@@ -64,8 +65,7 @@ public class Vision {
             cameraProp.setFPS(15);
             cameraProp.setAvgLatencyMs(50);
             cameraProp.setLatencyStdDevMs(15);
-            // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible
-            // targets.
+            // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible targets.
             m_cameraSim = new PhotonCameraSim(m_camera, cameraProp);
             // Add the simulated camera to view the targets on this simulated field.
             m_visionSim.addCamera(m_cameraSim, kRoboToCam);
@@ -163,7 +163,7 @@ public class Vision {
         return curStdDevs;
     }
 
-    // ----- Simulation
+    // Simulation
 
     public void simulationPeriodic(Pose2d robotSimPose) {
         m_visionSim.update(robotSimPose);
