@@ -6,6 +6,7 @@
 
 package frc.robot.autons;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.function.BooleanSupplier;
@@ -60,16 +61,17 @@ public class AutonChooser {
     public static HPStation hpStationChosen = hpStationChooser.getSelected();
     
     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
-    public static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
+    public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
+    // public static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
     //private static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
-    public static ReefLocs hpToReefChosen = hpToReefChooser.getSelected();
+    public static ReefLocs hpToReefChosen = TrajsAndLocs.ReefLocs.REEF_I;
     
     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
-    public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>(); 
+    //public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>(); 
         
-    //public static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
+    public static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
     //private static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
-    public static HPStation reefToHPChosen = TrajsAndLocs.HPStation.HP_LEFT;
+    public static HPStation reefToHPChosen = reefToHPChooser.getSelected();
     
     public static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
     //private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
@@ -94,7 +96,7 @@ public class AutonChooser {
     
     public static void addChoosers() {
         for (int i = 1; i <= 4; i++) {
-            reefToHPChoosers.add(new SendableChooser<HPStation>());
+           hpToReefChoosers.add(new SendableChooser<ReefLocs>());
         }
     }
     
@@ -118,9 +120,9 @@ public class AutonChooser {
         hpStationChooser.addOption(description, hpstation);
     }
     
-    public static void assignReefScoring(ReefLocs reefLocs, String description){
+    public static void assignReefScoring(ReefLocs reefLocs, String description, SendableChooser<ReefLocs> chooser){
         hpToReefMap.put(reefLocs, description);
-        hpToReefChooser.addOption(description, reefLocs);
+        chooser.addOption(description, reefLocs);
     }
     
     public static void assignReeftoHPScoring(HPStation hpStation, String description, SendableChooser<HPStation> chooser){
@@ -181,19 +183,23 @@ public class AutonChooser {
     /**
      * given that an HP Station is selected, creates NT that shows all possible(optimal?) routes to certain reefs
      */
-    public static void chooseHPtoReef(String description, HPStation hpChosen){
+    public static void chooseHPtoReef(String description, HPStation hpChosen, int index){
+        addChoosers();
+        SendableChooser<ReefLocs> hpToReefChooser = hpToReefChoosers.get(index);
         hpToReefChooser = new SendableChooser<ReefLocs>();
         SmartDashboard.updateValues();
             
         if(hpChosen.equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
             for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
                 assignReefScoring(TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i), 
-                TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i).toString());
+                TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i).toString(), 
+                hpToReefChooser);
             }
         } else {
             for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
                 assignReefScoring(TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i), 
-                TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i).toString());
+                TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i).toString(),
+                hpToReefChooser);
             }
         }
         SmartDashboard.putData(description, hpToReefChooser);
@@ -203,8 +209,8 @@ public class AutonChooser {
     * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
     */
     public static void chooseReefToHP(int index){
-        addChoosers();
-        SendableChooser<HPStation> reefToHPChooser = reefToHPChoosers.get(index);
+        // addChoosers();
+        // SendableChooser<HPStation> reefToHPChooser = reefToHPChoosers.get(index);
         reefToHPChooser = new SendableChooser<HPStation>();
         SmartDashboard.updateValues();
             
@@ -287,15 +293,15 @@ public class AutonChooser {
                 chooseEleHeight("ele height chooser " + i);
     
                 if(reefToHPChosen != null){    
-                    chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen);
+                    chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen, i);
                     chooseReefToHP(i);
     
                     // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){
                     //     scoringLocationArray.add(hpToReefChosen.get());
                     // }
     
-                } else if (i == 1) {
-                    chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen);
+                } else if (hpStationChosen != null) {
+                    chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen, i);
                     chooseReefToHP(i);
     
                     // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){

@@ -188,10 +188,11 @@ public class Robot extends TimedRobot {
   private void configAutonChooser() {
     AutonChooser.startingPositionChooser.onChange(startLocConsumer);
     AutonChooser.hpStationChooser.onChange(hpStationConsumer);
-    AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
-    for(int i = 0; i < AutonChooser.reefToHPChoosers.size(); i++){
-      AutonChooser.reefToHPChoosers.get(i).onChange(reefToHPConsumer);
+    // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
+    for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
+      AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
     }
+    AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
     AutonChooser.cyclesChooser.onChange(cyclesConsumer);
   }
 
