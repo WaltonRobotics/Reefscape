@@ -6,6 +6,10 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Optional;
+
+import org.photonvision.EstimatedRobotPose;
+
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -134,6 +138,12 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    Optional<EstimatedRobotPose> estimatedPoseOptional = vision.getEstimatedGlobalPose();
+    if (estimatedPoseOptional.isPresent()) {
+      EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
+      Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+      drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds);
+    }
   }
 
   @Override
@@ -194,7 +204,7 @@ public class Robot extends TimedRobot {
     drivetrain.simulationPeriodic();
 
     Field2d debugField = vision.getSimDebugField();
-    debugField.getObject("EstimatedRobot").setPose(robotPose);
-    debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
+    // debugField.getObject("EstimatedRobot").setPose(robotPose);
+    // debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
   }
 }
