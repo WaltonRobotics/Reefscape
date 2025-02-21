@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.jni.SwerveJNI.ModuleState;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -27,6 +28,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -248,7 +250,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         );
     }
 
-
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
      *
@@ -364,6 +365,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
 		return Commands.sequence(
 			initialize, executeEnd);
+	}
+
+    public Command applyFcRequest(Supplier<SwerveRequest.FieldCentric> requestSupplier) {
+		return run(() -> setControl(requestSupplier.get()));
+	}
+
+    public void logModulePositions() {
+        var pos = getState().ModulePositions;
+		for (int i = 0; i < pos.length; i++) {
+			SmartDashboard.putNumber("Module " + i + "/positionMeters",
+				pos[i].distanceMeters);
+		}
 	}
 
     @Override

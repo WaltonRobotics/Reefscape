@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -29,9 +30,9 @@ public class Algae extends SubsystemBase {
     private final TalonFX m_wrist = new TalonFX(kWristCANID); // I KNOW this is not a wrist its a shoulder, but im going to call it a wrist.
     private final TalonFX m_intake = new TalonFX(kIntakeCANID);
 
-    private boolean m_wristIsCoast = false; 
+    private Trigger trg_wristIsCoast;
+    private Trigger trg_intakeIsCoast;
     private GenericEntry nte_wristIsCoast;
-    private boolean m_intakeIsCoast = true;
     private GenericEntry nte_intakeIsCoast;
 
     private final DoubleConsumer m_manipRumbler;
@@ -50,7 +51,8 @@ public class Algae extends SubsystemBase {
     private final Trigger trg_hasAlgae = new Trigger(() -> isAlgaeThere());
     private final Trigger trg_processorReq;
     private final Trigger trg_shootReq;
-    private final Trigger trg_overrideReq;
+    private final Trigger trg_eleOverrideReq;
+    private final Trigger trg_intakeOverrideReq;
 
     private final DoubleSupplier m_overrideAngle;
 
@@ -71,7 +73,8 @@ public class Algae extends SubsystemBase {
         Trigger intakeReq, 
         Trigger processorReq, 
         Trigger shootReq, 
-        Trigger overrideReq,
+        Trigger eleOverrideReq,
+        Trigger intakeOverrideReq,
         DoubleConsumer manipRumbler,
         DoubleSupplier overrideAngle
     ) {
@@ -93,12 +96,17 @@ public class Algae extends SubsystemBase {
         trg_intakeReq = intakeReq;
         trg_processorReq = processorReq;
         trg_shootReq = shootReq;
-        trg_overrideReq = overrideReq;
+        trg_eleOverrideReq = eleOverrideReq;
+        trg_intakeOverrideReq = intakeOverrideReq;
 
         m_manipRumbler = manipRumbler;
         m_overrideAngle = overrideAngle;
 
-        
+        trg_wristIsCoast = new Trigger(() -> nte_wristIsCoast.getBoolean(false));
+        trg_intakeIsCoast = new Trigger(() -> nte_intakeIsCoast.getBoolean(true));
+
+        trg_wristIsCoast.onChange(Commands.runOnce(() -> setWristCoast(nte_wristIsCoast.getBoolean(false))));
+        trg_intakeIsCoast.onChange(Commands.runOnce(() -> setIntakeCoast(nte_intakeIsCoast.getBoolean(true))));
 
         configureStateTransitions();
         configureOverride();
@@ -140,7 +148,7 @@ public class Algae extends SubsystemBase {
     }
 
     private void configureOverride() {
-        (trg_overrideReq)
+        (trg_eleOverrideReq)
             .onTrue(Commands.runOnce(() -> m_state = State.OVERRIDE));
         
         (stateTrg_override.and(trg_groundReq))
@@ -151,6 +159,9 @@ public class Algae extends SubsystemBase {
             .onTrue(Commands.runOnce(() -> m_state = State.TO_PROCESSOR));
         (stateTrg_override.and(trg_shootReq))
             .onTrue(Commands.runOnce(() -> m_state = State.SHOOTING));
+
+        (trg_intakeOverrideReq)
+            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
     }
 
     private void configureStateActions() {
@@ -261,13 +272,6 @@ public class Algae extends SubsystemBase {
     @Override
     public void periodic() {
         stateEventLoop.poll();
-
-        m_wristIsCoast = nte_wristIsCoast.getBoolean(false);
-        m_intakeIsCoast = nte_intakeIsCoast.getBoolean(true);
-
-        setWristCoast(m_wristIsCoast);
-        setIntakeCoast(m_intakeIsCoast);
-
         log_desiredAngleDegs.accept(m_desiredWristAngleDegs);
     }
 

@@ -7,7 +7,11 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.Coralk.kCoralSpeed;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
@@ -16,6 +20,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,15 +41,14 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
-
-  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-  private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-  private final Telemetry logger = new Telemetry(MaxSpeed);
+  private double maxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+  private double maxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+  private final Telemetry logger = new Telemetry(maxSpeed);
+  public static final Field2d field2d = new Field2d();
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-          .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+          .withDeadband(maxSpeed * 0.1).withRotationalDeadband(maxAngularRate * 0.1) // Add a 10% deadband
           .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -55,10 +59,8 @@ public class Robot extends TimedRobot {
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
+  private final Algae algae;
   private final Superstructure superstructure;
-
-  private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
 
   private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
@@ -82,6 +84,16 @@ public class Robot extends TimedRobot {
     trg_manipDanger = manipulator.b();
     trg_driverDanger = driver.b();
 
+    algae = new Algae(
+      manipulator.a(), 
+      manipulator.leftTrigger(), 
+      manipulator.y(), 
+      manipulator.rightTrigger(), 
+      manipulator.back(), 
+      trg_manipDanger.and(manipulator.leftTrigger()),
+      (intensity) -> manipRumble(intensity), 
+      () -> manipulator.getRightY());
+
     superstructure = new Superstructure(
       coral, 
       elevator, 
@@ -95,7 +107,7 @@ public class Robot extends TimedRobot {
       manipulator.leftBumper(),
       manipulator.a().and(manipulator.povUp()),
       manipulator.a().and(manipulator.povDown()),
-      trg_manipDanger.and(trg_eleOverride),
+      manipulator.x().and(trg_eleOverride),
       () -> manipulator.getLeftY(),
       (intensity) -> driverRumble(intensity), 
       (intensity) -> manipRumble(intensity));
@@ -106,14 +118,14 @@ public class Robot extends TimedRobot {
   private void configureBindings() {
       // Note that X is defined as forward according to WPILib convention,
       // and Y is defined as to the left according to WPILib convention.
-      drivetrain.setDefaultCommand(
-          // Drivetrain will execute this command periodically
-          drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-          )
-      );
+
+      if(Utils.isSimulation()) {
+        drivetrain.seedFieldCentric();
+      }
+
+      drivetrain.registerTelemetry(logger::telemeterize);
+
+      drivetrain.setDefaultCommand(drivetrain.applyFcRequest(getTeleSwerveReq()));
 
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
       driver.y().whileTrue(drivetrain.applyRequest(() ->
@@ -150,17 +162,34 @@ public class Robot extends TimedRobot {
 		}
 	}
 
+  private Supplier<SwerveRequest.FieldCentric> getTeleSwerveReq() {
+    return () -> {
+      double leftY = -driver.getLeftY();
+      double leftX = -driver.getLeftX();
+      return drive
+        .withVelocityX(leftY * maxSpeed)
+        .withVelocityY(leftX * maxSpeed)
+        .withRotationalRate(-driver.getRightX() * maxAngularRate)
+        .withRotationalDeadband(maxAngularRate * 0.1);
+    };
+  }
+
   @Override
   public void robotInit(){
+    SmartDashboard.putData(field2d);
+    configureBindings();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+		drivetrain.logModulePositions();
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    SignalLogger.stop();
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -170,11 +199,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = null; // TODO: fill out
-
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
   }
 
   @Override
@@ -185,10 +209,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
-
   }
 
   @Override

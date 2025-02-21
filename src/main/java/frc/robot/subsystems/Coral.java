@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.Constants.Coralk.*;
@@ -29,9 +30,9 @@ public class Coral extends SubsystemBase {
     private final TalonFXS m_fingerMotor = new TalonFXS(kFingerMotorCANID);
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
 
-    private boolean m_coralIsCoast = false;
+    private Trigger trg_coralIsCoast;
+    private Trigger trg_fingerIsCoast;
     private GenericEntry nte_coralIsCoast;
-    private boolean m_fingerIsCoast = false;
     private GenericEntry nte_fingerIsCoast;
 
     // true when beam break brokey
@@ -55,6 +56,12 @@ public class Coral extends SubsystemBase {
                   .add("finger coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
+        
+        trg_coralIsCoast = new Trigger(() -> nte_coralIsCoast.getBoolean(true));
+        trg_fingerIsCoast = new Trigger(() -> nte_fingerIsCoast.getBoolean(false));
+
+        trg_coralIsCoast.onChange(Commands.runOnce(() -> setCoralCoast(nte_coralIsCoast.getBoolean(true))));
+        trg_fingerIsCoast.onChange(Commands.runOnce(() -> setFingerCoast(nte_fingerIsCoast.getBoolean(false))));
     }
 
     public void setCoralCoast(boolean coast) {
@@ -88,12 +95,6 @@ public class Coral extends SubsystemBase {
 
     @Override
     public void periodic() {
-        m_coralIsCoast = nte_coralIsCoast.getBoolean(false);
-        m_fingerIsCoast = nte_fingerIsCoast.getBoolean(false);
-
-        setCoralCoast(m_coralIsCoast);
-        setFingerCoast(m_fingerIsCoast);
-
         log_topBeamBreak.accept(bs_topBeamBreak);
         log_botBeamBreak.accept(bs_botBeamBreak);
     }
