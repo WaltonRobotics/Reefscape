@@ -1,144 +1,159 @@
 package frc.robot.autons;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 
 public abstract class TrajsAndLocs {
     /* 
-     * check docu for naming conventions:
-    */
-
-    private static enum StartingLocs {
-        RIGHT,
-        MID_1,
-        MID_12,
-        LEFT;
-    }
-    
-    /*
-     * the first place you'll score in a match.
-     * Kept separate so that ppl dont accidentally choose a first reefLoc that doesn't have a traj going form [startingLoc] -> [reefLoc]
+     * possible starting locs
+     * liable to add more
+     * 
+     * POV: driver station
      */
-    public static enum FirstScoringLocs {
-        REEF_1(StartingLocs.MID_1, "mid_1"),
-        REEF_2(StartingLocs.LEFT, "left_2"),
-        REEF_3(StartingLocs.LEFT, "left_3"),
+    public static enum StartingLocs {
+        // TODO: fill out the Real Values
+        LEFT(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
+        MID(new Pose2d(1, 2, Rotation2d.fromDegrees(0))),
+        RIGHT(new Pose2d(1, 2, Rotation2d.fromDegrees(0)));
 
-        REEF_10(StartingLocs.RIGHT, "right_10"),
-        REEF_11(StartingLocs.RIGHT, "right_11"),
-        REEF_12(StartingLocs.MID_12, "mid_12");
+        public final Pose2d pose;
+        private StartingLocs(Pose2d _pose) {
+            pose = _pose;
+        }
+    }
 
-        public Pair<StartingLocs, String> m_startAndTraj;
+    public static enum ReefLocs {
+        REEF_H,
+        REEF_I,
+        REEF_J,
+        REEF_K,
+        REEF_L,
+        REEF_A,
+        REEF_B,
+        REEF_C,
+        REEF_D,
+        REEF_E,
+        REEF_F,
+        REEF_G;
+
+        /* 
+         * enums used in autonchooser
+         * list of best possible next locs given the start cycle u were just at
+         */
+        public static ArrayList<ReefLocs> OptimalLeftStartCycles = new ArrayList<>();
+        static {
+            OptimalLeftStartCycles.add(REEF_H);
+            OptimalLeftStartCycles.add(REEF_I);         
+            OptimalLeftStartCycles.add(REEF_J);
+            OptimalLeftStartCycles.add(REEF_K);
+        }
+        public static ArrayList<ReefLocs> OptimalMidStartCycles = new ArrayList<>();
+        static {
+            OptimalMidStartCycles.add(REEF_E);
+            OptimalMidStartCycles.add(REEF_F);         
+            OptimalMidStartCycles.add(REEF_G);
+            OptimalMidStartCycles.add(REEF_H);
+            OptimalMidStartCycles.add(REEF_I);
+            OptimalMidStartCycles.add(REEF_J);
+        }
+        public static ArrayList<ReefLocs> OptimalRightStartCycles = new ArrayList<>();
+        static {
+            OptimalRightStartCycles.add(REEF_D);
+            OptimalRightStartCycles.add(REEF_E);         
+            OptimalRightStartCycles.add(REEF_F);
+            OptimalRightStartCycles.add(REEF_G);
+        }
 
         /*
-         * for possible starting scoring positions
+         * just to make looping throuugh and displaying all the different ReefLocs easier? will check if good ltr!
          */
-        private FirstScoringLocs(StartingLocs startLoc, String trajName) {
-            m_startAndTraj = new Pair<TrajsAndLocs.StartingLocs,String>(startLoc, trajName);
+        public static ArrayList<ReefLocs> OptimalLeftHPCycles = new ArrayList<>();
+        static{
+            OptimalLeftHPCycles.add(REEF_A);
+            OptimalLeftHPCycles.add(REEF_B);
+            OptimalLeftHPCycles.add(REEF_G);
+            OptimalLeftHPCycles.add(REEF_H);
+            OptimalLeftHPCycles.add(REEF_I);
+            OptimalLeftHPCycles.add(REEF_J);
+            OptimalLeftHPCycles.add(REEF_K);
+            OptimalLeftHPCycles.add(REEF_L);
+        }
+        public static ArrayList<ReefLocs> OptimalRightHPCycles = new ArrayList<>();
+        static{
+            OptimalRightHPCycles.add(REEF_A);
+            OptimalRightHPCycles.add(REEF_B);
+            OptimalRightHPCycles.add(REEF_C);
+            OptimalRightHPCycles.add(REEF_D);
+            OptimalRightHPCycles.add(REEF_E);
+            OptimalRightHPCycles.add(REEF_F);
+            OptimalRightHPCycles.add(REEF_G);
+            OptimalRightHPCycles.add(REEF_H);
         }
     }
 
-    public static enum ScoringLocs {
-        REEF_1(FirstScoringLocs.REEF_1),
-        REEF_2(FirstScoringLocs.REEF_2),
-        REEF_3(FirstScoringLocs.REEF_3),
-        REEF_4,
-        REEF_5,
-        REEF_6,
-        REEF_7,
-        REEF_8,
-        REEF_9,
-        REEF_10(FirstScoringLocs.REEF_10),
-        REEF_11(FirstScoringLocs.REEF_11),
-        REEF_12(FirstScoringLocs.REEF_12),
-        INVALID_LOC;
+    // will get put on autonchooser
+    public static enum HPStation {
+        HP_LEFT,
+        HP_RIGHT;
+    }
 
-        public FirstScoringLocs m_pairedLoc;
-
-        private ScoringLocs() {
-            m_pairedLoc = null;
-        }
-
-        /*
-         * for the positions that *could* be starting locations
-         */
-        private ScoringLocs(FirstScoringLocs sameLoc) {
-            m_pairedLoc = sameLoc;
-        }
-
-        public static ScoringLocs getSameLoc(FirstScoringLocs startLoc) {
-            switch (startLoc) {
-                case REEF_1:
-                    return REEF_1;
-                case REEF_2:
-                    return REEF_2;
-                case REEF_3:
-                    return REEF_3;
-                case REEF_10:
-                    return REEF_10;
-                case REEF_11:
-                    return REEF_11;
-                case REEF_12:
-                    return REEF_12;
-                default:
-                    return INVALID_LOC; //TODO: find better fail case T^T
-            }
+    public static class ReefHPPair extends Pair<ReefLocs, HPStation> {
+        public ReefHPPair(ReefLocs reef, HPStation hp) {
+            super(reef, hp);
         }
     }
 
-    public static enum CS {
-        /* pov from driver station */
-        CS_RIGHT,
-        CS_LEFT;
+    public static class HPReefPair extends Pair<HPStation, ReefLocs> {
+        public HPReefPair(HPStation hp, ReefLocs reef) {
+            super(hp, reef);
+        }
     }
 
-    //TODO: fill out values frfr
     public static class Trajectories {
-        public HashMap<Pair<ScoringLocs, CS>, String> m_toCSTrajMap;
-        public HashMap<Pair<CS, ScoringLocs>, String> m_toRTrajMap;
+        public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
+        public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
 
-        public Trajectories() {
-            m_toCSTrajMap = new HashMap<Pair<ScoringLocs, CS>, String>();
-            m_toRTrajMap = new HashMap<Pair<CS, ScoringLocs>, String>();
-        }
+        static {
+            // fill in maps here
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT) , "HP_A_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_LEFT) , "HP_B_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_LEFT) , "HP_G_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_LEFT) , "HP_H_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_I, HPStation.HP_LEFT) , "HP_I_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_J, HPStation.HP_LEFT) , "HP_J_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_K, HPStation.HP_LEFT) , "HP_K_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_L, HPStation.HP_LEFT) , "HP_L_left");
 
-        public void configureTrajectories() {
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_12, CS.CS_LEFT), "cs_12_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_1, CS.CS_LEFT), "cs_1_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_2, CS.CS_LEFT), "cs_2_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_3, CS.CS_LEFT), "cs_3_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_4, CS.CS_LEFT), "cs_4_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_5, CS.CS_LEFT), "cs_5_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_6, CS.CS_LEFT), "cs_6_left");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_7, CS.CS_LEFT), "cs_7_left");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_RIGHT), "HP_A_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_RIGHT), "HP_B_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_C, HPStation.HP_RIGHT), "HP_C_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_D, HPStation.HP_RIGHT), "HP_D_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_E, HPStation.HP_RIGHT), "HP_E_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_F, HPStation.HP_RIGHT), "HP_F_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_RIGHT), "HP_G_right");
+            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_RIGHT), "HP_H_right");
 
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_6, CS.CS_RIGHT), "cs_6_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_7, CS.CS_RIGHT), "cs_7_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_8, CS.CS_RIGHT), "cs_8_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_9, CS.CS_RIGHT), "cs_9_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_10, CS.CS_RIGHT), "cs_10_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_11, CS.CS_RIGHT), "cs_11_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_12, CS.CS_RIGHT), "cs_12_right");
-            m_toCSTrajMap.put(new Pair<ScoringLocs, CS>(ScoringLocs.REEF_1, CS.CS_RIGHT), "cs_1_right");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_A) , "R_left_A");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_B) , "R_left_B");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_G) , "R_left_G");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_H) , "R_left_H");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_I) , "R_left_I");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_J) , "R_left_J");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_K) , "R_left_K");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_L) , "R_left_L");
 
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_12), "r_left_12");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_1), "r_left_1");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_2), "r_left_2");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_3), "r_left_3");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_4), "r_left_4");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_5), "r_left_5");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_6), "r_left_6");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_LEFT, ScoringLocs.REEF_7), "r_left_7");
-
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_6), "r_right_6");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_7), "r_right_7");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_8), "r_right_8");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_9), "r_right_9");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_10), "r_right_10");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_11), "r_right_11");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_12), "r_right_12");
-            m_toRTrajMap.put(new Pair<CS, ScoringLocs>(CS.CS_RIGHT, ScoringLocs.REEF_1), "r_right_1");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_A) , "R_right_A");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_B) , "R_right_B");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_C) , "R_right_C");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_D) , "R_right_D");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_E) , "R_right_E");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_F) , "R_right_F");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_G) , "R_right_G");
+            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_H) , "R_right_H");
         }
     }
 }

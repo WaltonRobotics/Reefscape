@@ -36,7 +36,10 @@ import edu.wpi.first.units.measure.Mass;
 //numbers are dummies
 public class Constants {
     /* general */
-    public static boolean kDebugLoggingEnabled = true;
+    public static final  boolean kDebugLoggingEnabled = true;
+ 
+    public static final double kRumbleIntensity = 1.0;
+    public static final double kRumbleTimeoutSecs = 0.5;
 
     /* 
      * mostly taken from Mechanical Advantage's code. thankies for that gang <3
@@ -196,7 +199,10 @@ public class Constants {
 
         // motor configuration section
         // wrist motor
+        public static final double kMaxAngleDeg = 90; //dummy num
         public static final int kWristGearRatio = 10;
+        public static final double kAngleTolerance = 3; // dum
+        public static final double kLowTorqueMode = 10; // dum
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)
@@ -222,32 +228,22 @@ public class Constants {
             .withSlot0(kWristSlot0Configs);
 
         // intake motor
+        public static final double kHasAlgaeCurrent = 10; // dummy
         public static final int kIntakeGearRatio = 10;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
         private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(100)
-            .withSupplyCurrentLimit(50)
-            .withStatorCurrentLimitEnable(true);
+            .withStatorCurrentLimit(55)
+            .withSupplyCurrentLimit(35)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimitEnable(true);
         private static final FeedbackConfigs kIntakeFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kIntakeSensorToMechanismRatio);
         private static final MotionMagicConfigs kIntakeMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
             .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
-        private static final Slot0Configs kIntakeSlot0Configs = new Slot0Configs()
-            .withKS(0.25)
-            .withKV(0.12)
-            .withKA(0.01)
-            .withKP(60)
-            .withKI(0)
-            .withKD(0.5);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kIntakeCurrentLimitConfigs)
-            .withFeedback(kIntakeFeedbackConfigs)
-            .withMotionMagic(kIntakeMagicConfigs)
-            .withSlot0(kIntakeSlot0Configs);
-
-        public static final double kMaxAngleDeg = 10; //dummy num
+            .withCurrentLimits(kIntakeCurrentLimitConfigs);
     }
 
     public class Coralk {
@@ -259,6 +255,8 @@ public class Constants {
 
         public static final double kGearRatio = 27; //TODO: check real gear ratio
         public static final double kSpoolDiameter = 2; //TODO: check real spool diameter
+
+        public static final double kCoralSpeed = 1; //TODO: make frsies
 
         private static final CurrentLimitsConfigs kLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)    
@@ -304,6 +302,7 @@ public class Constants {
         public static final Distance kMinimumHeight = Feet.of(0);
         public static final Distance kMaximumHeight = Meters.of(8);
         public static final Distance kStartingHeightMeters = Feet.of(0);
+        public static final double kTolerancePulleyRotations = metersToRotation(Meters.of(0.01)).in(Rotations);
         //SensorToMechanismRatio = kGearRatio
 
         public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
@@ -311,7 +310,11 @@ public class Constants {
         }
 
         public static Angle metersToRotation(Distance meters){
-            return Radians.of(meters.in(Meters) / kSpoolRadius.in(Meters));
+            return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
+        }
+
+        public static Distance rotationsToMeters(Angle rotations) {
+            return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
         }
 
         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
