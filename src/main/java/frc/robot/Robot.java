@@ -101,7 +101,7 @@ public class Robot extends TimedRobot {
       trg_teleopEleHeightReq,
       driver.rightTrigger(), 
       trg_manipDanger.and(manipulator.rightBumper()),
-      trg_manipDanger.and(manipulator.leftTrigger()), 
+      manipulator.x().and(manipulator.rightBumper()), 
       trg_manipDanger.and(trg_teleopEleHeightReq),
       trg_driverDanger.and(driver.rightTrigger()), 
       manipulator.leftBumper(),
@@ -116,37 +116,39 @@ public class Robot extends TimedRobot {
   }
 
   private void configureBindings() {
-      // Note that X is defined as forward according to WPILib convention,
-      // and Y is defined as to the left according to WPILib convention.
+    // Note that X is defined as forward according to WPILib convention,
+    // and Y is defined as to the left according to WPILib convention.
 
-      if(Utils.isSimulation()) {
-        drivetrain.seedFieldCentric();
-      }
+    manipulator.start().whileTrue(coral.setCoralMotorAction(kCoralSpeed)); // this is for finger motor.
 
-      drivetrain.registerTelemetry(logger::telemeterize);
+    if(Utils.isSimulation()) {
+      drivetrain.seedFieldCentric();
+    }
 
-      drivetrain.setDefaultCommand(drivetrain.applyFcRequest(getTeleSwerveReq()));
+    drivetrain.registerTelemetry(logger::telemeterize);
 
-      driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-      driver.y().whileTrue(drivetrain.applyRequest(() ->
-          point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-      ));
-      driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+    drivetrain.setDefaultCommand(drivetrain.applyFcRequest(getTeleSwerveReq()));
 
-      /* 
-       * programmer buttons
-       * make sure u comment out when not in use
-       */
-      // Run SysId routines when holding back/start and X/Y.
-      // Note that each routine should be run exactly once in a single log.
-      //driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-      //driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-      //driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-      //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-      //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-      //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+    driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    driver.y().whileTrue(drivetrain.applyRequest(() ->
+        point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+    ));
+    driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      drivetrain.registerTelemetry(logger::telemeterize);
+    /* 
+     * programmer buttons
+     * make sure u comment out when not in use
+     */
+    // Run SysId routines when holding back/start and X/Y.
+    // Note that each routine should be run exactly once in a single log.
+    //driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+    //driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+    //driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+    //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+    //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+    //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+
+    drivetrain.registerTelemetry(logger::telemeterize);
 
   }
 

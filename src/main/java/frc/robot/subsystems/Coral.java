@@ -64,12 +64,9 @@ public class Coral extends SubsystemBase {
         trg_fingerIsCoast.onChange(Commands.runOnce(() -> setFingerCoast(nte_fingerIsCoast.getBoolean(false))));
     }
 
+    // coral stuff
     public void setCoralCoast(boolean coast) {
         m_coralMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
-    }
-
-    public void setFingerCoast(boolean coast) {
-        m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
     /**
@@ -83,6 +80,7 @@ public class Coral extends SubsystemBase {
         );
     }
 
+    // finger stuff
     public Command fingerOut() {
         return runOnce(
             () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees))));
@@ -91,6 +89,10 @@ public class Coral extends SubsystemBase {
     public Command fingerIn() {
         return runOnce(
             () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees))));
+    }
+
+    public void setFingerCoast(boolean coast) {
+        m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
     @Override
