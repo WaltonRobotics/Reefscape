@@ -10,6 +10,7 @@ import static frc.robot.Constants.Coralk.kCoralSpeed;
 import java.util.function.Consumer;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
@@ -161,7 +162,6 @@ public class Robot extends TimedRobot {
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
     drivetrain.registerTelemetry(logger::telemeterize);
-
   }
 
   private void mapAutonCommands(){

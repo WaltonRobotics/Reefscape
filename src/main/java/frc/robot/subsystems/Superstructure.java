@@ -5,6 +5,8 @@ import static frc.robot.Constants.Coralk.kCoralSpeed;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.Utils;
+
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -191,14 +193,23 @@ public class Superstructure {
     private void configureStateTransitions() {
         (stateTrg_eleToIntake.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (stateTrg_intaking.and(trg_botSensor))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
-        (stateTrg_score.and(trg_botSensor.negate()))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
         (stateTrg_scored.and(trg_toHomeOverride.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+
+        if(Utils.isSimulation()) {
+            (stateTrg_intaking.debounce(0.5))
+                .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+            (stateTrg_score.debounce(0.5))
+                .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+        } else { 
+            (stateTrg_intaking.and(trg_botSensor))
+                .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+            (stateTrg_score.and(trg_botSensor.negate()))
+                .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+        }
+
     }
 
     private void configureStateActions() {
