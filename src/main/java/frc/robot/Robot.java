@@ -63,26 +63,27 @@ public class Robot extends TimedRobot {
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+  private boolean cycleChange = false;
   /* AutonChooser trigs */
   private final Consumer<StartingLocs> startLocConsumer = startLoc -> {
     AutonChooser.startLocChosen = startLoc;
     AutonChooser.chooseFirstScoring();
   };
-  private final Consumer<HPStation> hpStatioConsumer = hpStation -> {
+  private final Consumer<HPStation> hpStationConsumer = hpStation -> {
     AutonChooser.hpStationChosen = hpStation;
-    AutonChooser.cycleIterations();
+    cycleChange = true;
   };
   private final Consumer<ReefLocs> hpToReefConsumer = hpToReef -> {
     AutonChooser.hpToReefChosen = hpToReef;
-    AutonChooser.cycleIterations();
+    cycleChange = true;
   };
   private final Consumer<HPStation> reefToHPConsumer = reefToHP -> {
     AutonChooser.reefToHPChosen = reefToHP;
-    AutonChooser.cycleIterations();
+    cycleChange = true;
   };
   private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
     AutonChooser.cyclesChosen = numCycles;
-    AutonChooser.cycleIterations();
+    cycleChange = true;
   };
 
   private final Trigger trg_teleopEleHeightReq = 
@@ -173,10 +174,8 @@ public class Robot extends TimedRobot {
     AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
 
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.MID, "mid");
     AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
 
-    AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_LEFT, "human player left");
     AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
 
     AutonChooser.assignStartingHeight(Elevator.EleHeight.L1, "L1");
@@ -188,9 +187,11 @@ public class Robot extends TimedRobot {
   /* needed to continue choosing schtuffs */
   private void configAutonChooser() {
     AutonChooser.startingPositionChooser.onChange(startLocConsumer);
-    AutonChooser.hpStationChooser.onChange(hpStatioConsumer);
+    AutonChooser.hpStationChooser.onChange(hpStationConsumer);
     AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
-    AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
+    for(int i = 0; i < AutonChooser.reefToHPChoosers.size(); i++){
+      AutonChooser.reefToHPChoosers.get(i).onChange(reefToHPConsumer);
+    }
     AutonChooser.cyclesChooser.onChange(cyclesConsumer);
   }
 
@@ -215,6 +216,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    if(cycleChange){
+      AutonChooser.cycleIterations();
+      cycleChange = false;
+    }
   }
 
   @Override
