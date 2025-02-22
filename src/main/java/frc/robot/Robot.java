@@ -57,7 +57,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
   private final Algae algae;
-  private final Superstructure superstructure;
+  // private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
@@ -84,34 +84,50 @@ public class Robot extends TimedRobot {
     trg_manipDanger = manipulator.b();
     trg_driverDanger = driver.b();
 
-    superstructure = new Superstructure(
-      coral, 
-      elevator, 
-      manipulator.rightBumper(), 
-      trg_teleopEleHeightReq,
-      driver.rightTrigger(), 
-      trg_manipDanger.and(manipulator.rightBumper()),
-      trg_manipDanger.and(manipulator.leftTrigger()), 
-      trg_manipDanger.and(trg_teleopEleHeightReq),
-      trg_driverDanger.and(driver.rightTrigger()), 
-      manipulator.leftBumper(),
-      manipulator.a().and(manipulator.povUp()),
-      manipulator.a().and(manipulator.povDown()),
-      trg_manipDanger.and(trg_eleOverride),
-      () -> manipulator.getLeftY(),
-      (intensity) -> driverRumble(intensity), 
-      (intensity) -> manipRumble(intensity));
+    // superstructure = new Superstructure(
+    //   coral, 
+    //   elevator, 
+    //   manipulator.rightBumper(), 
+    //   trg_teleopEleHeightReq,
+    //   driver.rightTrigger(), 
+    //   trg_manipDanger.and(manipulator.rightBumper()),
+    //   trg_manipDanger.and(manipulator.leftTrigger()), 
+    //   trg_manipDanger.and(trg_teleopEleHeightReq),
+    //   trg_driverDanger.and(driver.rightTrigger()), 
+    //   manipulator.leftBumper(),
+    //   manipulator.a().and(manipulator.povUp()),
+    //   manipulator.a().and(manipulator.povDown()),
+    //   trg_manipDanger.and(trg_eleOverride),
+    //   () -> manipulator.getLeftY(),
+    //   (intensity) -> driverRumble(intensity), 
+    //   (intensity) -> manipRumble(intensity));
+
+    // algae = new Algae(
+    //   manipulator.a(), 
+    //   manipulator.leftTrigger(), 
+    //   manipulator.y(), 
+    //   manipulator.rightTrigger(), 
+    //   manipulator.back(), 
+    //   (intensity) -> manipRumble(intensity), 
+    //   () -> manipulator.getRightY());
 
     algae = new Algae(
-      manipulator.a(), 
-      manipulator.leftTrigger(), 
-      manipulator.y(), 
-      manipulator.rightTrigger(), 
-      manipulator.back(), 
-      (intensity) -> manipRumble(intensity), 
-      () -> manipulator.getRightY());
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      null, 
+      () -> 0);
 
-    configureBindings();
+    // configureBindings();
+    configureTestBindings();
+  }
+
+  private void configureTestBindings() {
+    driver.a().whileTrue(elevator.testOverrideToHeight(() -> driver.getLeftY()));
+    // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
+    // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
   }
 
   private void configureBindings() {
@@ -187,7 +203,7 @@ public class Robot extends TimedRobot {
       Commands.parallel(
       algae.currentSenseHoming(),
       Commands.sequence(
-        elevator.currentSenseHoming(),
+        Commands.run(()->{}).until(() -> elevator.getIsHomed()),
         m_autonomousCommand
       )
     ).schedule();
@@ -206,13 +222,13 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    if(!elevator.getIsHomed()) {
-      elevator.currentSenseHoming().schedule();
-    }
+    // if(!elevator.getIsHomed()) {
+      // elevator.currentSenseHoming().schedule();
+    // }
 
-    if(!algae.getIsHomed()) {
-      algae.currentSenseHoming();
-    }
+    // if(!algae.getIsHomed()) {
+      // algae.currentSenseHoming().schedule();
+    // }
   }
 
   @Override
