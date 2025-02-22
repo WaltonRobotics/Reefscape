@@ -73,10 +73,10 @@ public class Algae extends SubsystemBase {
     public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
     public final Trigger stateTrg_override = new Trigger(stateEventLoop, () -> m_state == State.OVERRIDE);
 
-    private boolean m_isDebounced = false;
+    private boolean m_isHomed = false;
     private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
-    private boolean m_currentSpike = m_wrist.getSupplyCurrent().getValueAsDouble() > 15.0; 
-    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
+    private BooleanSupplier m_currentSpike = () -> m_wrist.getStatorCurrent().getValueAsDouble() > 5.0; 
+    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
 
     public Algae(
         Trigger groundReq, 
@@ -110,7 +110,7 @@ public class Algae extends SubsystemBase {
         m_manipRumbler = manipRumbler;
         m_overrideAngle = overrideAngle;
 
-        
+        setDefaultCommand(currentSenseHoming());
 
         configureStateTransitions();
         configureOverride();
@@ -274,22 +274,25 @@ public class Algae extends SubsystemBase {
     public Command currentSenseHoming() {
         Runnable init = () -> {
             m_wrist.setControl(zeroingVoltageCtrlReq);
+            System.out.println("Zeroing Algae...");
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
-            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
             m_wrist.setPosition(0);
-            m_isDebounced = true;
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            removeDefaultCommand();
+            m_isHomed = true;
+            System.out.println("Zeroed Algae!!!");
         };
 
         BooleanSupplier isFinished = () ->
-            m_debouncer.calculate(m_currentSpike);
+            m_debouncer.calculate(m_currentSpike.getAsBoolean());
 
-        return new FunctionalCommand(init, execute, onEnd, isFinished);
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
     }
 
     public boolean getIsHomed() {
-        return m_isDebounced;
+        return m_isHomed;
     }
 
     @Override
