@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.AutonChooser.NumCycles;
 // import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -65,6 +66,27 @@ public class Robot extends TimedRobot {
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+
+  private final Consumer<StartingLocs> startLocConsumer = startLoc -> {
+    AutonChooser.startLocChosen = startLoc;
+    AutonChooser.chooseFirstScoring();
+  };
+  private final Consumer<HPStation> hpStatioConsumer = hpStation -> {
+    AutonChooser.hpStationChosen = hpStation;
+    AutonChooser.cycleIterations();
+  };
+  private final Consumer<ReefLocs> hpToReefConsumer = hpToReef -> {
+    AutonChooser.hpToReefChosen = hpToReef;
+    AutonChooser.cycleIterations();
+  };
+  private final Consumer<HPStation> reefToHPConsumer = reefToHP -> {
+    AutonChooser.reefToHPChosen = reefToHP;
+    AutonChooser.cycleIterations();
+  };
+  private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
+    AutonChooser.cyclesChosen = numCycles;
+    AutonChooser.cycleIterations();
+  };
 
   private final Trigger trg_teleopEleHeightReq = 
     manipulator.povDown() //L1
@@ -131,6 +153,7 @@ public class Robot extends TimedRobot {
     ));
     driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
+
     /* 
      * programmer buttons
      * make sure u comment out when not in use
@@ -144,42 +167,42 @@ public class Robot extends TimedRobot {
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
     // manipulator.rightBumper().onTrue(AutonChooser.getCycleCountChoiceDEBUG());
-    driver.povRight().onTrue(AutonChooser.getChoiceNameDEBUG());
-    driver.rightBumper().onTrue(AutonChooser.forceUpdateDEBUG());
+    // driver.povRight().onTrue(AutonChooser.getChoiceNameDEBUG());
+    // driver.rightBumper().onTrue(AutonChooser.forceUpdateDEBUG());
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   private void mapAutonCommands(){
-    // AutonChooser.setDefaultStartingPos(TrajsAndLocs.StartingLocs.MID);
-    // AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
+    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
+    AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
 
-    // AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
-    // AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
-    // AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
-    // AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
+    AutonChooser.addNumCycles(NumCycles.CYCLE_1, "Cycle 1");
+    AutonChooser.addNumCycles(NumCycles.CYCLE_2, "Cycle 2");
+    AutonChooser.addNumCycles(NumCycles.CYCLE_3, "Cycle 3");
+    AutonChooser.addNumCycles(NumCycles.CYCLE_4, "Cycle 4");
 
-    // AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    // AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
+    AutonChooser.addStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
+    AutonChooser.addStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
 
-    // AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
+    AutonChooser.addHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
 
-    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L1, "L1");
-    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L2, "L2");
-    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L3, "L3");
-    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L4, "L4");
+    AutonChooser.addStartingHeight(Elevator.EleHeight.L1, "L1");
+    AutonChooser.addStartingHeight(Elevator.EleHeight.L2, "L2");
+    AutonChooser.addStartingHeight(Elevator.EleHeight.L3, "L3");
+    AutonChooser.addStartingHeight(Elevator.EleHeight.L4, "L4");
   }
 
   /* needed to continue choosing schtuffs */
   private void configAutonChooser() {
-    // AutonChooser.startingPositionChooser.onChange(startLocConsumer);
-    // AutonChooser.hpStationChooser.onChange(hpStationConsumer);
-    // // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
-    // for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
-    //   AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
-    // }
-    // AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
-    // AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+    AutonChooser.startingPositionChooser.onChange(startLocConsumer);
+    AutonChooser.hpStationChooser.onChange(hpStationConsumer);
+    // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
+    for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
+      AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
+    }
+    AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
+    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
   }
 
   private void driverRumble(double intensity) {

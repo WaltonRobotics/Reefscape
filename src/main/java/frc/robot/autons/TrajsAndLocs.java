@@ -57,54 +57,54 @@ public abstract class TrajsAndLocs {
          * enums used in autonchooser
          * list of best possible next locs given the start cycle u were just at
          */
-        public static HashMap<StartingLocs, ArrayList<ReefLocs>> optimalPathsByMatchStartLocation = new HashMap<StartingLocs, ArrayList<ReefLocs>>();
+        public static ArrayList<ReefLocs> OptimalLeftStartCycles = new ArrayList<>();
         static {
-            ArrayList<ReefLocs> leftStartReefLocs = new ArrayList<ReefLocs>();
-            leftStartReefLocs.add(REEF_H);
-            leftStartReefLocs.add(REEF_I);
-            leftStartReefLocs.add(REEF_J);
-            leftStartReefLocs.add(REEF_K);
-            optimalPathsByMatchStartLocation.put(StartingLocs.LEFT, leftStartReefLocs);
-
-            ArrayList<ReefLocs> midStartReefLocs = new ArrayList<ReefLocs>();
-            midStartReefLocs.add(REEF_E);
-            midStartReefLocs.add(REEF_F);
-            midStartReefLocs.add(REEF_G);
-            midStartReefLocs.add(REEF_H);
-            midStartReefLocs.add(REEF_I);
-            midStartReefLocs.add(REEF_J);
-            optimalPathsByMatchStartLocation.put(StartingLocs.MID, midStartReefLocs);
-
-            ArrayList<ReefLocs> rightStartReefLocs = new ArrayList<ReefLocs>();
-            rightStartReefLocs.add(REEF_D);
-            rightStartReefLocs.add(REEF_E);
-            rightStartReefLocs.add(REEF_F);
-            rightStartReefLocs.add(REEF_G);
-            optimalPathsByMatchStartLocation.put(StartingLocs.RIGHT, rightStartReefLocs);
+            OptimalLeftStartCycles.add(REEF_H);
+            OptimalLeftStartCycles.add(REEF_I);         
+            OptimalLeftStartCycles.add(REEF_J);
+            OptimalLeftStartCycles.add(REEF_K);
         }
-        public static HashMap<HPStation, ArrayList<ReefLocs>> optimalPathsByHPStation = new HashMap<HPStation, ArrayList<ReefLocs>>();
+        public static ArrayList<ReefLocs> OptimalMidStartCycles = new ArrayList<>();
         static {
-            ArrayList<ReefLocs> leftHPStationReefLocs = new ArrayList<ReefLocs>();
-            leftHPStationReefLocs.add(REEF_A);
-            leftHPStationReefLocs.add(REEF_B);
-            leftHPStationReefLocs.add(REEF_G);
-            leftHPStationReefLocs.add(REEF_H);
-            leftHPStationReefLocs.add(REEF_I);
-            leftHPStationReefLocs.add(REEF_J);
-            leftHPStationReefLocs.add(REEF_K);
-            leftHPStationReefLocs.add(REEF_L);
-            optimalPathsByHPStation.put(HPStation.HP_LEFT, leftHPStationReefLocs);
+            OptimalMidStartCycles.add(REEF_E);
+            OptimalMidStartCycles.add(REEF_F);         
+            OptimalMidStartCycles.add(REEF_G);
+            OptimalMidStartCycles.add(REEF_H);
+            OptimalMidStartCycles.add(REEF_I);
+            OptimalMidStartCycles.add(REEF_J);
+        }
+        public static ArrayList<ReefLocs> OptimalRightStartCycles = new ArrayList<>();
+        static {
+            OptimalRightStartCycles.add(REEF_D);
+            OptimalRightStartCycles.add(REEF_E);         
+            OptimalRightStartCycles.add(REEF_F);
+            OptimalRightStartCycles.add(REEF_G);
+        }
 
-            ArrayList<ReefLocs> rightHPStationReefLocs = new ArrayList<ReefLocs>();
-            rightHPStationReefLocs.add(REEF_A);
-            rightHPStationReefLocs.add(REEF_B);
-            rightHPStationReefLocs.add(REEF_C);
-            rightHPStationReefLocs.add(REEF_D);
-            rightHPStationReefLocs.add(REEF_E);
-            rightHPStationReefLocs.add(REEF_F);
-            rightHPStationReefLocs.add(REEF_G);
-            rightHPStationReefLocs.add(REEF_H);
-            optimalPathsByHPStation.put(HPStation.HP_RIGHT, rightHPStationReefLocs);
+        /*
+         * just to make looping throuugh and displaying all the different ReefLocs easier? will check if good ltr!
+         */
+        public static ArrayList<ReefLocs> OptimalLeftHPCycles = new ArrayList<>();
+        static{
+            OptimalLeftHPCycles.add(REEF_A);
+            OptimalLeftHPCycles.add(REEF_B);
+            OptimalLeftHPCycles.add(REEF_G);
+            OptimalLeftHPCycles.add(REEF_H);
+            OptimalLeftHPCycles.add(REEF_I);
+            OptimalLeftHPCycles.add(REEF_J);
+            OptimalLeftHPCycles.add(REEF_K);
+            OptimalLeftHPCycles.add(REEF_L);
+        }
+        public static ArrayList<ReefLocs> OptimalRightHPCycles = new ArrayList<>();
+        static{
+            OptimalRightHPCycles.add(REEF_A);
+            OptimalRightHPCycles.add(REEF_B);
+            OptimalRightHPCycles.add(REEF_C);
+            OptimalRightHPCycles.add(REEF_D);
+            OptimalRightHPCycles.add(REEF_E);
+            OptimalRightHPCycles.add(REEF_F);
+            OptimalRightHPCycles.add(REEF_G);
+            OptimalRightHPCycles.add(REEF_H);
         }
     }
 
@@ -133,9 +133,6 @@ public abstract class TrajsAndLocs {
         }
     }
 
-    /*
-     * MAKE SURE U HAVE A MIRRORED REEFTOHP TRAJ FOR EVERY HPTOREEF TRAJ U HAVE OR ELSE STUFF WILL DIE
-     */
     public static class Trajectories {
         public static HashMap<Pair<StartingLocs, ReefLocs>, String> StartToReefTrajs = new HashMap<>();
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
