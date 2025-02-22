@@ -41,9 +41,9 @@ import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
 public class Elevator extends SubsystemBase {
-    private final TalonFX m_right = new TalonFX(kBackCANID, TunerConstants.kCANBus);
-    private final TalonFX m_left = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
-    private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
+    private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
+    private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
+    private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private double m_desiredHeight = 0;
@@ -78,9 +78,10 @@ public class Elevator extends SubsystemBase {
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
 
     public Elevator() {
-        m_left.setControl(m_follower);
-        m_left.getConfigurator().apply(kLeftTalonFXConfiguration);
-        m_right.getConfigurator().apply(kRightTalonFXConfiguration);
+        m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
+
+        m_rearMotor.getConfigurator().apply(kRearTalonFXConfig);
+        m_rearMotor.setControl(m_followerReq);
         SmartDashboard.putData("Elevator Sim", m_mech2d);
     }
 
@@ -94,11 +95,11 @@ public class Elevator extends SubsystemBase {
     }
 
     private double getPulleyRotations() {
-        return m_right.getPosition().getValueAsDouble();
+        return m_rearMotor.getPosition().getValueAsDouble();
     }
 
     private Distance getPositionMeters() {
-        return ElevatorK.rotationsToMeters(m_right.getPosition().getValue());
+        return ElevatorK.rotationsToMeters(m_rearMotor.getPosition().getValue());
     }
 
     /* 
@@ -115,7 +116,7 @@ public class Elevator extends SubsystemBase {
             () -> {
                 m_MMEVRequest = m_MMEVRequest.withPosition(heightRots);
                 log_elevatorDesiredPosition.accept(Meters.of(heightMeters).magnitude());
-                m_right.setControl(m_MMEVRequest);
+                m_rearMotor.setControl(m_MMEVRequest);
             }
         ).until(() -> nearSetpoint());
     }
@@ -136,12 +137,12 @@ public class Elevator extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
-            m_right.setControl(zeroingVoltageCtrlReq);
+            m_frontMotor.setControl(zeroingVoltageCtrlReq);
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
-            m_right.setControl(zeroingVoltageCtrlReq.withOutput(0));
-            m_right.setPosition(0);
+            m_frontMotor.setPosition(0);
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
             m_isDebounced = true;
         };
 
@@ -162,8 +163,8 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void simulationPeriodic() {
-        TalonFXSimState rightSim = m_right.getSimState();
-        m_elevatorSim.setInput(rightSim.getMotorVoltage());
+        TalonFXSimState frontSim = m_frontMotor.getSimState();
+        m_elevatorSim.setInput(frontSim.getMotorVoltage());
 
         m_elevatorSim.update(0.020);
 
@@ -171,8 +172,8 @@ public class Elevator extends SubsystemBase {
         var elevatorVelocity = 
             metersToRotationVel(m_elevatorSim.getVelocityMetersPerSecond()* kGearRatio);
 
-        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
-        rightSim.setRotorVelocity(elevatorVelocity);
+        frontSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
+        frontSim.setRotorVelocity(elevatorVelocity);
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
     }
