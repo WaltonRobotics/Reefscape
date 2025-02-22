@@ -24,10 +24,14 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.ElevatorK.*;
+
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
@@ -43,6 +47,11 @@ public class Elevator extends SubsystemBase {
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private double m_desiredHeight = 0;
+    private boolean m_isDebounced = false;
+    private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
+    private boolean m_currentSpike = m_right.getSupplyCurrent().getValueAsDouble() > 15.0; 
+    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
+
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -126,17 +135,24 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command currentSenseHoming() {
-        Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising); // .5 feels like a lotta time but thats what banks' graph said.
-        boolean currentSpike = m_right.getSupplyCurrent().getValueAsDouble() > 30.0; // idk if those nums are right but that is what graph says
-        Trigger isStalled = new Trigger(() -> debouncer.calculate(currentSpike));
-        VoltageOut voltageControl = new VoltageOut(4);
-        
-        return Commands.sequence(
-            Commands.runOnce(() -> m_right.setControl(voltageControl)),
-            Commands.waitUntil(isStalled),
-            Commands.runOnce(() -> m_right.setControl(voltageControl.withOutput(0))),
-            Commands.runOnce(() -> m_right.setPosition(0))
-        );
+        Runnable init = () -> {
+            m_right.setControl(zeroingVoltageCtrlReq);
+        };
+        Runnable execute = () -> {};
+        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            m_right.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            m_right.setPosition(0);
+            m_isDebounced = true;
+        };
+
+        BooleanSupplier isFinished = () ->
+            m_debouncer.calculate(m_currentSpike);
+
+        return new FunctionalCommand(init, execute, onEnd, isFinished);
+    }
+    
+    public boolean getIsHomed() {
+        return m_isDebounced;
     }
 
     @Override

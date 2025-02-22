@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.WaltLogger;
@@ -26,6 +27,7 @@ import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.AlgaeK.*;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
  
@@ -69,6 +71,11 @@ public class Algae extends SubsystemBase {
     public final Trigger stateTrg_shooting = new Trigger(stateEventLoop, () -> m_state == State.SHOOTING);
     public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
     public final Trigger stateTrg_override = new Trigger(stateEventLoop, () -> m_state == State.OVERRIDE);
+
+    private boolean m_isDebounced = false;
+    private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
+    private boolean m_currentSpike = m_wrist.getSupplyCurrent().getValueAsDouble() > 15.0; 
+    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
     public Algae(
         Trigger groundReq, 
@@ -264,24 +271,24 @@ public class Algae extends SubsystemBase {
     }
 
     public Command currentSenseHoming() {
-        Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising); // .5 feels like a lotta time but thats what banks' graph said.
-        boolean currentSpike = m_wrist.getSupplyCurrent().getValueAsDouble() > 30.0; // idk if those nums are right but that is what graph says
-        Trigger isStalled = new Trigger(() -> debouncer.calculate(currentSpike));
-        VoltageOut voltageControl = new VoltageOut(4);
+        Runnable init = () -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq);
+        };
+        Runnable execute = () -> {};
+        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            m_wrist.setPosition(0);
+            m_isDebounced = true;
+        };
 
-        // it would be really tragic if this code is wrong cuz i was supposed to get it done at like 7pm
-        // if thats the case SORRY BANKS BUT IN MY DEFENSE RETURN TO OZ IS LIKE MY FAV MOVIE EVER AND MAD HAS DISNEY+
-        // AND THEN SHE WAS FINALLY HOOKED ON OZ STUFF SO WE HAD A WHOLE HOURS LONG OZ RABBIT HOLE THING
-        // and i also accidentally fell asleep and took a nap and then woke up randomly at 5 and was like OH shih tzu puppies I WAS SUPPOSED TO DO CODE
-        // my bad
+        BooleanSupplier isFinished = () ->
+            m_debouncer.calculate(m_currentSpike);
 
-        // also btw reminder for grac if this is wrong u should also fix the code in elevator.java :3
-        return Commands.sequence(
-            Commands.runOnce(() -> m_wrist.setControl(voltageControl)),
-            Commands.waitUntil(isStalled),
-            Commands.runOnce(() -> m_wrist.setControl(voltageControl.withOutput(0))),
-            Commands.runOnce(() -> m_wrist.setPosition(0))
-        );
+        return new FunctionalCommand(init, execute, onEnd, isFinished);
+    }
+
+    public boolean getIsHomed() {
+        return m_isDebounced;
     }
 
     @Override
