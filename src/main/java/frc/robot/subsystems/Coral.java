@@ -45,6 +45,8 @@ public class Coral extends SubsystemBase {
     private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
     private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
 
+    private boolean m_isFingerOut = false;
+
     public Coral() {
         m_coralMotor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);
 
@@ -82,13 +84,30 @@ public class Coral extends SubsystemBase {
 
     // finger stuff
     public Command fingerOut() {
-        return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees))));
+        return Commands.sequence(
+            Commands.runOnce(() -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees)))),
+            Commands.runOnce(() -> m_isFingerOut = true))
+            ;
     }
 
     public Command fingerIn() {
-        return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees))));
+        return Commands.sequence(
+            Commands.runOnce(() -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees)))),
+            Commands.runOnce(() -> m_isFingerOut = false));
+    }
+
+    public Command fingerCmd() {
+        if(m_isFingerOut) {
+            return fingerIn();
+        } else if(!m_isFingerOut) {
+            return fingerOut();
+        }
+
+        return Commands.print("something oopsied. this should like ne'er happen. what did u do");
+    }
+
+    public boolean getFingerStatus() {
+        return m_isFingerOut;
     }
 
     public void setFingerCoast(boolean coast) {

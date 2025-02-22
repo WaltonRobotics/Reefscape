@@ -122,6 +122,7 @@ public class Robot extends TimedRobot {
     // and Y is defined as to the left according to WPILib convention.
 
     manipulator.start().whileTrue(coral.setCoralMotorAction(kCoralSpeed)); // this is for finger motor.
+    manipulator.back().whileTrue(coral.fingerCmd());
 
     if(Utils.isSimulation()) {
       drivetrain.seedFieldCentric();
@@ -151,7 +152,6 @@ public class Robot extends TimedRobot {
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
     drivetrain.registerTelemetry(logger::telemeterize);
-
   }
 
   private void driverRumble(double intensity) {
