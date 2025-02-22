@@ -133,6 +133,9 @@ public abstract class TrajsAndLocs {
         }
     }
 
+    /*
+     * MAKE SURE U HAVE A MIRRORED REEFTOHP TRAJ FOR EVERY HPTOREEF TRAJ U HAVE OR ELSE STUFF WILL DIE
+     */
     public static class Trajectories {
         public static HashMap<Pair<StartingLocs, ReefLocs>, String> StartToReefTrajs = new HashMap<>();
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
