@@ -32,6 +32,7 @@ import static frc.robot.Constants.ElevatorK.*;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
 
 import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
@@ -47,9 +48,9 @@ public class Elevator extends SubsystemBase {
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
     private double m_desiredHeight = 0;
-    private boolean m_isDebounced = false;
-    private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
-    private boolean m_currentSpike = m_right.getSupplyCurrent().getValueAsDouble() > 15.0; 
+    private boolean m_isHomed = false;
+    private Debouncer m_debouncer = new Debouncer(0.125, DebounceType.kRising);
+    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 15.0; 
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
 
@@ -82,7 +83,10 @@ public class Elevator extends SubsystemBase {
 
         m_rearMotor.getConfigurator().apply(kRearTalonFXConfig);
         m_rearMotor.setControl(m_followerReq);
+
         SmartDashboard.putData("Elevator Sim", m_mech2d);
+
+        setDefaultCommand(currentSenseHoming());
     }
 
     public boolean nearSetpoint() {
@@ -109,7 +113,7 @@ public class Elevator extends SubsystemBase {
         return toHeight(heightMeters.meters);
     }
 
-    private Command toHeight(double heightMeters) {
+    public Command toHeight(double heightMeters) {
         m_desiredHeight = heightMeters;
         double heightRots = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
         return runOnce(
@@ -135,6 +139,15 @@ public class Elevator extends SubsystemBase {
         } else { return Commands.none();}
     }
 
+    public Command testOverrideToHeight(DoubleSupplier stick) {
+        return runEnd(() -> {
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
+        }, () -> {
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
+        }
+        );
+    }
+
     public Command currentSenseHoming() {
         Runnable init = () -> {
             m_frontMotor.setControl(zeroingVoltageCtrlReq);
@@ -143,17 +156,19 @@ public class Elevator extends SubsystemBase {
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
             m_frontMotor.setPosition(0);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
-            m_isDebounced = true;
+            removeDefaultCommand();
+            m_isHomed = true;
+            System.out.println("Zeroed Elevator!!!");
         };
 
         BooleanSupplier isFinished = () ->
-            m_debouncer.calculate(m_currentSpike);
+            m_debouncer.calculate(m_currentSpike.getAsBoolean());
 
-        return new FunctionalCommand(init, execute, onEnd, isFinished);
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
     }
     
     public boolean getIsHomed() {
-        return m_isDebounced;
+        return m_isHomed;
     }
 
     @Override
