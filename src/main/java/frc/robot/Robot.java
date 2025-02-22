@@ -16,6 +16,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -25,6 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
@@ -123,6 +125,7 @@ public class Robot extends TimedRobot {
 
     if(Utils.isSimulation()) {
       drivetrain.seedFieldCentric();
+      driver.back().onTrue(Commands.runOnce(() -> drivetrain.resetPose(new Pose2d()))); //unsure if this is workyy\
     }
 
     drivetrain.registerTelemetry(logger::telemeterize);
@@ -147,7 +150,6 @@ public class Robot extends TimedRobot {
     //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-
     drivetrain.registerTelemetry(logger::telemeterize);
 
   }
