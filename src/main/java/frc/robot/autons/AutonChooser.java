@@ -55,6 +55,7 @@ public class AutonChooser {
     private static final ArrayList<SendableChooser<EleHeight>> scoreHeightChoosers = new ArrayList<>();
 
     public static void init() {
+        cycleCountChooser.onChange(AutonChooser::updateChoices);
         cycleCountChooser.setDefaultOption("Zero True Cycles", CycleCount.ZERO_TRUE_CYCLES);
         cycleCountChooser.addOption("One Cycle", CycleCount.ONE_CYCLE);
         cycleCountChooser.addOption("Two Cycles", CycleCount.TWO_CYCLES);
@@ -64,30 +65,43 @@ public class AutonChooser {
         SmartDashboard.putData("Cycle Count", cycleCountChooser);
 
         // staring position chooser
+        startingPositionChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
         startingPositionChooser.setDefaultOption("Mid", StartingLocs.MID);
         startingPositionChooser.addOption("Left", StartingLocs.LEFT);
         startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
         SmartDashboard.putData("Starting Position", startingPositionChooser);
 
         basicChooserConfig();
-        cycleCountChooser.onChange(AutonChooser::updateChoices);
+        SmartDashboard.updateValues();
+    }
+
+    public static Command forceUpdateDEBUG() {
+        return Commands.runOnce(() -> updateChoices(cycleCountChooser.getSelected()));
     }
 
     /**
      * Think about whether you actually need to use this!!! i'm just doing debug stuff iwth it
      */
-    public static Command getCycleCountChoiceDEBUG() {
-        String cycleCountChoiceName = "cycleCountChoiceName: " + cycleCountChooser.getSelected().m_name;
-        return Commands.print(cycleCountChoiceName);
+    public static Command getChoiceNameDEBUG() {
+        String value;
+        if (firstScoreChooser.getSelected() != null) {
+            value = "value: " + firstScoreChooser.getSelected().name();
+        } else {
+            value = "value is null";
+        }
+        return Commands.print(value);
     }
 
     /**
      * Runs and puts all empty choosers. Do not call this outside of initialization above
      */
     private static void basicChooserConfig() {
+        firstScoreChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
         SmartDashboard.putData("First Score Location", firstScoreChooser);
-        SmartDashboard.putData("First Score Height", firstScoreHeightChooser);
+        firstHPStationChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
         SmartDashboard.putData("First Human Station Location", firstHPStationChooser);
+        firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+        SmartDashboard.putData("First Score Height", firstScoreHeightChooser);
         // hpToReefChoosers
         for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
             SendableChooser<ReefLocs> currentChooser = new SendableChooser<ReefLocs>();
@@ -168,7 +182,7 @@ public class AutonChooser {
             newFirstHPStationChooser.addOption(hpStation.name(), hpStation);
         }
         firstHPStationChooser = newFirstHPStationChooser;
-        SmartDashboard.putData("First Score Location", firstHPStationChooser);
+        SmartDashboard.putData("First HP Location", firstHPStationChooser);
 
         SmartDashboard.updateValues();
     }
@@ -260,6 +274,8 @@ public class AutonChooser {
                 scoreHeightChoosers.add(actualIndex, currentChooser);
             }
         }
+
+        SmartDashboard.updateValues();
     }
 
     private static Optional<ArrayList<ReefLocs>> getOptimalReefLocs(StartingLocs startingLocation) {

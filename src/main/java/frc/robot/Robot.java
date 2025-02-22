@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
+// import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -109,6 +110,7 @@ public class Robot extends TimedRobot {
 
     // TODO: this might be supposed to be in robotInit but i imagine we want autonchooser to run before robotInit
     AutonChooser.init();
+    configureBindings();
   }
 
   private void configureBindings() {
@@ -142,7 +144,8 @@ public class Robot extends TimedRobot {
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
     // manipulator.rightBumper().onTrue(AutonChooser.getCycleCountChoiceDEBUG());
-    driver.rightBumper().onTrue(Commands.print("motherfucker why won't you work"));
+    driver.povRight().onTrue(AutonChooser.getChoiceNameDEBUG());
+    driver.rightBumper().onTrue(AutonChooser.forceUpdateDEBUG());
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
@@ -195,7 +198,6 @@ public class Robot extends TimedRobot {
   public void robotInit(){
     mapAutonCommands();
     configAutonChooser();
-    configureBindings();
   }
 
   @Override
@@ -212,21 +214,21 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {}
 
-  @Override
-  public void autonomousInit() {
-    m_autonomousCmd = waltAutonFactory.generateAuton(
-      drivetrain, 
-      superstructure, 
-      AutonChooser.getChosenStart(), 
-      AutonChooser.getChosenFirstReef(), 
-      AutonChooser.getStartingHeight(), 
-      AutonChooser.getChosenFirstHP(), 
-      AutonChooser.getCycles());
+  // @Override
+  // public void autonomousInit() {
+  //   m_autonomousCmd = waltAutonFactory.generateAuton(
+  //     drivetrain, 
+  //     superstructure, 
+  //     AutonChooser.getChosenStart(), 
+  //     AutonChooser.getChosenFirstReef(), 
+  //     AutonChooser.getStartingHeight(), 
+  //     AutonChooser.getChosenFirstHP(), 
+  //     AutonChooser.getCycles());
 
-    if(m_autonomousCmd != null) {
-      m_autonomousCmd.schedule();
-    }
-  }
+  //   if(m_autonomousCmd != null) {
+  //     m_autonomousCmd.schedule();
+  //   }
+  // }
 
   @Override
   public void autonomousPeriodic() {}
