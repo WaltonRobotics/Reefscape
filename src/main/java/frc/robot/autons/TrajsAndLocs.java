@@ -4,8 +4,6 @@ import static edu.wpi.first.units.Units.Meters;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -59,16 +57,16 @@ public abstract class TrajsAndLocs {
          * enums used in autonchooser
          * list of best possible next locs given the start cycle u were just at
          */
-        public static HashMap<StartingLocs, List<ReefLocs>> optimalPathsByMatchStartLocation = new HashMap<StartingLocs, List<ReefLocs>>();
+        public static HashMap<StartingLocs, ArrayList<ReefLocs>> optimalPathsByMatchStartLocation = new HashMap<StartingLocs, ArrayList<ReefLocs>>();
         static {
-            List<ReefLocs> leftStartReefLocs = new ArrayList<ReefLocs>();
+            ArrayList<ReefLocs> leftStartReefLocs = new ArrayList<ReefLocs>();
             leftStartReefLocs.add(REEF_H);
             leftStartReefLocs.add(REEF_I);
             leftStartReefLocs.add(REEF_J);
             leftStartReefLocs.add(REEF_K);
             optimalPathsByMatchStartLocation.put(StartingLocs.LEFT, leftStartReefLocs);
 
-            List<ReefLocs> midStartReefLocs = new ArrayList<ReefLocs>();
+            ArrayList<ReefLocs> midStartReefLocs = new ArrayList<ReefLocs>();
             midStartReefLocs.add(REEF_E);
             midStartReefLocs.add(REEF_F);
             midStartReefLocs.add(REEF_G);
@@ -77,16 +75,16 @@ public abstract class TrajsAndLocs {
             midStartReefLocs.add(REEF_J);
             optimalPathsByMatchStartLocation.put(StartingLocs.MID, midStartReefLocs);
 
-            List<ReefLocs> rightStartReefLocs = new ArrayList<ReefLocs>();
+            ArrayList<ReefLocs> rightStartReefLocs = new ArrayList<ReefLocs>();
             rightStartReefLocs.add(REEF_D);
             rightStartReefLocs.add(REEF_E);
             rightStartReefLocs.add(REEF_F);
             rightStartReefLocs.add(REEF_G);
             optimalPathsByMatchStartLocation.put(StartingLocs.RIGHT, rightStartReefLocs);
         }
-        public static HashMap<HPStation, List<ReefLocs>> optimalPathsByHPStation = new HashMap<HPStation, List<ReefLocs>>();
+        public static HashMap<HPStation, ArrayList<ReefLocs>> optimalPathsByHPStation = new HashMap<HPStation, ArrayList<ReefLocs>>();
         static {
-            List<ReefLocs> leftHPStationReefLocs = new ArrayList<ReefLocs>();
+            ArrayList<ReefLocs> leftHPStationReefLocs = new ArrayList<ReefLocs>();
             leftHPStationReefLocs.add(REEF_A);
             leftHPStationReefLocs.add(REEF_B);
             leftHPStationReefLocs.add(REEF_G);
@@ -97,7 +95,7 @@ public abstract class TrajsAndLocs {
             leftHPStationReefLocs.add(REEF_L);
             optimalPathsByHPStation.put(HPStation.HP_LEFT, leftHPStationReefLocs);
 
-            List<ReefLocs> rightHPStationReefLocs = new ArrayList<ReefLocs>();
+            ArrayList<ReefLocs> rightHPStationReefLocs = new ArrayList<ReefLocs>();
             rightHPStationReefLocs.add(REEF_A);
             rightHPStationReefLocs.add(REEF_B);
             rightHPStationReefLocs.add(REEF_C);

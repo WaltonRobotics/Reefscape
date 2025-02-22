@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
@@ -32,7 +33,6 @@ import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
-import frc.robot.autons.AutonChooser.NumCycles;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -106,6 +106,9 @@ public class Robot extends TimedRobot {
     if(Robot.isSimulation()) {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
+
+    // TODO: this might be supposed to be in robotInit but i imagine we want autonchooser to run before robotInit
+    AutonChooser.init();
   }
 
   private void configureBindings() {
@@ -138,40 +141,42 @@ public class Robot extends TimedRobot {
     //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+    // manipulator.rightBumper().onTrue(AutonChooser.getCycleCountChoiceDEBUG());
+    driver.rightBumper().onTrue(Commands.print("motherfucker why won't you work"));
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   private void mapAutonCommands(){
-    AutonChooser.setDefaultStartingPos(TrajsAndLocs.StartingLocs.MID);
-    AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
+    // AutonChooser.setDefaultStartingPos(TrajsAndLocs.StartingLocs.MID);
+    // AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
 
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
+    // AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
+    // AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
+    // AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
+    // AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
 
-    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
+    // AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
+    // AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
 
-    AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
+    // AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
 
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L1, "L1");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L2, "L2");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L3, "L3");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L4, "L4");
+    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L1, "L1");
+    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L2, "L2");
+    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L3, "L3");
+    // AutonChooser.assignStartingHeight(Elevator.EleHeight.L4, "L4");
   }
 
   /* needed to continue choosing schtuffs */
   private void configAutonChooser() {
-    AutonChooser.startingPositionChooser.onChange(startLocConsumer);
-    AutonChooser.hpStationChooser.onChange(hpStationConsumer);
-    // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
-    for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
-      AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
-    }
-    AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
-    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+    // AutonChooser.startingPositionChooser.onChange(startLocConsumer);
+    // AutonChooser.hpStationChooser.onChange(hpStationConsumer);
+    // // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
+    // for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
+    //   AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
+    // }
+    // AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
+    // AutonChooser.cyclesChooser.onChange(cyclesConsumer);
   }
 
   private void driverRumble(double intensity) {
@@ -190,15 +195,12 @@ public class Robot extends TimedRobot {
   public void robotInit(){
     mapAutonCommands();
     configAutonChooser();
+    configureBindings();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    if(cycleChange){
-      AutonChooser.cycleIterations();
-      cycleChange = false;
-    }
   }
 
   @Override
