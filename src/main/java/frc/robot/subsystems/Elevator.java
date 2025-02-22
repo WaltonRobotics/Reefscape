@@ -6,9 +6,12 @@ import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
@@ -22,6 +25,8 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import static frc.robot.Constants.ElevatorK.*;
 
 import frc.robot.Constants.ElevatorK;
@@ -118,6 +123,20 @@ public class Elevator extends SubsystemBase {
                 toHeight(m_desiredHeight)
             );
         } else { return Commands.none();}
+    }
+
+    public Command currentSenseHoming() {
+        Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising); // .5 feels like a lotta time but thats what banks' graph said.
+        boolean currentSpike = m_right.getSupplyCurrent().getValueAsDouble() > 30.0; // idk if those nums are right but that is what graph says
+        Trigger isStalled = new Trigger(() -> debouncer.calculate(currentSpike));
+        VoltageOut voltageControl = new VoltageOut(4);
+        
+        return Commands.sequence(
+            Commands.runOnce(() -> m_right.setControl(voltageControl)),
+            Commands.waitUntil(isStalled),
+            Commands.runOnce(() -> m_right.setControl(voltageControl.withOutput(0))),
+            Commands.runOnce(() -> m_right.setPosition(0))
+        );
     }
 
     @Override

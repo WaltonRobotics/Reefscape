@@ -4,9 +4,12 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
@@ -22,6 +25,7 @@ import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.AlgaeK.*;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
  
@@ -251,11 +255,33 @@ public class Algae extends SubsystemBase {
 
     public void setWheelAction(double destinationVoltage) {
         // should this be a runend? i thought no cuz i didn't want the motor to stop until i told it to
+        // ive decided no (watch me be wrong (idt im wrong tho (maybe)))
         m_intake.setVoltage(destinationVoltage);
     }
 
     public boolean isAlgaeThere() {
         return m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent;
+    }
+
+    public Command currentSenseHoming() {
+        Debouncer debouncer = new Debouncer(0.5, DebounceType.kRising); // .5 feels like a lotta time but thats what banks' graph said.
+        boolean currentSpike = m_wrist.getSupplyCurrent().getValueAsDouble() > 30.0; // idk if those nums are right but that is what graph says
+        Trigger isStalled = new Trigger(() -> debouncer.calculate(currentSpike));
+        VoltageOut voltageControl = new VoltageOut(4);
+
+        // it would be really tragic if this code is wrong cuz i was supposed to get it done at like 7pm
+        // if thats the case SORRY BANKS BUT IN MY DEFENSE RETURN TO OZ IS LIKE MY FAV MOVIE EVER AND MAD HAS DISNEY+
+        // AND THEN SHE WAS FINALLY HOOKED ON OZ STUFF SO WE HAD A WHOLE HOURS LONG OZ RABBIT HOLE THING
+        // and i also accidentally fell asleep and took a nap and then woke up randomly at 5 and was like OH shih tzu puppies I WAS SUPPOSED TO DO CODE
+        // my bad
+
+        // also btw reminder for grac if this is wrong u should also fix the code in elevator.java :3
+        return Commands.sequence(
+            Commands.runOnce(() -> m_wrist.setControl(voltageControl)),
+            Commands.waitUntil(isStalled),
+            Commands.runOnce(() -> m_wrist.setControl(voltageControl.withOutput(0))),
+            Commands.runOnce(() -> m_wrist.setPosition(0))
+        );
     }
 
     @Override
