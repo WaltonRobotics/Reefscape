@@ -1,24 +1,21 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 import edu.wpi.first.units.measure.Current;
-
-import edu.wpi.first.units.measure.Current;
-
 import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -69,7 +66,6 @@ public class Constants {
             .withFeedback(kWristFeedbackConfigs)
             .withMotionMagic(kWristMagicConfigs)
             .withSlot0(kWristSlot0Configs);
-
         // intake motor
         public static final int kIntakeGearRatio = 2;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
@@ -186,14 +182,13 @@ public class Constants {
             return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
         }
 
-        private static final CurrentLimitsConfigs kLimitConfigs = new CurrentLimitsConfigs()
+        private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(300)
             .withStatorCurrentLimitEnable(false)
             .withSupplyCurrentLimit(75)
             .withSupplyCurrentLimitEnable(false);
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kGearRatio);
-
         private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(5)
             .withMotionMagicAcceleration(15)
@@ -204,18 +199,22 @@ public class Constants {
             .withGravityType(GravityTypeValue.Elevator_Static)
             .withKP(10) 
             .withKG(kG);
+        private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.Clockwise_Positive);
+        private static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitThreshold(12.845); // true hard 12.9849854
         
-        public static final TalonFXConfiguration kRightTalonFXConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kLimitConfigs)
+        public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
             .withFeedback(kFeedbackConfigs)
             .withMotionMagic(kMagicConfigs)
-            .withSlot0(kSlot0Configs);
+            .withSlot0(kSlot0Configs)
+            .withSoftwareLimitSwitch(kSoftwareLimitConfigs);
 
-        public static final TalonFXConfiguration kLeftTalonFXConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kLimitConfigs)
-            .withFeedback(kFeedbackConfigs)
-            .withMotionMagic(kMagicConfigs)
-            .withSlot0(kSlot0Configs);
+        public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
 
     }
 
