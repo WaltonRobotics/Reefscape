@@ -107,7 +107,8 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     Commands.runOnce(() -> superstructure.requestIsPreload(true)),
                     superstructure.autonRequestEleToScore(firstHeight),
-                    Commands.runOnce(() -> superstructure.requestIsPreload(false))
+                    Commands.runOnce(() -> superstructure.requestIsPreload(false)),
+                    Commands.print("EleUp")
                 )
             );
         firstScoreTraj.done().onTrue(
@@ -119,8 +120,9 @@ public class WaltAutonFactory {
                 firstLoadTraj.cmd()
             )
         );
+
         firstLoadTraj.atTime("intake")
-            .onTrue(superstructure.autonRequestToIntake());
+                .onTrue(superstructure.autonRequestToIntake());
         // now ur at the HP
 
         // list of traj start cmds

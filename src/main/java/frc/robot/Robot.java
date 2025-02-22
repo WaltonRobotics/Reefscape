@@ -7,13 +7,18 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.Coralk.kCoralSpeed;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.photonvision.EstimatedRobotPose;
+
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -59,31 +64,43 @@ public class Robot extends TimedRobot {
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
+  private final Vision vision = new Vision();
   private final Elevator elevator = new Elevator();
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
-  private boolean cycleChange = false;
+  // booleans to determine whether the value has changed
+  private boolean numCycleChange = false;
+  private boolean startingPositionChange = false;
+  private boolean firstScoringPositionChange = false;
+  private boolean startingHeightChange = false;
+  private boolean initialHPStationChange = false;
+
   /* AutonChooser trigs */
-  private final Consumer<StartingLocs> startLocConsumer = startLoc -> {
-    AutonChooser.startLocChosen = startLoc;
-    AutonChooser.chooseFirstScoring();
-  };
-  private final Consumer<HPStation> hpStationConsumer = hpStation -> {
-    AutonChooser.hpStationChosen = hpStation;
-    cycleChange = true;
-  };
-  private final Consumer<ReefLocs> hpToReefConsumer = hpToReef -> {
-    AutonChooser.hpToReefChosen = hpToReef;
-    cycleChange = true;
-  };
-  private final Consumer<HPStation> reefToHPConsumer = reefToHP -> {
-    AutonChooser.reefToHPChosen = reefToHP;
-    cycleChange = true;
-  };
+  // When the user selects a different option, this thing runs
   private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
-    AutonChooser.cyclesChosen = numCycles;
-    cycleChange = true;
+    AutonChooser.m_cycles = numCycles;
+    numCycleChange = true;
+  };
+
+  private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+    AutonChooser.startingPosition = startingPosition;
+    startingPositionChange = true;
+  };
+
+  private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
+    AutonChooser.startingHeight = startingHeight;
+    startingHeightChange = true;
+  };
+
+  private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+    AutonChooser.scoringPosition = scoringPosition;
+    firstScoringPositionChange = true;
+  };
+
+  private final Consumer<HPStation> initialHPStationConsumer = hpStation -> {
+    AutonChooser.hpStation = hpStation;
+    initialHPStationChange = true;
   };
 
   private final Trigger trg_teleopEleHeightReq = 
@@ -127,6 +144,8 @@ public class Robot extends TimedRobot {
     if(Robot.isSimulation()) {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
+
+    configureBindings();
   }
 
   private void configureBindings() {
@@ -161,39 +180,19 @@ public class Robot extends TimedRobot {
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
     drivetrain.registerTelemetry(logger::telemeterize);
-
   }
 
-  private void mapAutonCommands(){
-    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
-    AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
-
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_2, "Cycle 2");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_3, "Cycle 3");
-    AutonChooser.assignNumCycles(NumCycles.CYCLE_4, "Cycle 4");
-
-    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.RIGHT, "right");
-    AutonChooser.assignStartingPosition(TrajsAndLocs.StartingLocs.LEFT, "left");
-
-    AutonChooser.assignHPStation(TrajsAndLocs.HPStation.HP_RIGHT, "human player right");
-
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L1, "L1");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L2, "L2");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L3, "L3");
-    AutonChooser.assignStartingHeight(Elevator.EleHeight.L4, "L4");
+  private void mapAutonCommands() {
+    AutonChooser.configureFirstCycle();
   }
 
   /* needed to continue choosing schtuffs */
   private void configAutonChooser() {
-    AutonChooser.startingPositionChooser.onChange(startLocConsumer);
-    AutonChooser.hpStationChooser.onChange(hpStationConsumer);
-    // AutonChooser.hpToReefChooser.onChange(hpToReefConsumer);
-    for(int i = 0; i < AutonChooser.hpToReefChoosers.size(); i++){
-      AutonChooser.hpToReefChoosers.get(i).onChange(hpToReefConsumer);
-    }
-    AutonChooser.reefToHPChooser.onChange(reefToHPConsumer);
     AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+    AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
+    AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
+    AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
+    AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
   }
 
   private void driverRumble(double intensity) {
@@ -209,7 +208,7 @@ public class Robot extends TimedRobot {
 	}
 
   @Override
-  public void robotInit(){
+  public void robotInit() {
     mapAutonCommands();
     configAutonChooser();
   }
@@ -217,10 +216,39 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    if(cycleChange){
-      AutonChooser.cycleIterations();
-      cycleChange = false;
+    // any time the selection changes, the variable in AutonChooser updates
+    if (numCycleChange) {
+      AutonChooser.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+      AutonChooser.updateNumCycles();
+      numCycleChange = false;
     }
+    if (startingPositionChange) {
+      AutonChooser.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+      AutonChooser.updateStartingPosition();
+      startingPositionChange = false;
+    }
+    if (initialHPStationChange) {
+      AutonChooser.updateInitalHPStation();
+      initialHPStationChange = false;
+    }
+    if (firstScoringPositionChange) {
+      AutonChooser.updateInitialScoringPosition();
+      firstScoringPositionChange = false;
+    }
+    if (startingHeightChange) {
+      AutonChooser.updateStartingHeight();
+      startingHeightChange = false;
+    }
+
+    CommandScheduler.getInstance().run();
+    Optional<EstimatedRobotPose> estimatedPoseOptional = vision.getEstimatedGlobalPose();
+    if (estimatedPoseOptional.isPresent()) {
+      EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
+      Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+      drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds);
+    }
+
+    superstructure.logState();
   }
 
   @Override
@@ -237,11 +265,11 @@ public class Robot extends TimedRobot {
     m_autonomousCmd = waltAutonFactory.generateAuton(
       drivetrain, 
       superstructure, 
-      AutonChooser.getChosenStart(), 
-      AutonChooser.getChosenFirstReef(), 
-      AutonChooser.getStartingHeight(), 
-      AutonChooser.getChosenFirstHP(), 
-      AutonChooser.getCycles());
+      AutonChooser.startingPosition, 
+      AutonChooser.scoringPosition, 
+      AutonChooser.startingHeight, 
+      AutonChooser.hpStation, 
+      AutonChooser.getAutonCycles());
 
     if(m_autonomousCmd != null) {
       m_autonomousCmd.schedule();
@@ -276,5 +304,14 @@ public class Robot extends TimedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SwerveDriveState robotState = drivetrain.getState();
+    Pose2d robotPose = robotState.Pose;
+    vision.simulationPeriodic(robotPose);
+    drivetrain.simulationPeriodic();
+
+    // Field2d debugField = vision.getSimDebugField();
+    // debugField.getObject("EstimatedRobot").setPose(robotPose);
+    // debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
+  }
 }

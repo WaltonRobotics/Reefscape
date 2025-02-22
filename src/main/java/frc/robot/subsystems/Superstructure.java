@@ -5,14 +5,16 @@ import static frc.robot.Constants.Coralk.kCoralSpeed;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.Utils;
+
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.Constants.*;
-import static frc.robot.Constants.AlgaeK.kLogTab;
 
+import static frc.robot.Constants.RobotK.*;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.IntLogger;
@@ -191,14 +193,29 @@ public class Superstructure {
     private void configureStateTransitions() {
         (stateTrg_eleToIntake.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (stateTrg_intaking.and(trg_botSensor))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_eleToScore.and(trg_eleNearSetpoint))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY));
-        (stateTrg_score.and(trg_botSensor.negate()))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
         (stateTrg_scored.and(trg_toHomeOverride.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
+
+        if(Utils.isSimulation() && RobotModeTriggers.autonomous().getAsBoolean()) {
+            (stateTrg_intaking.debounce(0.5))
+                .onTrue(Commands.runOnce(() -> {
+                    m_state = State.INTOOK;
+                    Commands.print("pretend intook whee");
+                }));
+            (stateTrg_score.debounce(0.5))
+                .onTrue(Commands.runOnce(() -> {
+                    m_state = State.ELE_TO_INTAKE;
+                    Commands.print("pretend scored wow we're so cool");
+                }
+                ));
+        } else {
+            (stateTrg_intaking.and(trg_botSensor))
+                .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+            (stateTrg_score.and(trg_botSensor.negate()))
+                .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+        }
     }
 
     private void configureStateActions() {
@@ -272,11 +289,13 @@ public class Superstructure {
     }
 
     public Command autonScoreReq() {
-        return Commands.runOnce(() -> autonScoreReq = true);
+        return Commands.runOnce(() -> autonScoreReq = true).andThen(Commands.print("BALLIN"));
     }
 
     public Command autonRequestToIntake() {
-        return requestToIntake().alongWith(Commands.runOnce(() -> autonIntakeReq = true));
+        return Commands.runOnce(() -> autonIntakeReq = true)
+            .andThen(Commands.runOnce(() -> System.out.println(autonIntakeReq)))
+            .andThen(requestToIntake());
     }
 
     public Command requestToIntake() {
