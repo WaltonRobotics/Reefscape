@@ -17,6 +17,7 @@ import static frc.robot.Constants.*;
 import static frc.robot.Constants.RobotK.*;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
+// import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.IntLogger;
 
 public class Superstructure {
@@ -84,6 +85,7 @@ public class Superstructure {
 
     private EleHeight m_curHeightReq = EleHeight.HOME;
 
+    // private BooleanLogger log_preloadOverride = WaltLogger.logBoolean(kLogTab, "preloadOverride");
     private IntLogger log_state = WaltLogger.logInt(kLogTab, "state");
 
     public Superstructure(
@@ -138,12 +140,14 @@ public class Superstructure {
         // these are treated kinda differently in auton than in teleop so i differentiated them again
         (stateTrg_idle.and(trg_autonIntakeReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
+        // never activates presumably because stateTrg_intook never becomes true
         (stateTrg_intook.and(trg_autonScoreEleReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         
         // overrides
+        // this presumably never activates meaning maybe i want to plot trg_preloadOverride??
         (trg_preloadOverride.and(stateTrg_idle).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (trg_autonIntakeOverride.and(RobotModeTriggers.autonomous()))
@@ -281,7 +285,7 @@ public class Superstructure {
     }
 
     public Command autonRequestEleToScore(EleHeight height) {
-        return requestEleToScore(height).alongWith(Commands.runOnce(() -> autonScoreEleReq = true));
+        return Commands.print("infinity ballin").andThen(requestEleToScore(height).alongWith(Commands.runOnce(() -> autonScoreEleReq = true)).andThen(Commands.print("DOUBLE BALLIN")));
     }
 
     public Command requestEleToScore(EleHeight height) {
@@ -304,6 +308,7 @@ public class Superstructure {
 
     public void logState() {
         log_state.accept(m_state.idx);
+        // log_preloadOverride.accept(trg_preloadOverride.getAsBoolean());
     }
 
     public enum State {

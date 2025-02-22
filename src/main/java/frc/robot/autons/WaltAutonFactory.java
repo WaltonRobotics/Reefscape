@@ -102,9 +102,11 @@ public class WaltAutonFactory {
             )
         );
 
+        // this trigger doesn't go off!
         firstScoreTraj.atTime("eleUp")
             .onTrue(
                 Commands.sequence(
+                    Commands.print("does this shit even run"),
                     Commands.runOnce(() -> superstructure.requestIsPreload(true)),
                     superstructure.autonRequestEleToScore(firstHeight),
                     Commands.runOnce(() -> superstructure.requestIsPreload(false)),
