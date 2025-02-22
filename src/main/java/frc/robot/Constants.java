@@ -153,7 +153,7 @@ public class Constants {
         public static final int kBackCANID = 11;
 
         public static final double kGearRatio = 50/12;
-        public static final Distance kSpoolRadius = Inches.of(1.8798);  // TODO: ask banks if the thing we considered a spool is a spool?
+        public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
 
         public static final double kV = 0;
         public static final double kA = 0;
