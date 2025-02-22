@@ -105,8 +105,8 @@ public class Constants {
 
     public class Coralk {
         public static final String kLogTab = "EleSubsys";
-        public static final int kCoralMotorCANID = 1; //TODO: check real CANID
-        public static final int kFingerMotorCANID = 2;
+        public static final int kCoralMotorCANID = 30; 
+        public static final int kFingerMotorCANID = 31;
         public static final int kTopBeamBreakChannel = 3;
         public static final int kBotBeamBreakChannel = 4;
 
