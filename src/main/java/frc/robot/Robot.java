@@ -55,6 +55,7 @@ public class Robot extends TimedRobot {
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
+  private final Algae algae;
   private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
@@ -99,6 +100,15 @@ public class Robot extends TimedRobot {
       () -> manipulator.getLeftY(),
       (intensity) -> driverRumble(intensity), 
       (intensity) -> manipRumble(intensity));
+
+    algae = new Algae(
+      manipulator.a(), 
+      manipulator.leftTrigger(), 
+      manipulator.y(), 
+      manipulator.rightTrigger(), 
+      manipulator.back(), 
+      (intensity) -> manipRumble(intensity), 
+      () -> manipulator.getRightY());
 
     configureBindings();
   }
@@ -175,6 +185,9 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
+
+    elevator.currentSenseHoming();
+    algae.currentSenseHoming();
   }
 
   @Override
@@ -189,6 +202,8 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
+    elevator.currentSenseHoming();
+    algae.currentSenseHoming();
   }
 
   @Override
