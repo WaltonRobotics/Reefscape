@@ -41,8 +41,8 @@ import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
 public class Elevator extends SubsystemBase {
-    private final TalonFX m_right = new TalonFX(kRightCANID, TunerConstants.kCANBus);
-    private final TalonFX m_left = new TalonFX(kLeftCANID, TunerConstants.kCANBus);
+    private final TalonFX m_right = new TalonFX(kBackCANID, TunerConstants.kCANBus);
+    private final TalonFX m_left = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
     private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
 
