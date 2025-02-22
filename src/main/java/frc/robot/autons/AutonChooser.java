@@ -187,14 +187,19 @@ public class AutonChooser {
         return Optional.of(ReefLocs.optimalPathsByHPStation.get(hpStation));
     }
 
-    private static Optional<List<HPStation>> getAvailableHPStation(ReefLocs reefLocation) {
+    private static Optional<List<HPStation>> getAvailableHPStations(ReefLocs reefLocation) {
         if (reefLocation == null) {
             return Optional.empty();
         }
         Set<HPStation> allHPStationValues = ReefLocs.optimalPathsByHPStation.keySet();
-        for (Iterator<HPStation> iter = allHPStationValues.iterator(); iter.hasNext(); ) {
-            HPStation currentHPStationValue = iter.next();
-            
+        List<HPStation> outputList = new ArrayList<HPStation>();
+        // TODO: just be warned that if this doesn't function look here - not sure using a foreach loop in this manner is perfect
+        for (HPStation hpStation : allHPStationValues) {
+            if (ReefLocs.optimalPathsByHPStation.get(hpStation).contains(reefLocation)) {
+                outputList.add(hpStation);
+            }
         }
+
+        return Optional.of(outputList);
     }
 }
