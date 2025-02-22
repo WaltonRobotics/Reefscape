@@ -1,5 +1,6 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Second;
@@ -10,6 +11,10 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+
+import edu.wpi.first.units.measure.Current;
+
+import edu.wpi.first.units.measure.Current;
 
 import edu.wpi.first.math.util.Units;
 
@@ -34,16 +39,14 @@ public class Constants {
     public static class AlgaeK {
         public static final String kLogTab = "AlgaeSubsys";
         
-        public static final int kWristCANID = 6;
+        public static final int kWristCANID = 12;
         public static final int kIntakeCANID = 13;
 
         // motor configuration section
         // wrist motor
-        public static final double kMaxAngleDeg = 90; //dummy num
-        public static final int kWristGearRatio = 10;
-        public static final double kAngleTolerance = 3; // dum
-        public static final double kLowTorqueMode = 10; // dum
+        public static final int kWristGearRatio = 40;   //TODO: check if still accurate
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
+        public static final int kAngleTolerance = 3;//DUMMY VALUE
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(100)
             .withSupplyCurrentLimit(50)
@@ -68,33 +71,48 @@ public class Constants {
             .withSlot0(kWristSlot0Configs);
 
         // intake motor
-        public static final double kHasAlgaeCurrent = 10; // dummy
-        public static final int kIntakeGearRatio = 10;
+        public static final int kIntakeGearRatio = 2;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
+        public static final double kHasAlgaeCurrent = 10; //DUMMY VALUE
         private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(55)
-            .withSupplyCurrentLimit(35)
-            .withStatorCurrentLimitEnable(true)
-            .withSupplyCurrentLimitEnable(true);
+            .withStatorCurrentLimit(100)
+            .withSupplyCurrentLimit(50)
+            .withStatorCurrentLimitEnable(true);
         private static final FeedbackConfigs kIntakeFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kIntakeSensorToMechanismRatio);
         private static final MotionMagicConfigs kIntakeMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
             .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
+        private static final Slot0Configs kIntakeSlot0Configs = new Slot0Configs()
+            .withKS(0.25)
+            .withKV(0.12)
+            .withKA(0.01)
+            .withKP(60)
+            .withKI(0)
+            .withKD(0.5);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
-            .withCurrentLimits(kIntakeCurrentLimitConfigs);
+            .withCurrentLimits(kIntakeCurrentLimitConfigs)
+            .withFeedback(kIntakeFeedbackConfigs)
+            .withMotionMagic(kIntakeMagicConfigs)
+            .withSlot0(kIntakeSlot0Configs);
+
+        // state machine work -- make real values!
+        public static final Current kIntakeCurrentSpikeThreshold = Amps.of(20);
+        public static final Current kShootCurrentDropThreshold = Amps.of(5);
+        public static final double kMaxAngleDeg = 120; //TODO: check if this is still accurate - from zero position to algae pickup
     }
 
     public class Coralk {
         public static final String kLogTab = "EleSubsys";
-        public static final int kCoralMotorCANID = 31;
-        public static final int kFingerMotorCANID = 32;
+        public static final int kCoralMotorCANID = 1; //TODO: check real CANID
+        public static final int kFingerMotorCANID = 2;
         public static final int kTopBeamBreakChannel = 3;
         public static final int kBotBeamBreakChannel = 4;
 
-        public static final double kGearRatio = 27; //TODO: check real gear ratio
-        public static final double kSpoolDiameter = 2; //TODO: check real spool diameter
+        public static final double kGearRatio = 1; //for arm spinup and coral intake
+        public static final double kArmGearRatio = 2; //for arm pivot
+        // public static final double kSpoolDiameter = 1; no actual spool diameter
 
         public static final double kCoralSpeed = 1; //TODO: make frsies
 
@@ -105,7 +123,10 @@ public class Constants {
             //TODO: ^check what the values actually should be^
 
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-            .withSensorToMechanismRatio((kGearRatio) / (Units.inchesToMeters(kSpoolDiameter) * Math.PI));
+            .withSensorToMechanismRatio((kGearRatio));
+
+        // private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
+        //     .withSensorToMechanismRatio((kGearRatio) / (Units.inchesToMeters(kSpoolDiameter) * Math.PI));
 
         private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(5))
@@ -128,11 +149,11 @@ public class Constants {
     public class ElevatorK{
         public static final String kLogTab = "EleSubsys";
 
-        public static final int kFrontCANID = 9;
-        public static final int kBackCANID = 10; 
+        public static final int kFrontCANID = 10;
+        public static final int kBackCANID = 11;
 
-        public static final double kGearRatio = 50.0/11.0;
-        public static final Distance kSpoolRadius = Inches.of(1);
+        public static final double kGearRatio = 50/12;
+        public static final Distance kSpoolRadius = Inches.of(1.8798);  // TODO: ask banks if the thing we considered a spool is a spool?
 
         public static final double kV = 0;
         public static final double kA = 0;
@@ -189,12 +210,12 @@ public class Constants {
             .withFeedback(kFeedbackConfigs)
             .withMotionMagic(kMagicConfigs)
             .withSlot0(kSlot0Configs);
+
         public static final TalonFXConfiguration kLeftTalonFXConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kLimitConfigs)
             .withFeedback(kFeedbackConfigs)
             .withMotionMagic(kMagicConfigs)
             .withSlot0(kSlot0Configs);
-
 
     }
 
