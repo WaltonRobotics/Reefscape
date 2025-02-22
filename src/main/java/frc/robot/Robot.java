@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
@@ -183,11 +184,14 @@ public class Robot extends TimedRobot {
     m_autonomousCommand = null; // TODO: fill out
 
     if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
+      Commands.parallel(
+      algae.currentSenseHoming(),
+      Commands.sequence(
+        elevator.currentSenseHoming(),
+        m_autonomousCommand
+      )
+    ).schedule();
     }
-
-    elevator.currentSenseHoming();
-    algae.currentSenseHoming();
   }
 
   @Override
@@ -202,8 +206,13 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    elevator.currentSenseHoming();
-    algae.currentSenseHoming();
+    if(!elevator.getIsHomed()) {
+      elevator.currentSenseHoming().schedule();
+    }
+
+    if(!algae.getIsHomed()) {
+      algae.currentSenseHoming();
+    }
   }
 
   @Override
