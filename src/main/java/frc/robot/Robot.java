@@ -64,28 +64,6 @@ public class Robot extends TimedRobot {
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
-  private boolean cycleChange = false;
-  /* AutonChooser trigs */
-  private final Consumer<StartingLocs> startLocConsumer = startLoc -> {
-    AutonChooser.startLocChosen = startLoc;
-    AutonChooser.chooseFirstScoring();
-  };
-  private final Consumer<HPStation> hpStationConsumer = hpStation -> {
-    AutonChooser.hpStationChosen = hpStation;
-    cycleChange = true;
-  };
-  private final Consumer<ReefLocs> hpToReefConsumer = hpToReef -> {
-    AutonChooser.hpToReefChosen = hpToReef;
-    cycleChange = true;
-  };
-  private final Consumer<HPStation> reefToHPConsumer = reefToHP -> {
-    AutonChooser.reefToHPChosen = reefToHP;
-    cycleChange = true;
-  };
-  private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
-    AutonChooser.cyclesChosen = numCycles;
-    cycleChange = true;
-  };
 
   private final Trigger trg_teleopEleHeightReq = 
     manipulator.povDown() //L1
@@ -165,7 +143,7 @@ public class Robot extends TimedRobot {
   }
 
   private void mapAutonCommands(){
-    AutonChooser.setDefaultAuton(TrajsAndLocs.StartingLocs.MID);
+    AutonChooser.setDefaultStartingPos(TrajsAndLocs.StartingLocs.MID);
     AutonChooser.setDefaultHPStation(TrajsAndLocs.HPStation.HP_LEFT);
 
     AutonChooser.assignNumCycles(NumCycles.CYCLE_1, "Cycle 1");

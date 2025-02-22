@@ -97,6 +97,10 @@ public class Constants {
         public static final double kMaxAngleDeg = 120; //TODO: check if this is still accurate - from zero position to algae pickup
     }
 
+    public class AutonChooserK {
+        public static final int maxAutonCycleCount = 5;
+    }
+
     public class Coralk {
         public static final String kLogTab = "EleSubsys";
         public static final int kCoralMotorCANID = 1; //TODO: check real CANID
