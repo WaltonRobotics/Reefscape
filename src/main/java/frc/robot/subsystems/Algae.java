@@ -4,15 +4,19 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.util.WaltLogger;
@@ -22,6 +26,8 @@ import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.AlgaeK.*;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
  
@@ -65,6 +71,11 @@ public class Algae extends SubsystemBase {
     public final Trigger stateTrg_shooting = new Trigger(stateEventLoop, () -> m_state == State.SHOOTING);
     public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
     public final Trigger stateTrg_override = new Trigger(stateEventLoop, () -> m_state == State.OVERRIDE);
+
+    private boolean m_isDebounced = false;
+    private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
+    private boolean m_currentSpike = m_wrist.getSupplyCurrent().getValueAsDouble() > 15.0; 
+    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
     public Algae(
         Trigger groundReq, 
@@ -251,11 +262,33 @@ public class Algae extends SubsystemBase {
 
     public void setWheelAction(double destinationVoltage) {
         // should this be a runend? i thought no cuz i didn't want the motor to stop until i told it to
+        // ive decided no (watch me be wrong (idt im wrong tho (maybe)))
         m_intake.setVoltage(destinationVoltage);
     }
 
     public boolean isAlgaeThere() {
         return m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent;
+    }
+
+    public Command currentSenseHoming() {
+        Runnable init = () -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq);
+        };
+        Runnable execute = () -> {};
+        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            m_wrist.setPosition(0);
+            m_isDebounced = true;
+        };
+
+        BooleanSupplier isFinished = () ->
+            m_debouncer.calculate(m_currentSpike);
+
+        return new FunctionalCommand(init, execute, onEnd, isFinished);
+    }
+
+    public boolean getIsHomed() {
+        return m_isDebounced;
     }
 
     @Override
