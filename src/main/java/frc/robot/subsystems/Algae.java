@@ -302,8 +302,8 @@ public class Algae extends SubsystemBase {
         m_wristIsCoast = nte_wristIsCoast.getBoolean(false);
         m_intakeIsCoast = nte_intakeIsCoast.getBoolean(true);
 
-        setWristCoast(m_wristIsCoast);
-        setIntakeCoast(m_intakeIsCoast);
+        // setWristCoast(m_wristIsCoast);
+        // setIntakeCoast(m_intakeIsCoast);
 
         log_desiredAngleDegs.accept(m_desiredWristAngleDegs);
     }
