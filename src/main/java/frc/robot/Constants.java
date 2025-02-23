@@ -38,6 +38,7 @@ public class Constants {
  
     public static final double kRumbleIntensity = 1.0;
     public static final double kRumbleTimeoutSecs = 0.5;
+    public static final String kLogTab = "Robot";
     public static class AlgaeK {
         public static final String kLogTab = "AlgaeSubsys";
         
