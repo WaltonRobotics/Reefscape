@@ -83,7 +83,7 @@ public class AutonChooser {
     public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
     public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>();
 
-    // add method that closes unnecessary sendable choosers (when numCycles Changes)
+    // TODO: MAYBE add method that closes unnecessary sendable choosers (when numCycles Changes)
 
     // adds choosers based on number of cycles selected
     public static void configureCycles() {
@@ -136,7 +136,7 @@ public class AutonChooser {
     // get Cycle Data of whats currently selected
     public static ArrayList<AutonCycle> getAutonCycles() {
         ArrayList<AutonCycle> cycles = new ArrayList<AutonCycle>();
-        int cycleCount = 0;
+        int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
         if (cyclesChooser.getSelected() != null) {
             cycleCount = cyclesChooser.getSelected().m_cycles;
         }
@@ -153,7 +153,7 @@ public class AutonChooser {
         return cycles;
     }
 
-    // updaters
+    // updaters - called when a change in selection is detected by the listener
     public static void updateNumCycles() {
         m_cycles = cyclesChooser.getSelected();
     }
