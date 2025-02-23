@@ -7,13 +7,18 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -52,6 +57,12 @@ public class Elevator extends SubsystemBase {
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
+    private boolean m_isCoast = false;
+    private GenericEntry nte_coast = Shuffleboard.getTab(kLogTab)
+        .add("Coast", false)
+        .withWidget(BuiltInWidgets.kToggleSwitch)
+        .getEntry();
+
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -86,6 +97,14 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putData("Elevator Sim", m_mech2d);
 
         setDefaultCommand(currentSenseHoming());
+    }
+
+    private void setCoast(boolean coast) {
+        if (m_isCoast != coast) {
+            m_isCoast = coast;
+            m_frontMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+            m_rearMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+        }
     }
 
     public boolean nearSetpoint() {
@@ -159,6 +178,9 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
+
+        setCoast(nte_coast.getBoolean(false));
+
         log_eleAtHeight.accept(nearSetpoint());
         log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
     }
