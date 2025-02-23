@@ -30,6 +30,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Algae.WristPos;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
@@ -125,7 +126,12 @@ public class Robot extends TimedRobot {
   }
 
   private void configureTestBindings() {
-    driver.a().whileTrue(elevator.testOverrideToHeight(() -> driver.getLeftY()));
+    driver.a().whileTrue(
+      Commands.sequence(
+        algae.toAngle(WristPos.GROUND),
+        algae.intake()
+      )
+    );
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
   }
