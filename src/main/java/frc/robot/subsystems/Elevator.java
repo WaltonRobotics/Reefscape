@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -45,12 +45,12 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
     private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
     private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
-    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
+    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0);
 
     private double m_desiredHeight = 0;
     private boolean m_isHomed = false;
     private Debouncer m_debouncer = new Debouncer(0.125, DebounceType.kRising);
-    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 15.0; 
+    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 25.0; 
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
 
@@ -94,33 +94,33 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean nearSetpoint(double tolerancePulleyRotations) {
-        double diff = m_MMEVRequest.Position - getPulleyRotations();
+        double diff = m_MMVRequest.Position - getPulleyRotations();
         return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
     private double getPulleyRotations() {
-        return m_rearMotor.getPosition().getValueAsDouble();
+        return m_frontMotor.getPosition().getValueAsDouble();
     }
 
     private Distance getPositionMeters() {
-        return ElevatorK.rotationsToMeters(m_rearMotor.getPosition().getValue());
+        return ElevatorK.rotationsToMeters(m_frontMotor.getPosition().getValue());
     }
 
     /* 
      * use for scoring
      */
-    public Command toHeight(EleHeight heightMeters) {
-        return toHeight(heightMeters.meters);
+    public Command toHeight(EleHeight height) {
+        return toHeight(height.rotations);
     }
 
-    public Command toHeight(double heightMeters) {
-        m_desiredHeight = heightMeters;
-        double heightRots = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
+    public Command toHeight(double rotations) {
         return runOnce(
             () -> {
-                m_MMEVRequest = m_MMEVRequest.withPosition(heightRots);
-                log_elevatorDesiredPosition.accept(Meters.of(heightMeters).magnitude());
-                m_rearMotor.setControl(m_MMEVRequest);
+                m_desiredHeight = rotations;
+                // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
+                m_MMVRequest = m_MMVRequest.withPosition(rotations);
+                log_elevatorDesiredPosition.accept(Meters.of(rotations).magnitude());
+                m_frontMotor.setControl(m_MMVRequest);
             }
         ).until(() -> nearSetpoint());
     }
@@ -196,19 +196,19 @@ public class Elevator extends SubsystemBase {
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
-        HOME(Units.inchesToMeters(14.542)),
-        L1(Units.inchesToMeters(37)),
-        L2(Units.inchesToMeters(48.041)),
-        L3(Units.inchesToMeters(64)),
-        L4(Units.inchesToMeters(86)),
+        HOME(0.1),
+        L1(2.5),
+        L2(5.5),
+        L3(8.5),
+        L4(12.8),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         CLIMB_DOWN(5), //this height will ove robot down for climb
-        HP(Units.inchesToMeters(36)); //human player station intake height
+        HP(2.0); //human player station intake height
 
-        public final double meters;
+        public final double rotations;
 
-       private EleHeight(double heightMeters){
-            this.meters = heightMeters;
+       private EleHeight(double rotations){
+            this.rotations = rotations;
         }
     }
 
