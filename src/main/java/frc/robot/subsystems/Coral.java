@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.Coralk.*;
 
@@ -31,17 +32,12 @@ public class Coral extends SubsystemBase {
     private final double m_slowIntakeSpeed = 12 * .25;
     private final double m_scoreSpeed = 6;
 
-    private boolean m_coralIsCoast = false;
-    private GenericEntry nte_coralIsCoast;
-    private boolean m_fingerIsCoast = false;
-    private GenericEntry nte_fingerIsCoast;
-
     // true when beam break brokey
     public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
     public DigitalInput m_botBeamBreak = new DigitalInput(kBotBeamBreakChannel);
 
-    public final BooleanSupplier bs_topBeamBreak = () -> !m_topBeamBreak.get();
-    public final BooleanSupplier bs_botBeamBreak = () -> !m_botBeamBreak.get();
+    public final Trigger trg_topBeamBreak = new Trigger(() -> !m_topBeamBreak.get());
+    public final Trigger trg_botBeamBreak = new Trigger(() -> !m_botBeamBreak.get());
 
     private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
     private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
@@ -49,22 +45,13 @@ public class Coral extends SubsystemBase {
     public Coral() {
         m_coralMotor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);
         m_fingerMotor.getConfigurator().apply(kFingerMotorTalonFXSConfig);
-
-        nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
-                  .add("coral coast", false)
-                  .withWidget(BuiltInWidgets.kToggleSwitch)
-                  .getEntry();
-        nte_fingerIsCoast = Shuffleboard.getTab(kLogTab)
-                  .add("finger coast", false)
-                  .withWidget(BuiltInWidgets.kToggleSwitch)
-                  .getEntry();
     }
 
     // good method
     public Command automaticCoralIntake() {
         return Commands.sequence(
-            fastIntake().until(bs_topBeamBreak),
-            slowIntake().until(bs_botBeamBreak),
+            fastIntake().until(trg_topBeamBreak),
+            slowIntake().until(trg_botBeamBreak),
             stopCoralMotorCmd()
         );
     }
@@ -108,7 +95,9 @@ public class Coral extends SubsystemBase {
      * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
      */
     public Command slowIntake(){
-        return setCoralMotorActionCmd(m_slowIntakeSpeed);
+        return setCoralMotorActionCmd(m_slowIntakeSpeed)
+            .alongWith(Commands.print("slow intake"));
+
     }
 
     public Command score() {
@@ -167,13 +156,7 @@ public class Coral extends SubsystemBase {
 
     @Override
     public void periodic() {
-        m_coralIsCoast = nte_coralIsCoast.getBoolean(false);
-        m_fingerIsCoast = nte_fingerIsCoast.getBoolean(false);
-
-        // setCoralCoast(m_coralIsCoast);
-        // setFingerCoast(m_fingerIsCoast);
-
-        log_topBeamBreak.accept(bs_topBeamBreak);
-        log_botBeamBreak.accept(bs_botBeamBreak);
+        log_topBeamBreak.accept(trg_topBeamBreak);
+        log_botBeamBreak.accept(trg_botBeamBreak);
     }
 }
