@@ -126,17 +126,7 @@ public class Constants {
             //TODO: ^check what the values actually should be^
 
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-            .withSensorToMechanismRatio((kGearRatio));
-
-        // private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-        //     .withSensorToMechanismRatio((kGearRatio) / (Units.inchesToMeters(kSpoolDiameter) * Math.PI));
-
-        private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(5))
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
-            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
-            //TODO: ^check what the values actually should be^
-        
+            .withSensorToMechanismRatio((kGearRatio));        
         private static final Slot0Configs kSlot0Configs = new Slot0Configs()
             .withKS(0.25)
             .withKV(0.12)
@@ -146,7 +136,8 @@ public class Constants {
             .withKD(0.5);
             //TODO: ^check what the values actually should be^
 
-        public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration();
+        public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
+            .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
     }
 
     public class ElevatorK{
