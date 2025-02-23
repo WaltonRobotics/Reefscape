@@ -65,7 +65,7 @@ public class Coral extends SubsystemBase {
         return Commands.sequence(
             fastIntake().until(bs_topBeamBreak),
             slowIntake().until(bs_botBeamBreak),
-            stopCoralMotor()
+            stopCoralMotorCmd()
         );
     }
 
@@ -84,38 +84,52 @@ public class Coral extends SubsystemBase {
         );
     }
 
-    public Command setCoralMotorAction(double destinationVelocity) {
-        return setCoralMotorAction(destinationVelocity, 0);
+    private void setCoralMotorAction(double voltage) {
+        m_coralMotor.setControl(m_voltOutReq.withOutput(voltage));
     }
 
-    public Command stopCoralMotor() {
-        return runOnce(() -> m_coralMotor.setControl(m_voltOutReq.withOutput(0)));
+    public Command setCoralMotorActionCmd(double destinationVelocity) {
+        return runOnce(() -> setCoralMotorAction(destinationVelocity));
+    }
+
+    private void stopCoralMotor() {
+        m_coralMotor.setControl(m_voltOutReq.withOutput(0));
+    }
+
+    public Command stopCoralMotorCmd() {
+        return runOnce(this::stopCoralMotor);
     }
 
     public Command fastIntake() {
-        return setCoralMotorAction(12);
+        return setCoralMotorActionCmd(12);
     }
 
     /*
      * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
      */
     public Command slowIntake(){
-        return setCoralMotorAction(m_slowIntakeSpeed);
+        return setCoralMotorActionCmd(m_slowIntakeSpeed);
     }
 
     public Command score() {
-        return setCoralMotorAction(m_scoreSpeed);
+        return setCoralMotorActionCmd(m_scoreSpeed);
     }
 
     // finger methods
-    public Command fingerOut() {
-        return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations)));
+    private void fingerOut() {
+        m_fingerMotor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
     }
 
-    public Command fingerIn() {
-        return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(kMaxAngleRotations)));
+    public Command fingerOutCmd() {
+        return runOnce(this::fingerOut);
+    }
+
+    private void fingerIn() {
+        m_fingerMotor.setControl(m_PosVoltReq.withPosition(kMaxAngleRotations));
+    }
+
+    public Command fingerInCmd() {
+        return runOnce(this::fingerIn);
     }
 
     public Command testFingerVoltageControl(DoubleSupplier stick) {
@@ -127,12 +141,28 @@ public class Coral extends SubsystemBase {
         );
     }
 
-    public Command runFinger() {
-        return setCoralMotorAction(-m_scoreSpeed);
+    private void runWheelsAlgaeRemoval() {
+        setCoralMotorAction(-m_scoreSpeed);
+    }
+
+    public Command runWheelsAlgaeRemovalCmd() {
+        return runOnce(this::runWheelsAlgaeRemoval);
     }
 
     public void setFingerCoast(boolean coast) {
         m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+    }
+
+    public Command algaeIntake() {
+        return startEnd(
+            () -> {
+                fingerOut();
+                runWheelsAlgaeRemoval();
+            }, () -> {
+                fingerIn();
+                stopCoralMotor();
+            }
+        );
     }
 
     @Override
