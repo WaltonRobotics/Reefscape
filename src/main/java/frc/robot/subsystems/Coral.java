@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -28,6 +29,9 @@ public class Coral extends SubsystemBase {
 
     private final TalonFXS m_fingerMotor = new TalonFXS(kFingerMotorCANID);
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
+    private VoltageOut m_VoltOutReq = new VoltageOut(0);
+
+    private final double slowIntakeSpeed = 12*.4;
 
     private boolean m_coralIsCoast = false;
     private GenericEntry nte_coralIsCoast;
@@ -38,8 +42,8 @@ public class Coral extends SubsystemBase {
     public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
     public DigitalInput m_botBeamBreak = new DigitalInput(kBotBeamBreakChannel);
 
-    public final BooleanSupplier bs_topBeamBreak = () -> m_topBeamBreak.get();
-    public final BooleanSupplier bs_botBeamBreak = () -> m_botBeamBreak.get();
+    public final BooleanSupplier bs_topBeamBreak = () -> !m_topBeamBreak.get();
+    public final BooleanSupplier bs_botBeamBreak = () -> !m_botBeamBreak.get();
 
     private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
     private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
@@ -69,13 +73,29 @@ public class Coral extends SubsystemBase {
      * @param destinationVelocity Units in percent max velocity [-1.0, 1.0]
      * @return A Command which sets the intake to go to the specificed velocity
      */
-    public Command setCoralMotorAction(double destinationVelocity) {
+    public Command setCoralMotorAction(double destinationVelocity, double endVelocity) {
         return Commands.runEnd(
-            () -> m_coralMotor.set(destinationVelocity),
-            () -> m_coralMotor.set(0)
+            () -> m_coralMotor.setControl(m_VoltOutReq.withOutput(destinationVelocity)),
+            () -> m_coralMotor.setControl(m_VoltOutReq.withOutput(endVelocity))
         );
     }
 
+    public Command setCoralMotorAction(double destinationVelocity) {
+        return setCoralMotorAction(destinationVelocity, 0);
+    }
+
+    public Command fastIntake(){
+        return setCoralMotorAction(12, slowIntakeSpeed);
+    }
+
+    /*
+     * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
+     */
+    public Command slowIntake(){
+        return setCoralMotorAction(slowIntakeSpeed, 0);
+    }
+
+    // finger methods
     public Command fingerOut() {
         return runOnce(
             () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees))));

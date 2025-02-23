@@ -206,12 +206,18 @@ public class Superstructure {
         (stateTrg_eleToIntake)
             .onTrue(m_ele.toHeight(EleHeight.HP));
         (stateTrg_intaking)
-            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+            .onTrue(
+                Commands.sequence(
+                    m_coral.fastIntake().until(m_coral.bs_topBeamBreak),
+                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs),
+                    m_coral.slowIntake().until(m_coral.bs_botBeamBreak)
+                )
+            );
         (stateTrg_intook)
             .onTrue(
                 Commands.sequence(
                     m_coral.setCoralMotorAction(0),
-                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                   manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
                 )
             );
         (stateTrg_eleToScore)
