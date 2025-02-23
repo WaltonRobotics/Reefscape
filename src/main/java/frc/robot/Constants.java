@@ -100,11 +100,11 @@ public class Constants {
     }
 
     public class Coralk {
-        public static final String kLogTab = "EleSubsys";
+        public static final String kLogTab = "CoralSubsys";
         public static final int kCoralMotorCANID = 30; 
         public static final int kFingerMotorCANID = 31;
-        public static final int kTopBeamBreakChannel = 3;
-        public static final int kBotBeamBreakChannel = 4;
+        public static final int kTopBeamBreakChannel = 0;
+        public static final int kBotBeamBreakChannel = 1;
 
         public static final double kGearRatio = 1; //for arm spinup and coral intake
         public static final double kArmGearRatio = 2; //for arm pivot
