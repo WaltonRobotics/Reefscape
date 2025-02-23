@@ -129,6 +129,10 @@ public class Constants {
         // finger things
         public static final int kFingerMotorCANID = 31;
 
+        public static final double kMaxAngleRotations = -0.4;
+        public static final double kMinAngleRotations = -0.75;
+        public static final double kParallelToGroundRotations = -0.6;
+
         private static final MotorOutputConfigs kFingerMotorOutputConfig = new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake);
@@ -142,8 +146,8 @@ public class Constants {
             .withContinuousWrap(false);
 
         private static final Slot0Configs kFingerSlot0Config = new Slot0Configs()
-            .withKP(25)
-            .withKS(0.25)
+            .withKP(100)
+            .withKS(1.5)
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign);
         private static final ExternalFeedbackConfigs kFingerExternalFeedbackConfig = new ExternalFeedbackConfigs()
             .withAbsoluteSensorDiscontinuityPoint(0)
@@ -154,9 +158,9 @@ public class Constants {
             .withSensorToMechanismRatio(2);        
         private static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchConfig = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(-0.4)
+            .withForwardSoftLimitThreshold(kMaxAngleRotations)
             .withReverseSoftLimitEnable(true)
-            .withReverseSoftLimitThreshold(-0.75);
+            .withReverseSoftLimitThreshold(kMinAngleRotations);
 
         private static final CommutationConfigs kFingerCommutationConfig = new CommutationConfigs()
             .withMotorArrangement(MotorArrangementValue.Brushed_DC)
@@ -200,7 +204,7 @@ public class Constants {
         }
 
         public static Angle metersToRotation(Distance meters){
-            return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
+        return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
         }
 
         public static Distance rotationsToMeters(Angle rotations) {
