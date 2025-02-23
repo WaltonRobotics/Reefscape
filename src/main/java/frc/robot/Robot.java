@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -62,8 +63,14 @@ public class Robot extends TimedRobot {
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
-  private final Vision vision = new Vision();
+  // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
+  private final VisionSim visionSim = new VisionSim();
+  private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
+    VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
   private final Superstructure superstructure;
+
+  // this should be updated with all of our cameras
+  private final Vision[] cameras = {eleForwardsCam};
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
@@ -164,11 +171,14 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    Optional<EstimatedRobotPose> estimatedPoseOptional = vision.getEstimatedGlobalPose();
-    if (estimatedPoseOptional.isPresent()) {
-      EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
-      Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
-      drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds);
+    // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
+    for (Vision camera : cameras) {
+      Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
+      if (estimatedPoseOptional.isPresent()) {
+        EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
+        Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+        drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds);
+      }
     }
   }
 
@@ -225,11 +235,7 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
     SwerveDriveState robotState = drivetrain.getState();
     Pose2d robotPose = robotState.Pose;
-    vision.simulationPeriodic(robotPose);
+    visionSim.simulationPeriodic(robotPose);
     drivetrain.simulationPeriodic();
-
-    Field2d debugField = vision.getSimDebugField();
-    // debugField.getObject("EstimatedRobot").setPose(robotPose);
-    // debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
   }
 }
