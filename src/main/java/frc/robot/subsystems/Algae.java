@@ -35,8 +35,6 @@ public class Algae extends SubsystemBase {
 
     private boolean m_wristIsCoast = false; 
     private GenericEntry nte_wristIsCoast;
-    private boolean m_intakeIsCoast = true;
-    private GenericEntry nte_intakeIsCoast;
 
     private final DoubleConsumer m_manipRumbler;
 
@@ -88,11 +86,7 @@ public class Algae extends SubsystemBase {
                   .add("wrist coast", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
-        nte_intakeIsCoast = Shuffleboard.getTab(kLogTab)
-                  .add("intake coast", false)
-                  .withWidget(BuiltInWidgets.kToggleSwitch)
-                  .getEntry();
-        
+
         m_state = State.IDLE;
 
         trg_groundReq = groundReq;
@@ -181,7 +175,10 @@ public class Algae extends SubsystemBase {
 
     // WRIST SCHTUFFS
     public void setWristCoast(boolean coast) {
-        m_wrist.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+        if (m_wristIsCoast != coast) {
+            m_wristIsCoast = coast;
+            m_wrist.setNeutralMode(m_wristIsCoast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+        }
     }
 
     public Command toAngle(WristPos wristPos) {
@@ -272,12 +269,8 @@ public class Algae extends SubsystemBase {
     @Override
     public void periodic() {
         stateEventLoop.poll();
-
-        m_wristIsCoast = nte_wristIsCoast.getBoolean(false);
-        m_intakeIsCoast = nte_intakeIsCoast.getBoolean(true);
-
-        // setWristCoast(m_wristIsCoast);
-        // setIntakeCoast(m_intakeIsCoast);
+    
+        setWristCoast(nte_wristIsCoast.getBoolean(false));
 
         log_desiredAngleDegs.accept(m_desiredWristRotations);
     }
