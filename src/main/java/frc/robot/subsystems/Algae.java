@@ -43,7 +43,7 @@ public class Algae extends SubsystemBase {
 
     private final DoubleConsumer m_manipRumbler;
 
-    private double m_desiredWristAngleDegs = 0;
+    private double m_desiredWristRotations = 0;
     private final DoubleLogger log_desiredAngleDegs = WaltLogger.logDouble(kLogTab, "desiredAngleDegs");
 
     private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
@@ -190,8 +190,6 @@ public class Algae extends SubsystemBase {
             .onTrue(shoot());
         (stateTrg_shot)
             .onTrue(toAngle(WristPos.HOME)); 
-        (stateTrg_override)
-            .onTrue(overrideToAngle(m_overrideAngle.getAsDouble())); //maybe i should keep this as a doublesupplier and deal w/ it in the method idk
     }
 
     private Command manipRumble(double intensity, double secs) {
@@ -214,26 +212,21 @@ public class Algae extends SubsystemBase {
     }
 
     public Command toAngle(double angleDegs) {
-        m_desiredWristAngleDegs = angleDegs;
         return runOnce(
             () -> {
-                m_MMEVRequest = m_MMEVRequest.withPosition(Degrees.of(m_desiredWristAngleDegs).in(Rotations));
+                m_desiredWristRotations = angleDegs;
+                m_MMEVRequest = m_MMEVRequest.withPosition(m_desiredWristRotations);
                 m_wrist.setControl(m_MMEVRequest);}
         ).until(() -> nearSetpoint());
     }
-    
-    public Command overrideToAngle(double input) {
-        if(input > 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredWristAngleDegs += Degrees.of(0.5).magnitude()), // logic taken from Shosty's increaseAngle() method in Aim
-                toAngle(m_desiredWristAngleDegs)
-            );
-        } else if(input < 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredWristAngleDegs -= Degrees.of(0.5).magnitude()), // logic taken from Shosty's decreaseAngle() method in Aim
-                toAngle(m_desiredWristAngleDegs)
-            );
-        } else { return Commands.none();}
+
+    public Command testVoltageControl(DoubleSupplier stick) {
+        return runEnd(() -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
+        }, () -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
+        }
+        );
     }
 
     public boolean nearSetpoint() {
@@ -251,7 +244,10 @@ public class Algae extends SubsystemBase {
     }
 
     public Command intake() {
-        return Commands.runOnce(() -> setWheelAction(12));
+        return Commands.startEnd(
+            () -> setWheelAction(12),
+            () -> setWheelAction(0)
+        );
     }
 
     public Command shoot() {
@@ -305,7 +301,7 @@ public class Algae extends SubsystemBase {
         // setWristCoast(m_wristIsCoast);
         // setIntakeCoast(m_intakeIsCoast);
 
-        log_desiredAngleDegs.accept(m_desiredWristAngleDegs);
+        log_desiredAngleDegs.accept(m_desiredWristRotations);
     }
 
     public enum State {
@@ -329,8 +325,8 @@ public class Algae extends SubsystemBase {
 
     public enum WristPos {
         HOME(0),
-        GROUND(90),
-        PROCESSOR(45);
+        GROUND(0.28),
+        PROCESSOR(0.14);
 
         public double angleDegs;
         private WristPos(double angle) {
