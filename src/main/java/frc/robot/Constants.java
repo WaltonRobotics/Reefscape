@@ -2,20 +2,28 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
+import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.ExternalFeedbackConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.math.util.Units;
 
+import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
+import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorPhaseValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -30,9 +38,6 @@ public class Constants {
  
     public static final double kRumbleIntensity = 1.0;
     public static final double kRumbleTimeoutSecs = 0.5;
-
-    // TODO: NONE OF THESE ARE REAL NUMBERS!!!!!!!!!!!!!!!!!
-    // BE WARY OF MOTOR NUMBERS - MANY ARE STOLEN FROM ELEVATOR!!!!! (couldn't easily find better ones)
     public static class AlgaeK {
         public static final String kLogTab = "AlgaeSubsys";
         
@@ -178,6 +183,7 @@ public class Constants {
         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
 
         public static final double kP = 15;
+        public static final double kS = 0.25;
         public static final double kV = 0;
         public static final double kA = 0;
         public static final double kG = 2; 
@@ -216,19 +222,15 @@ public class Constants {
             .withSupplyCurrentLimitEnable(true);
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kGearRatio);
-        private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
-            .withMotionMagicCruiseVelocity(5)
-            .withMotionMagicAcceleration(15)
-            .withMotionMagicExpo_kV(3.54);
         private static final Slot0Configs kSlot0Configs = new Slot0Configs()
-            .withKS(0.25) 
+            .withKS(kS) 
             .withKV(kV) 
             .withGravityType(GravityTypeValue.Elevator_Static)
             .withKP(kP) 
             .withKG(kG);
         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
-            .withInverted(InvertedValue.Clockwise_Positive);
+            .withInverted(InvertedValue.CounterClockwise_Positive);
         private static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitThreshold(12.845); // true hard 12.9849854
         private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
@@ -240,9 +242,10 @@ public class Constants {
         public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
             .withCurrentLimits(kCurrentLimitConfigs)
             .withFeedback(kFeedbackConfigs)
-            .withMotionMagic(kMagicConfigs)
+            .withMotionMagic(kMotionMagicConfigs)
             .withSlot0(kSlot0Configs)
-            .withSoftwareLimitSwitch(kSoftwareLimitConfigs);
+            .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
 
         public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
             .withCurrentLimits(kCurrentLimitConfigs)

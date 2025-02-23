@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -23,10 +22,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.ElevatorK.*;
 
@@ -45,12 +42,14 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
     private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
     private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
-    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0);
+    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
 
-    private double m_desiredHeight = 0;
+    private double m_desiredHeight = 0; // needs to be logged
     private boolean m_isHomed = false;
-    private Debouncer m_debouncer = new Debouncer(0.125, DebounceType.kRising);
+    private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
+    private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 25.0; 
+    private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
 
@@ -75,8 +74,8 @@ public class Elevator extends SubsystemBase {
 
     private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition");
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
-
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
+    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
 
     public Elevator() {
         m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
@@ -136,7 +135,7 @@ public class Elevator extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
-            m_frontMotor.setControl(zeroingVoltageCtrlReq);
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
@@ -148,7 +147,8 @@ public class Elevator extends SubsystemBase {
         };
 
         BooleanSupplier isFinished = () ->
-            m_debouncer.calculate(m_currentSpike.getAsBoolean());
+            m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
+            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
     }
@@ -160,6 +160,7 @@ public class Elevator extends SubsystemBase {
     @Override
     public void periodic() {
         log_eleAtHeight.accept(nearSetpoint());
+        log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
     }
 
     @Override
