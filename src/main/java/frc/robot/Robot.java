@@ -126,12 +126,16 @@ public class Robot extends TimedRobot {
   }
 
   private void configureTestBindings() {
-    driver.a().whileTrue(
+    driver.a().onTrue(
       Commands.sequence(
         algae.toAngle(WristPos.GROUND),
         algae.intake()
       )
-    );
+    ).onFalse(algae.toAngle(WristPos.HOME));
+  
+    driver.y().whileTrue(elevator.testVoltageControl(() -> driver.getLeftY()));
+    driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
+
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
   }

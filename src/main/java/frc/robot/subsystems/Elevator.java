@@ -139,7 +139,7 @@ public class Elevator extends SubsystemBase {
         } else { return Commands.none();}
     }
 
-    public Command testOverrideToHeight(DoubleSupplier stick) {
+    public Command testVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
         }, () -> {
