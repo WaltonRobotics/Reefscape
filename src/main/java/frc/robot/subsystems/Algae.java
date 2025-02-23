@@ -43,7 +43,7 @@ public class Algae extends SubsystemBase {
     private double m_desiredWristRotations = 0;
     private final DoubleLogger log_desiredAngleDegs = WaltLogger.logDouble(kLogTab, "desiredAngleDegs");
 
-    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
+    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0).withEnableFOC(true);
 
     private State m_state;
     public final EventLoop stateEventLoop = new EventLoop();
@@ -67,9 +67,11 @@ public class Algae extends SubsystemBase {
     public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
 
     private boolean m_isHomed = false;
-    private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
+    private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
+    private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private BooleanSupplier m_currentSpike = () -> m_wrist.getStatorCurrent().getValueAsDouble() > 5.0; 
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
+    private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_wrist.getVelocity().getValueAsDouble()) < 0.01;
 
     public Algae(
         Trigger groundReq, 
@@ -216,8 +218,7 @@ public class Algae extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
-            m_wrist.setControl(zeroingVoltageCtrlReq);
-            System.out.println("Zeroing Algae...");
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(-1));
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
@@ -225,11 +226,12 @@ public class Algae extends SubsystemBase {
             m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
-            System.out.println("Zeroed Algae!!!");
+            System.out.println("Zeroed Elevator!!!");
         };
 
         BooleanSupplier isFinished = () ->
-            m_debouncer.calculate(m_currentSpike.getAsBoolean());
+            m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
+            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
     }
