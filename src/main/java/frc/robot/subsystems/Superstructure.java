@@ -140,14 +140,12 @@ public class Superstructure {
         // these are treated kinda differently in auton than in teleop so i differentiated them again
         (stateTrg_idle.and(trg_autonIntakeReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE)); 
-        // never activates presumably because stateTrg_intook never becomes true
         (stateTrg_intook.and(trg_autonScoreEleReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         
         // overrides
-        // this presumably never activates meaning maybe i want to plot trg_preloadOverride??
         (trg_preloadOverride.and(stateTrg_idle).and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (trg_autonIntakeOverride.and(RobotModeTriggers.autonomous()))
@@ -202,7 +200,7 @@ public class Superstructure {
         (stateTrg_scored.and(trg_toHomeOverride.negate()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
 
-        if(Utils.isSimulation() && RobotModeTriggers.autonomous().getAsBoolean()) {
+        if (Utils.isSimulation() && RobotModeTriggers.autonomous().getAsBoolean()) {
             (stateTrg_intaking.debounce(0.5))
                 .onTrue(Commands.runOnce(() -> {
                     m_state = State.INTOOK;

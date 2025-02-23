@@ -8,6 +8,7 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.autons.TrajsAndLocs.HPReefPair;
@@ -26,7 +27,7 @@ public class WaltAutonFactory {
     private final AutoRoutine m_routine;
 
     private final SwerveRequest.SwerveDriveBrake m_brake = new SwerveRequest.SwerveDriveBrake();
-
+    
     public WaltAutonFactory(AutoFactory autonFactory) {
         m_autonFactory = autonFactory;
         m_routine = m_autonFactory.newRoutine("auton");
@@ -76,62 +77,6 @@ public class WaltAutonFactory {
 
     // generateAuton method if there were no intake and elevator events in between parts of the path
     // purpose: used to test out auton paths via simulation
-    public Command generateAuton(
-        Swerve drivetrain, 
-        Superstructure superstructure, 
-        StartingLocs startLoc,
-        ReefLocs firstReefLoc,
-        EleHeight firstHeight, 
-        HPStation firstHPStation,
-        ArrayList<AutonCycle> cycles
-    ) {
-        // iterate AutonCycles and validate all HP->Score and Score->HP pairs
-        for (AutonCycle autonCycle : cycles) {
-            if(!autonCycle.isLegit()) {
-                return Commands.print("One of these cycles are WRONG - one of the paths prolly dont exist");
-            }
-        }
-
-        ArrayList<Command> trajCommands = new ArrayList<Command>();
-
-        // add preload cycle to routine
-        AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.StartToReefTrajs.get(new Pair<StartingLocs, ReefLocs>(startLoc, firstReefLoc)));
-        AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(firstReefLoc, firstHPStation)));
-        trajCommands.add(firstScoreTraj.cmd());
-        trajCommands.add(firstLoadTraj.cmd());
-
-        // add other cycles
-        if (cycles != null) {
-            for (AutonCycle cycle : cycles) {
-                AutoTrajectory hpToReefTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycle.hpReefPair));
-                AutoTrajectory reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycle.reefHPPair));
-
-                trajCommands.add(hpToReefTraj.cmd());
-                trajCommands.add(reefToHpTraj.cmd());
-            }
-        }
-
-        // convert arraylist to array
-        Command[] cmds = new Command[trajCommands.size() + 1];
-        cmds[0] = firstScoreTraj.resetOdometry();
-        for (int i = 0; i < trajCommands.size(); i++) {
-            cmds[i + 1] = trajCommands.get(i);
-        }
-
-        // run commands in order
-        m_routine.active().onTrue(
-            Commands.sequence(
-                cmds
-            )
-        );
-
-        return m_routine.cmd();
-    }
-
-    // BELOW COMMENTED OUT BECAUSE LOGIC DOESNT WORK - EVENTS "intake" AND "eleUp" DO NOT EXIST
-    // /*
-    //  * cycles start from the first time u get to an hp
-    //  */
     // public Command generateAuton(
     //     Swerve drivetrain, 
     //     Superstructure superstructure, 
@@ -144,80 +89,144 @@ public class WaltAutonFactory {
     //     // iterate AutonCycles and validate all HP->Score and Score->HP pairs
     //     for (AutonCycle autonCycle : cycles) {
     //         if(!autonCycle.isLegit()) {
-    //             return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
+    //             return Commands.print("One of these cycles are WRONG - one of the paths prolly dont exist");
     //         }
     //     }
+
+    //     ArrayList<Command> trajCommands = new ArrayList<Command>();
+
+    //     // add preload cycle to routine
     //     AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.StartToReefTrajs.get(new Pair<StartingLocs, ReefLocs>(startLoc, firstReefLoc)));
     //     AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(firstReefLoc, firstHPStation)));
+        
+    //     trajCommands.add(firstScoreTraj.cmd());
+    //     trajCommands.add(firstLoadTraj.cmd());
 
-    //     m_routine.active().onTrue(
-    //         Commands.sequence(
-    //             firstScoreTraj.resetOdometry(),
-    //             firstScoreTraj.cmd(),
-    //             firstLoadTraj.cmd()
-    //         )
-    //     );
-
-    //     firstScoreTraj.atTime("eleUp")
-    //         .onTrue(
-    //             Commands.sequence(
-    //                 Commands.runOnce(() -> superstructure.requestIsPreload(true)),
-    //                 superstructure.autonRequestEleToScore(firstHeight),
-    //                 Commands.runOnce(() -> superstructure.requestIsPreload(false)),
-    //                 Commands.print("EleUp")
-    //             )
-    //         );
-    //     firstScoreTraj.done().onTrue(
-    //         Commands.sequence(
-    //             Commands.parallel(
-    //                 drivetrain.applyRequest(() -> m_brake),
-    //                 superstructure.autonScoreReq()
-    //             ),
-    //             firstLoadTraj.cmd()
-    //         )
-    //     );
-
-    //     firstLoadTraj.atTime("intake")
-    //             .onTrue(superstructure.autonRequestToIntake());
-
-    //     // now ur at the HP
-
-    //     // list of traj start cmds
-    //     ArrayList<AutoTrajectory> trajList = new ArrayList<>();
-    //     for (int cycleIdx = 0; cycleIdx < cycles.size(); cycleIdx++) {
-    //         // remember, ur at HP rn
-    //         AutonCycle cycle = cycles.get(cycleIdx);
-
-    //         var hpToReefTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycle.hpReefPair));
-    //         var reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycle.reefHPPair));
-
-    //         trajList.add(hpToReefTraj);
-    //         // attach this cycle's first traj to the end of the last cycle's last traj
-    //         if (cycles.size() > 1 && cycleIdx > 0) {
-    //             var lastCycleDone = trajList.get(cycleIdx - 1).done();
+    //     // add other cycles
+    //     if (cycles != null) {
+    //         for (AutonCycle cycle : cycles) {
+    //             AutoTrajectory hpToReefTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycle.hpReefPair));
+    //             AutoTrajectory reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycle.reefHPPair));
                 
-    //             lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
+    //             trajCommands.add(hpToReefTraj.cmd());
+    //             trajCommands.add(reefToHpTraj.cmd());
     //         }
-
-    //         hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycle.height));
-            
-    //         hpToReefTraj.done().onTrue(
-    //             Commands.sequence(
-    //                 Commands.parallel(
-    //                     drivetrain.applyRequest(() -> m_brake),
-    //                     superstructure.autonScoreReq()
-    //                 ),
-    //                 reefToHpTraj.cmd()
-    //             )
-    //         );
-
-    //         reefToHpTraj.atTime("intake")
-    //             .onTrue(superstructure.autonRequestToIntake());
     //     }
 
-    //     firstLoadTraj.done().onTrue(trajList.get(0).cmd());
+    //     // convert arraylist to array
+    //     Command[] cmds = new Command[trajCommands.size() + 1];
+    //     cmds[0] = firstScoreTraj.resetOdometry();
+    //     for (int i = 0; i < trajCommands.size(); i++) {
+    //         cmds[i + 1] = trajCommands.get(i);
+    //     }
+
+    //     // run commands in order
+    //     m_routine.active().onTrue(
+    //         Commands.sequence(
+    //             cmds
+    //         )
+    //     );
 
     //     return m_routine.cmd();
-
     // }
+
+    /*
+     * cycles start from the first time u get to an hp
+     */
+    public Command generateAuton(
+        Swerve drivetrain, 
+        Superstructure superstructure, 
+        StartingLocs startLoc,
+        ReefLocs firstReefLoc,
+        EleHeight firstHeight, 
+        HPStation firstHPStation,
+        ArrayList<AutonCycle> cycles
+    ) {
+        // iterate AutonCycles and validate all HP->Score and Score->HP pairs
+        for (AutonCycle autonCycle : cycles) {
+            if(!autonCycle.isLegit()) {
+                return Commands.print("that one scene in alice in borderland where karube just sits there contemplatively before he blows up.");
+            }
+        }
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(Trajectories.StartToReefTrajs.get(new Pair<StartingLocs, ReefLocs>(startLoc, firstReefLoc)));
+        AutoTrajectory firstLoadTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(firstReefLoc, firstHPStation)));
+
+        m_routine.active().onTrue(
+            Commands.sequence(
+                firstScoreTraj.resetOdometry(),
+                firstScoreTraj.cmd()
+            )
+        );
+
+        firstScoreTraj.atTime("eleUp")
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> System.out.println("eleUp")),
+                    Commands.runOnce(() -> superstructure.requestIsPreload(true)),
+                    superstructure.autonRequestEleToScore(firstHeight),
+                    Commands.runOnce(() -> superstructure.requestIsPreload(false))
+                )
+            );
+        firstScoreTraj.done().onTrue(
+            Commands.sequence(
+                Commands.runOnce(() -> System.out.println("starting to score")),
+                Commands.race(
+                    drivetrain.applyRequest(() -> m_brake).andThen(() -> System.out.println("done with applying brake")),
+                    superstructure.autonScoreReq().andThen(() -> System.out.println("done with autonScoreReq"))
+                ),
+                Commands.runOnce(() -> System.out.println("after score req")),
+                firstLoadTraj.cmd()
+            )
+        );
+
+        firstLoadTraj.atTime("intake")
+                .onTrue(superstructure.autonRequestToIntake());
+
+        // now ur at the HP
+
+        // list of traj start cmds
+        ArrayList<AutoTrajectory> trajList = new ArrayList<>();
+        for (int cycleIdx = 0; cycleIdx < cycles.size(); cycleIdx++) {
+            // remember, ur at HP rn
+            AutonCycle cycle = cycles.get(cycleIdx);
+            AutoTrajectory hpToReefTraj = m_routine.trajectory(Trajectories.HPToReefTrajs.get(cycle.hpReefPair));
+            AutoTrajectory reefToHpTraj = m_routine.trajectory(Trajectories.ReefToHPTrajs.get(cycle.reefHPPair));
+
+            trajList.add(hpToReefTraj);
+            // attach this cycle's first traj to the end of the last cycle's last traj
+            if (cycles.size() > 1 && cycleIdx > 0) {
+                var lastCycleDone = trajList.get(cycleIdx - 1).done();
+                
+                // THIS IS THE ISSUE: THE STATE NEVER CHNGES ACCORDING TO ADVANTAGE SCOPE
+                lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
+            }
+
+            hpToReefTraj.atTime("eleUp").onTrue(
+                superstructure.autonRequestEleToScore(cycle.height)
+            );
+            
+            hpToReefTraj.done().onTrue(
+                Commands.sequence(
+                    Commands.race(
+                        drivetrain.applyRequest(() -> m_brake),
+                        superstructure.autonScoreReq()
+                    ),
+                    reefToHpTraj.cmd()
+                )
+            );
+
+            reefToHpTraj.atTime("intake").onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> System.out.println("b4 intaking - cycles")),
+                    superstructure.autonRequestToIntake(),
+                    Commands.runOnce(() -> System.out.println("after intaking - cycles"))
+                )
+            );
+        }
+
+        firstLoadTraj.done().onTrue(trajList.get(0).cmd());
+
+        return m_routine.cmd();
+
+    }
 }
