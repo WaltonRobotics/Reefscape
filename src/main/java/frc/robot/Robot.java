@@ -140,9 +140,9 @@ public class Robot extends TimedRobot {
     driver.leftTrigger().whileTrue(coral.score());
     driver.rightTrigger().whileTrue(coral.runFinger());
 
-    driver.b().onTrue(elevator.toHeight(EleHeight.HP));
-    driver.x().onTrue(elevator.toHeight(EleHeight.L2));
-    driver.y().onTrue(elevator.toHeight(EleHeight.L3));
+    driver.b().whileTrue(coral.testFingerVoltageControl(() -> driver.getLeftY()));
+    driver.x().onTrue(coral.fingerOut());
+    driver.y().onTrue(coral.fingerIn());
     driver.a().onTrue(elevator.toHeight(EleHeight.L4));
   }
 
