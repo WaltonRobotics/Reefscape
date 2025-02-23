@@ -45,8 +45,8 @@ public class Constants {
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         public static final int kAngleTolerance = 3;//DUMMY VALUE
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(100)
-            .withSupplyCurrentLimit(50)
+            .withStatorCurrentLimit(20)
+            .withSupplyCurrentLimit(20)
             .withStatorCurrentLimitEnable(true);
         private static final FeedbackConfigs kWristFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kWristSensorToMechanismRatio);
@@ -55,17 +55,21 @@ public class Constants {
             .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
             .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
         private static final Slot0Configs kWristSlot0Configs = new Slot0Configs()
-            .withKS(0.25)
-            .withKV(0.12)
-            .withKA(0.01)
-            .withKP(60)
+            .withKS(0)
+            .withKV(0)
+            .withKA(0)
+            .withKP(25) // gg ez
             .withKI(0)
-            .withKD(0.5);
+            .withKD(0);
+        public static final MotorOutputConfigs kWristMotorOutputConfigs = new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake);
         public static final TalonFXConfiguration kWristConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kWristCurrentLimitConfigs)
             .withFeedback(kWristFeedbackConfigs)
             .withMotionMagic(kWristMagicConfigs)
-            .withSlot0(kWristSlot0Configs);
+            .withSlot0(kWristSlot0Configs)
+            .withMotorOutput(kWristMotorOutputConfigs);
+        
         // intake motor
         public static final int kIntakeGearRatio = 2;
         public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
@@ -87,11 +91,14 @@ public class Constants {
             .withKP(60)
             .withKI(0)
             .withKD(0.5);
+        public static final MotorOutputConfigs kIntakeMotorOutputConfigs = new MotorOutputConfigs()
+            .withInverted(InvertedValue.Clockwise_Positive);
         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
             .withCurrentLimits(kIntakeCurrentLimitConfigs)
             .withFeedback(kIntakeFeedbackConfigs)
             .withMotionMagic(kIntakeMagicConfigs)
-            .withSlot0(kIntakeSlot0Configs);
+            .withSlot0(kIntakeSlot0Configs)
+            .withMotorOutput(kIntakeMotorOutputConfigs);
 
         // state machine work -- make real values!
         public static final Current kIntakeCurrentSpikeThreshold = Amps.of(20);
