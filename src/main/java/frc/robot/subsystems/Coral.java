@@ -7,7 +7,6 @@ import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -15,12 +14,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.Constants.Coralk.*;
 
 import java.util.function.BooleanSupplier;
-
-import frc.robot.generated.TunerConstants;
+import java.util.function.DoubleSupplier;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 
@@ -29,10 +26,13 @@ public class Coral extends SubsystemBase {
 
     private final TalonFXS m_fingerMotor = new TalonFXS(kFingerMotorCANID);
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
-    private VoltageOut m_VoltOutReq = new VoltageOut(0);
+    private VoltageOut m_voltOutReq = new VoltageOut(0);
 
     private final double m_slowIntakeSpeed = 12 * .25;
     private final double m_scoreSpeed = 6;
+
+    private final double m_fingerInPosRots = 0.097412; // currently bad
+    private final double m_fingerOutPosRots = -0.107422; // currently bad
 
     private boolean m_coralIsCoast = false;
     private GenericEntry nte_coralIsCoast;
@@ -82,8 +82,8 @@ public class Coral extends SubsystemBase {
      */
     public Command setCoralMotorAction(double voltage, double endVoltage) {
         return Commands.runEnd(
-            () -> m_coralMotor.setControl(m_VoltOutReq.withOutput(voltage)),
-            () -> m_coralMotor.setControl(m_VoltOutReq.withOutput(endVoltage))
+            () -> m_coralMotor.setControl(m_voltOutReq.withOutput(voltage)),
+            () -> m_coralMotor.setControl(m_voltOutReq.withOutput(endVoltage))
         );
     }
 
@@ -92,7 +92,7 @@ public class Coral extends SubsystemBase {
     }
 
     public Command stopCoralMotor() {
-        return runOnce(() -> m_coralMotor.setControl(m_VoltOutReq.withOutput(0)));
+        return runOnce(() -> m_coralMotor.setControl(m_voltOutReq.withOutput(0)));
     }
 
     public Command fastIntake() {
