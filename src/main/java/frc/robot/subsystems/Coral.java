@@ -31,9 +31,6 @@ public class Coral extends SubsystemBase {
     private final double m_slowIntakeSpeed = 12 * .25;
     private final double m_scoreSpeed = 6;
 
-    private final double m_fingerInPosRots = 0.097412; // currently bad
-    private final double m_fingerOutPosRots = -0.107422; // currently bad
-
     private boolean m_coralIsCoast = false;
     private GenericEntry nte_coralIsCoast;
     private boolean m_fingerIsCoast = false;
@@ -113,12 +110,12 @@ public class Coral extends SubsystemBase {
     // finger methods
     public Command fingerOut() {
         return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(m_fingerOutPosRots)));
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations)));
     }
 
     public Command fingerIn() {
         return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(m_fingerInPosRots)));
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(kMaxAngleRotations)));
     }
 
     public Command testFingerVoltageControl(DoubleSupplier stick) {
