@@ -209,8 +209,10 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     m_coral.fastIntake().until(m_coral.bs_topBeamBreak),
-                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs),
-                    m_coral.slowIntake().until(m_coral.bs_botBeamBreak)
+                    Commands.parallel(
+                        manipRumble(kRumbleIntensity, kRumbleTimeoutSecs),
+                        m_coral.slowIntake().until(m_coral.bs_botBeamBreak)
+                    )
                 )
             );
         (stateTrg_intook)
