@@ -51,6 +51,7 @@ public class Coral extends SubsystemBase {
 
     public Coral() {
         m_coralMotor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);
+        m_fingerMotor.getConfigurator().apply(kFingerMotorTalonFXSConfig);
 
         nte_coralIsCoast = Shuffleboard.getTab(kLogTab)
                   .add("coral coast", false)
@@ -112,12 +113,21 @@ public class Coral extends SubsystemBase {
     // finger methods
     public Command fingerOut() {
         return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(180, Degrees))));
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(m_fingerOutPosRots)));
     }
 
     public Command fingerIn() {
         return runOnce(
-            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees))));
+            () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(m_fingerInPosRots)));
+    }
+
+    public Command testFingerVoltageControl(DoubleSupplier stick) {
+        return runEnd(() -> {
+            m_fingerMotor.setControl(m_voltOutReq.withOutput(-(stick.getAsDouble()) * 6));
+        }, () -> {
+            m_fingerMotor.setControl(m_voltOutReq.withOutput(0));
+        }
+        );
     }
 
     public Command runFinger() {
