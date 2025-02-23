@@ -403,14 +403,14 @@ public class Constants {
 
         public static final String kElevatorForwardsCamName = "Cam";
         public static final Transform3d kElevatorForwardsCamRoboToCam = new Transform3d(
-            Units.inchesToMeters(4.81), Units.inchesToMeters(8.238), Units.inchesToMeters(32), 
+            Units.inchesToMeters(8.238), Units.inchesToMeters(4.81), Units.inchesToMeters(32), 
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
         );
         public static final String kElevatorForwardsCamSimVisualName = "EleForwardsVisionEstimation";
 
         public static final String kSimTestCamName = "TestCam";
         public static final Transform3d kSimTestCamRoboToCam = new Transform3d(
-            Units.inchesToMeters(-4.81), Units.inchesToMeters(-8.238), Units.inchesToMeters(32),
+            Units.inchesToMeters(-8.32), Units.inchesToMeters(-4.81), Units.inchesToMeters(32),
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-40), Units.degreesToRadians(170))
         );
         public static final String kSimTestCamSimVisualName = "SimTestCamVisionEstimation";
