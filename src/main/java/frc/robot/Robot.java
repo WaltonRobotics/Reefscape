@@ -98,8 +98,6 @@ public class Robot extends TimedRobot {
     //   manipulator.leftBumper(),
     //   manipulator.a().and(manipulator.povUp()),
     //   manipulator.a().and(manipulator.povDown()),
-    //   trg_manipDanger.and(trg_eleOverride),
-    //   () -> manipulator.getLeftY(),
     //   (intensity) -> driverRumble(intensity), 
     //   (intensity) -> manipRumble(intensity));
 
@@ -113,7 +111,6 @@ public class Robot extends TimedRobot {
     //   () -> manipulator.getRightY());
 
     algae = new Algae(
-      new Trigger(() -> false), 
       new Trigger(() -> false), 
       new Trigger(() -> false), 
       new Trigger(() -> false), 
@@ -141,7 +138,7 @@ public class Robot extends TimedRobot {
 
     driver.leftBumper().whileTrue(coral.automaticCoralIntake());
     driver.leftTrigger().whileTrue(coral.score());
-    driver.rightTrigger().whileTrue(coral.finger());
+    driver.rightTrigger().whileTrue(coral.runFinger());
 
     driver.b().onTrue(elevator.toHeight(EleHeight.HP));
     driver.x().onTrue(elevator.toHeight(EleHeight.L2));

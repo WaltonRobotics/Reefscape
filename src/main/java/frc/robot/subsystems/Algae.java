@@ -1,8 +1,5 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Rotations;
-
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -57,9 +54,6 @@ public class Algae extends SubsystemBase {
     private final Trigger trg_hasAlgae = new Trigger(() -> isAlgaeThere());
     private final Trigger trg_processorReq;
     private final Trigger trg_shootReq;
-    private final Trigger trg_overrideReq;
-
-    private final DoubleSupplier m_overrideAngle;
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_toGround = new Trigger(stateEventLoop, () -> m_state == State.TO_GROUND);
@@ -71,7 +65,6 @@ public class Algae extends SubsystemBase {
     public final Trigger stateTrg_processor = new Trigger(stateEventLoop, () -> m_state == State.PROCESSOR);
     public final Trigger stateTrg_shooting = new Trigger(stateEventLoop, () -> m_state == State.SHOOTING);
     public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
-    public final Trigger stateTrg_override = new Trigger(stateEventLoop, () -> m_state == State.OVERRIDE);
 
     private boolean m_isHomed = false;
     private Debouncer m_debouncer = new Debouncer(0.25, DebounceType.kRising);
@@ -83,7 +76,6 @@ public class Algae extends SubsystemBase {
         Trigger intakeReq, 
         Trigger processorReq, 
         Trigger shootReq, 
-        Trigger overrideReq,
         DoubleConsumer manipRumbler,
         DoubleSupplier overrideAngle
     ) {
@@ -105,15 +97,12 @@ public class Algae extends SubsystemBase {
         trg_intakeReq = intakeReq;
         trg_processorReq = processorReq;
         trg_shootReq = shootReq;
-        trg_overrideReq = overrideReq;
 
         m_manipRumbler = manipRumbler;
-        m_overrideAngle = overrideAngle;
 
         setDefaultCommand(currentSenseHoming());
 
         configureStateTransitions();
-        configureOverride();
         configureStateActions();
     }
 
@@ -149,20 +138,6 @@ public class Algae extends SubsystemBase {
             .onTrue(Commands.runOnce(() -> m_state = State.SHOT));
         (stateTrg_shot)
             .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
-    }
-
-    private void configureOverride() {
-        (trg_overrideReq)
-            .onTrue(Commands.runOnce(() -> m_state = State.OVERRIDE));
-        
-        (stateTrg_override.and(trg_groundReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.TO_GROUND));
-        (stateTrg_override.and(trg_intakeReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (stateTrg_override.and(trg_processorReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.TO_PROCESSOR));
-        (stateTrg_override.and(trg_shootReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.SHOOTING));
     }
 
     private void configureStateActions() {
@@ -220,6 +195,7 @@ public class Algae extends SubsystemBase {
         ).until(() -> nearSetpoint());
     }
 
+    // testin' only
     public Command testVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
@@ -236,6 +212,30 @@ public class Algae extends SubsystemBase {
     public boolean nearSetpoint(double tolerancePulleyRotations) {
         double diff = m_MMEVRequest.Position - m_wrist.getPosition().getValueAsDouble();
         return Math.abs(diff) <= tolerancePulleyRotations;
+    }
+
+    public Command currentSenseHoming() {
+        Runnable init = () -> {
+            m_wrist.setControl(zeroingVoltageCtrlReq);
+            System.out.println("Zeroing Algae...");
+        };
+        Runnable execute = () -> {};
+        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            m_wrist.setPosition(0);
+            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            removeDefaultCommand();
+            m_isHomed = true;
+            System.out.println("Zeroed Algae!!!");
+        };
+
+        BooleanSupplier isFinished = () ->
+            m_debouncer.calculate(m_currentSpike.getAsBoolean());
+
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+
+    public boolean getIsHomed() {
+        return m_isHomed;
     }
 
     // INTAKE SCHTUFFS
@@ -265,30 +265,6 @@ public class Algae extends SubsystemBase {
 
     public boolean isAlgaeThere() {
         return m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent;
-    }
-
-    public Command currentSenseHoming() {
-        Runnable init = () -> {
-            m_wrist.setControl(zeroingVoltageCtrlReq);
-            System.out.println("Zeroing Algae...");
-        };
-        Runnable execute = () -> {};
-        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
-            m_wrist.setPosition(0);
-            m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
-            removeDefaultCommand();
-            m_isHomed = true;
-            System.out.println("Zeroed Algae!!!");
-        };
-
-        BooleanSupplier isFinished = () ->
-            m_debouncer.calculate(m_currentSpike.getAsBoolean());
-
-        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
-    }
-
-    public boolean getIsHomed() {
-        return m_isHomed;
     }
 
     @Override

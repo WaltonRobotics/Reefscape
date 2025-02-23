@@ -11,7 +11,7 @@
 
 ### State Diagram
 
-Algae has its own state machine this year cuz its soooooo special like that. NOTE: OverrideReq->T at any state will go to OVERRIDE
+Algae has its own state machine this year cuz its soooooo special like that.
 
 ```mermaid
 stateDiagram
@@ -25,7 +25,6 @@ stateDiagram
     state "PROCESSOR" as s8
     state "SHOOTING" as s9
     state "SHOT" as s10
-    state "OVERRIDE" as s11
 
     s1 --> s2: GroundReq->T
     s2 --> s3: AtGround->T
@@ -37,10 +36,6 @@ stateDiagram
     s8 --> s9: ShootReq->T
     s9 --> s10: CurrentSpike->F
     s10 --> s1: Automatic
-    s11 --> s2: GroundReq->T
-    s11 --> s4: IntakeReq->T
-    s11 --> s7: ProcessorReq->T
-    s11 --> s9: ShootReq->T
 
 ```
 
@@ -48,14 +43,13 @@ stateDiagram
 
 |    **State**     | **Intake**     |**Wrist**    | **Open Requests**  |
 | :--------------: | :------------: | :--------:  | :----------------: |
-|     **IDLE**     | Unrunning      |  HOME       | Ground, Override   |
-|**TO_GROUND**     | Unrunning      |Move->GROUND | Override           |
-|  **GROUND**      | Unrunning      | GROUND      | Intake, Override   |
-|  **INTAKING**    | Intaking       | GROUND      | Override           |
-|  **INTOOK**      | KeepIn         |Move->HOME   | Override           |
-| **HOME**         | KeepIn         | HOME        | Processor, Override|
-| **TO_PROCESSOR** | KeepIn         |Move->PROC   | Override           |
-| **PROCESSOR**    | KeepIn         |PROC         | Shoot, Override    |
-| **SHOOTING**     | Shooting       | PROC        | Override           |
+|     **IDLE**     | Unrunning      |  HOME       | Ground             |
+|**TO_GROUND**     | Unrunning      |Move->GROUND |                    |
+|  **GROUND**      | Unrunning      | GROUND      | Intake             |
+|  **INTAKING**    | Intaking       | GROUND      |                    |
+|  **INTOOK**      | KeepIn         |Move->HOME   |                    |
+| **HOME**         | KeepIn         | HOME        | Processor          |
+| **TO_PROCESSOR** | KeepIn         |Move->PROC   | n/a                |
+| **PROCESSOR**    | KeepIn         |PROC         | Shoot              |
+| **SHOOTING**     | Shooting       | PROC        | n/a                |
 | **SHOT**         | Unrunning      | Move->HOME  | n/a                |
-| **OVERRIDE**     |Unrunning/KeepIn|Unknown      | All                |
