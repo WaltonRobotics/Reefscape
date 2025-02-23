@@ -237,5 +237,10 @@ public class Robot extends TimedRobot {
     Pose2d robotPose = robotState.Pose;
     visionSim.simulationPeriodic(robotPose);
     drivetrain.simulationPeriodic();
+
+    // below is debug for swerve simulation. the farthest down one displays the module poses, but it's definitely bugged
+    Field2d debugField = visionSim.getSimDebugField();
+    // debugField.getObject("EstimatedRobot").setPose(robotPose);
+    // debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
   }
 }
