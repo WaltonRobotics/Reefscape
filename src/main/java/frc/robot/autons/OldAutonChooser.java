@@ -1,369 +1,339 @@
-// /* 
-//  * alexandra and sohan are dummies and this formatting is ABSOLUTELY COOKED WHAT THE hallways 
-//  * I DIDNT RAISE MY CHILDREN LIKE THIS
-//  * *crash out*
-//  */
-
 // package frc.robot.autons;
 
-// import java.lang.reflect.Array;
 // import java.util.ArrayList;
-// import java.util.EnumMap;
-// import java.util.function.BooleanSupplier;
-// import java.util.function.Consumer;
-// import java.util.function.Supplier;
+// import java.util.Optional;
+// import java.util.Set;
 
-// import choreo.auto.AutoFactory;
 // import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-// import frc.robot.autons.TrajsAndLocs.*;
+// import edu.wpi.first.wpilibj2.command.Command;
+// import edu.wpi.first.wpilibj2.command.Commands;
+// import frc.robot.Constants.AutonChooserK;
+// import frc.robot.autons.TrajsAndLocs.HPStation;
+// import frc.robot.autons.TrajsAndLocs.ReefLocs;
+// import frc.robot.autons.TrajsAndLocs.StartingLocs;
 // import frc.robot.autons.WaltAutonFactory.AutonCycle;
-// import frc.robot.generated.TunerConstants;
-// import frc.robot.subsystems.Elevator;
 // import frc.robot.subsystems.Elevator.EleHeight;
-// import frc.robot.subsystems.Swerve; 
 
-// public class OldAutonChooser {
-//     private static final Swerve drivetrain = TunerConstants.createDrivetrain();
-//     private static final AutoFactory autoFactory = drivetrain.createAutoFactory();
-//     private static WaltAutonFactory autonFactory = new WaltAutonFactory(autoFactory);
-    
-//         public static enum NumCycles {
-//             CYCLE_1(1),
-//             CYCLE_2(2),
-//             CYCLE_3(3),
-//             CYCLE_4(4);
-    
-//             public int m_cycles;
-    
-//             private NumCycles(int cycles){
-//                 m_cycles = cycles;
-//             }
-//             @Override
-//             public String toString() {
-//                 return String.valueOf(m_cycles);
-//             }
-//         }
-//     //TODO: change suppliers to consumers/listeners
-//     private static EnumMap<StartingLocs, String> startingLocMap = new EnumMap<>(TrajsAndLocs.StartingLocs.class);
-//     public static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
-//     //private static Supplier<StartingLocs> startLocChosen = () -> startingPositionChooser.getSelected();
-//     public static StartingLocs startLocChosen = TrajsAndLocs.StartingLocs.MID;
-    
-//     private static EnumMap<ReefLocs, String> firstScoringMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class);
-//     public static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
-//     //private static Supplier<ReefLocs> firstScoringChosen = () -> firstScoringChooser.getSelected();
-//     public static ReefLocs firstScoringChosen = firstScoringChooser.getSelected();
-       
-//     private static EnumMap<HPStation, String> hpStationMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
-//     public static SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
-//     //private static Supplier<HPStation> hpStationChosen = () -> hpStationChooser.getSelected();
-//     public static HPStation hpStationChosen = hpStationChooser.getSelected();
-    
-//     private static EnumMap<ReefLocs, String> hpToReefMap = new EnumMap<>(TrajsAndLocs.ReefLocs.class); 
-//     public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
-//     // public static SendableChooser<ReefLocs> hpToReefChooser = new SendableChooser<ReefLocs>();
-//     //private static Supplier<ReefLocs> hpToReefChosen = () -> hpToReefChooser.getSelected();
-//     public static ReefLocs hpToReefChosen = TrajsAndLocs.ReefLocs.REEF_I;
-    
-//     private static EnumMap<HPStation, String> reefToHPMap = new EnumMap<>(TrajsAndLocs.HPStation.class);
-//     //public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>(); 
-        
-//     public static SendableChooser<HPStation> reefToHPChooser = new SendableChooser<HPStation>();
-//     //private static Supplier<HPStation> reefToHPChosen = () -> reefToHPChooser.getSelected();
-//     public static HPStation reefToHPChosen = reefToHPChooser.getSelected();
-    
-//     public static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
-//     //private static Supplier<NumCycles> cyclesChosen = () -> cyclesChooser.getSelected();
-//     public static NumCycles cyclesChosen = cyclesChooser.getSelected();
-
-//     private static EnumMap<EleHeight, String> startingHeightMap = new EnumMap<>(Elevator.EleHeight.class);
-//     public static SendableChooser<EleHeight> startingHeightChooser = new SendableChooser<EleHeight>();
-//     //private static Supplier<EleHeight> eleHeightChosen = () -> eleHeightChooser.getSelected();
-//     public static EleHeight startingHeightChosen = startingHeightChooser.getSelected();
-    
-//     private static EnumMap<EleHeight, String> eleHeightMap = new EnumMap<>(Elevator.EleHeight.class);
-//     public static SendableChooser<EleHeight> eleHeightChooser = new SendableChooser<EleHeight>();
-//     //private static Supplier<EleHeight> eleHeightChosen = () -> eleHeightChooser.getSelected();
-//     public static EleHeight eleHeightChosen = eleHeightChooser.getSelected();
-    
-//     static{
-//         SmartDashboard.putData("starting position chooser", startingPositionChooser);   
-//         SmartDashboard.putData("human player station chooser", hpStationChooser);
-//         SmartDashboard.putData("number of cycles chooser", cyclesChooser);
-//         SmartDashboard.putData("starting height chooser", startingHeightChooser);
-//     }
-    
-//     public static void addChoosers() {
-//         for (int i = 1; i <= 4; i++) {
-//            hpToReefChoosers.add(new SendableChooser<ReefLocs>());
-//         }
-//     }
-    
-//     public static void assignNumCycles(NumCycles numCycles, String description){
-//         // cyclesMap.put(numCycles, description);
-//         cyclesChooser.addOption(description, numCycles);
-//     }
-    
-//     public static void assignStartingPosition(StartingLocs startingLoc, String description){
-//         startingLocMap.put(startingLoc, description);
-//         startingPositionChooser.addOption(description, startingLoc);
-//     }
-    
-//     public static void assignFirstScoring(ReefLocs scoringLoc, String description){
-//         firstScoringMap.put(scoringLoc, description);
-//         firstScoringChooser.addOption(description, scoringLoc);
-//     }
-    
-//     public static void assignHPStation(HPStation hpstation, String description){
-//         hpStationMap.put(hpstation, description);
-//         hpStationChooser.addOption(description, hpstation);
-//     }
-    
-//     public static void assignReefScoring(ReefLocs reefLocs, String description, SendableChooser<ReefLocs> chooser){
-//         hpToReefMap.put(reefLocs, description);
-//         chooser.addOption(description, reefLocs);
-//     }
-    
-//     public static void assignReeftoHPScoring(HPStation hpStation, String description, SendableChooser<HPStation> chooser){
-//         reefToHPMap.put(hpStation, description);
-//         chooser.addOption(description, hpStation);
-//     }
-
-//     public static void assignStartingHeight(EleHeight startingHeight, String description){
-//         startingHeightMap.put(startingHeight, description);
-//         startingHeightChooser.addOption(description, startingHeight);
-//     }
-    
-//     public static void assignEleHeight(EleHeight eleHeight, String description){
-//         eleHeightMap.put(eleHeight, description);
-//         eleHeightChooser.addOption(description, eleHeight);
-//     }
-    
-//     public static void setDefaultAuton(StartingLocs scoringLoc){
-//         startingPositionChooser.setDefaultOption("mid", scoringLoc);
-//     }
-    
-//     public static void setDefaultHPStation(HPStation hpStation){
-//         hpStationChooser.setDefaultOption("human player left", hpStation);
-//     }
-    
-    
-    
+// public class AutonChooser {
 //     /**
-//      * depending on certain starting location, displays the optimal path for said starting + scoring path
+//      * This determines how many true cycles to account for.
+//      * A cycle consists of a movement from the Human Player Station to the Reef and back.
 //      */
-//     public static void chooseFirstScoring(){
-//         firstScoringChooser = new SendableChooser<ReefLocs>();
+//     public static enum CycleCount {
+//         ZERO_TRUE_CYCLES(0, "ZERO_TRUE_CYCLES"),
+//         ONE_CYCLE(1, "ONE_CYCLE"),
+//         TWO_CYCLES(2, "TWO CYCLES"),
+//         THREE_CYCLES(3, "THREE CYCLES"),
+//         FOUR_CYCLES(4, "FOUR CYCLES"),
+//         FIVE_CYCLES(5, "FIVE CYCLES");
+//         // WARNING: Constants.AutonChooserK.maxAutonCycleCount determines the maximum number of cycles.
+//         // do not add anything here without updating that value so that network tables understands what it's doing
+
+//         public final int m_count;
+//         public final String m_name;
+
+//         private CycleCount(int count, String name) {
+//             m_count = count;
+//             m_name = name;
+//         }
+//     }
+
+//     // THIS DOES NOT MODIFY ANYTHING RELATED TO NETWORK TABLES
+//     // this solely tells the auton generation to consider this the auton cycle count and ignore any after that
+//     private static final SendableChooser<CycleCount> cycleCountChooser = new SendableChooser<>();
+
+//     // declare and define SendableChoosers for special starting cycle
+//     private static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<>();
+//     private static SendableChooser<ReefLocs> firstScoreChooser = new SendableChooser<>();
+//     private static SendableChooser<EleHeight> firstScoreHeightChooser = new SendableChooser<>();
+//     private static SendableChooser<HPStation> firstHPStationChooser = new SendableChooser<>();
+
+//     // declare and define SendableChoosers for cycles
+//     private static final ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<>();
+//     private static final ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<>();
+//     private static final ArrayList<SendableChooser<EleHeight>> scoreHeightChoosers = new ArrayList<>();
+
+//     public static void init() {
+//         cycleCountChooser.onChange(AutonChooser::updateChoices);
+//         cycleCountChooser.setDefaultOption("Zero True Cycles", CycleCount.ZERO_TRUE_CYCLES);
+//         cycleCountChooser.addOption("One Cycle", CycleCount.ONE_CYCLE);
+//         cycleCountChooser.addOption("Two Cycles", CycleCount.TWO_CYCLES);
+//         cycleCountChooser.addOption("Three Cycles", CycleCount.THREE_CYCLES);
+//         cycleCountChooser.addOption("Four Cycles", CycleCount.FOUR_CYCLES);
+//         cycleCountChooser.addOption("Five Cycles", CycleCount.FIVE_CYCLES);
+//         SmartDashboard.putData("Cycle Count", cycleCountChooser);
+
+//         // staring position chooser
+//         startingPositionChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//         startingPositionChooser.setDefaultOption("Mid", StartingLocs.MID);
+//         startingPositionChooser.addOption("Left", StartingLocs.LEFT);
+//         startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
+//         SmartDashboard.putData(AutonChooserK.kStartingPosChooserKey, startingPositionChooser);
+
+//         basicChooserConfig();
 //         SmartDashboard.updateValues();
-    
-//         if(startLocChosen.equals(TrajsAndLocs.StartingLocs.MID)){
-    
-//             for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalMidStartCycles.size(); i++) {
-//                 assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i), 
-//                     TrajsAndLocs.ReefLocs.OptimalMidStartCycles.get(i).toString());
-//             }
-    
-//         }else if (startLocChosen.equals(TrajsAndLocs.StartingLocs.LEFT)){
-    
-//             for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.size(); i++) {
-//                 assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i), 
-//                     TrajsAndLocs.ReefLocs.OptimalLeftStartCycles.get(i).toString());
-//             }
+//     }
+
+//     public static Command forceUpdateDEBUG() {
+//         return Commands.runOnce(() -> updateChoices(cycleCountChooser.getSelected()));
+//     }
+
+//     /**
+//      * Think about whether you actually need to use this!!! i'm just doing debug stuff iwth it
+//      */
+//     public static Command getChoiceNameDEBUG() {
+//         String value;
+//         if (firstScoreChooser.getSelected() != null) {
+//             value = "value: " + firstScoreChooser.getSelected().name();
 //         } else {
-//             for (int i = 0; i < TrajsAndLocs.ReefLocs.OptimalRightStartCycles.size(); i++) {
-//                 assignFirstScoring(TrajsAndLocs.ReefLocs.OptimalRightStartCycles.get(i), 
-//                     TrajsAndLocs.ReefLocs.OptimalRightStartCycles.get(i).toString());
-//             }
-    
-//         }   
-//         SmartDashboard.putData("first scoring chooser", firstScoringChooser);
-//     }
-    
-//     /**
-//      * given that an HP Station is selected, creates NT that shows all possible(optimal?) routes to certain reefs
-//      */
-//     public static void chooseHPtoReef(String description, HPStation hpChosen, int index){
-//         addChoosers();
-//         SendableChooser<ReefLocs> hpToReefChooser = hpToReefChoosers.get(index);
-//         hpToReefChooser = new SendableChooser<ReefLocs>();
-//         SmartDashboard.updateValues();
-            
-//         if(hpChosen.equals(TrajsAndLocs.HPStation.HP_RIGHT)){ 
-//             for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
-//                 assignReefScoring(TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i), 
-//                 TrajsAndLocs.ReefLocs.OptimalRightHPCycles.get(i).toString(), 
-//                 hpToReefChooser);
-//             }
-//         } else {
-//             for(int i = 0; i < TrajsAndLocs.Trajectories.HPToReefTrajs.size() / 2; i++){
-//                 assignReefScoring(TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i), 
-//                 TrajsAndLocs.ReefLocs.OptimalLeftHPCycles.get(i).toString(),
-//                 hpToReefChooser);
-//             }
+//             value = "value is null";
 //         }
-//         SmartDashboard.putData(description, hpToReefChooser);
+//         return Commands.print(value);
 //     }
-        
+
 //     /**
-//     * given that a reef was selected (after going to HP), creates the possible HP options for that selected reef
-//     */
-//     public static void chooseReefToHP(int index){
-//         // addChoosers();
-//         // SendableChooser<HPStation> reefToHPChooser = reefToHPChoosers.get(index);
-//         reefToHPChooser = new SendableChooser<HPStation>();
-//         SmartDashboard.updateValues();
-            
-//         if(hpToReefChosen != null){
-//             if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_A)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_B)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_C)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_D)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser); 
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_E)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_F)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right",reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_G)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_H)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_RIGHT, "hp right", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_I)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_J)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-    
-//             } else if(hpToReefChosen.equals(TrajsAndLocs.ReefLocs.REEF_K)){
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-    
-//             } else{
-//                 assignReeftoHPScoring(TrajsAndLocs.HPStation.HP_LEFT, "hp left", reefToHPChooser);
-    
-//             }
-//         }
-    
-//         SmartDashboard.putData("Reef to HP Chooser " + index, reefToHPChooser);
-//     }
-    
-//     /**
-//      * choose ele height
+//      * Runs and puts all empty choosers. Do not call this outside of initialization above
 //      */
-//     public static void chooseEleHeight(String description){
-//         eleHeightChooser = new SendableChooser<EleHeight>();
-
-//         assignEleHeight(Elevator.EleHeight.L1, "L1");
-//         assignEleHeight(Elevator.EleHeight.L2, "L2");
-//         assignEleHeight(Elevator.EleHeight.L3, "L3");
-//         assignEleHeight(Elevator.EleHeight.L4, "L4");
-    
-//         SmartDashboard.putData(description, eleHeightChooser);
-//     }
-    
-//     /**
-//      * depending on how many cycles you choose, will display each cycle's choosers: hp to reef, reef to hp, and ele height
-//      */
-//     public static void cycleIterations() {
-
-//         System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-//         System.out.println("cycleIteration yippee");
-//         System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
-//         NumCycles selectedCycles = cyclesChosen;
-    
-//         if (cyclesChosen != null) {
-//             int numIterations = selectedCycles.m_cycles;
-    
-//             for(int i = 1; i <= numIterations; i++) { 
-//                 chooseEleHeight("ele height chooser " + i);
-    
-//                 if(reefToHPChosen != null){    
-//                     chooseHPtoReef("HP to Reef Chooser " + i, reefToHPChosen, i);
-//                     chooseReefToHP(i);
-    
-//                     // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){
-//                     //     scoringLocationArray.add(hpToReefChosen.get());
-//                     // }
-    
-//                 } else if (hpStationChosen != null) {
-//                     chooseHPtoReef("HP to Reef Chooser " + i, hpStationChosen, i);
-//                     chooseReefToHP(i);
-    
-//                     // if(hpToReefChosen.get() != null && !(scoringLocationArray.contains(hpToReefChosen.get()))){
-//                     //     scoringLocationArray.add(hpToReefChosen.get());
-//                     // }
-//                 } else {
-//                     // TODO: send error!!!
-//                 }    
-//             }
-//         }
-//     }
-    
-//         // public static void getSelectedValues(){
-    
-//         //     StartingLocs startingPosition = startingPositionChooser.getSelected();
-//         //     ReefLocs firstScoringLoc = firstScoringChooser.getSelected();
-//         //     HPStation hpStation = hpStationChooser.getSelected();
-    
-//         //         // for(int i = 0; i < scoringLocationArray.size(); i++){
-//         //         //     System.out.println(scoringLocationArray.get(i));
-//         //         // }
-    
-//         //         // if(!(hpStationArray.contains(reefToHPChosen.get()))){
-//         //         //     hpStationArray.add(reefToHPChooser.getSelected());
-//         //         // }
-    
-//         //         // for(int i = 0; i < hpStationArray.size(); i++){
-//         //         //     System.out.println(hpStationArray.get(i));
-//         //         // }
-//         // }
+//     private static void basicChooserConfig() {
+//         SmartDashboard.putData(AutonChooserK.kFirstScoreLocChooserKey, firstScoreChooser);
+//         firstScoreChooser = (SendableChooser<ReefLocs>) SmartDashboard.getData(AutonChooserK.kFirstScoreLocChooserKey);
+//         firstScoreChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
 
         
-    
-//     public static StartingLocs getChosenStart(){
-//         return startLocChosen;
-//     }
-    
-//     public static ReefLocs getChosenFirstReef(){
-//         return firstScoringChosen;
-//     }
-    
-//     public static HPStation getChosenFirstHP(){
-//         return hpStationChosen;
+//         SmartDashboard.putData(AutonChooserK.kFirstHPStationChooserKey, firstHPStationChooser);
+//         firstHPStationChooser = (SendableChooser<HPStation>) SmartDashboard.getData(AutonChooserK.kFirstHPStationChooserKey);
+//         firstHPStationChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+
+//         // firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//         SmartDashboard.putData(AutonChooserK.kFirstScoreHeightChooserKey, firstScoreHeightChooser);
+//         firstScoreHeightChooser = (SendableChooser<EleHeight>) SmartDashboard.getData(AutonChooserK.kFirstScoreHeightChooserKey);
+//         firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//         // hpToReefChoosers
+//         for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
+//             SendableChooser<ReefLocs> currentChooser = new SendableChooser<ReefLocs>();
+//             currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//             hpToReefChoosers.add(currentChooser);
+//             SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " Scoring Location Chooser", currentChooser);
+//         }
+//         // reefToHPChoosers
+//         for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
+//             SendableChooser<HPStation> currentChooser = new SendableChooser<HPStation>();
+//             currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//             reefToHPChoosers.add(currentChooser);
+//             SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " HP Station Chooser", currentChooser);
+//         }
+//         // scoreHeightChoosers
+//         for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
+//             SendableChooser<EleHeight> currentChooser = new SendableChooser<EleHeight>();
+//             currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//             scoreHeightChoosers.add(currentChooser);
+//             SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " Score Height Chooser", currentChooser);
+//         }
 //     }
 
-//     public static EleHeight getStartingHeight(){
-//         return startingHeightChosen;
+//     public static StartingLocs getChosenStart() {
+//         return null;
+//     }
+
+//     public static ReefLocs getChosenFirstReef() {
+//         return null;
+//     }
+
+//     public static EleHeight getStartingHeight() {
+//         return null;
+//     }
+
+//     public static HPStation getChosenFirstHP() {
+//         return null;
+//     }
+
+//     public static ArrayList<AutonCycle> getCycles() {
+//         return null;
 //     }
     
-//     public static ArrayList<AutonCycle> getCycles(){
-    
-//         ArrayList<AutonCycle> arrayCycles = new ArrayList<AutonCycle>();
-//         AutonCycle cycle;
-    
-//         for(int i = 1; i <= cyclesChosen.m_cycles; i++){
-//             cycle = autonFactory.new AutonCycle(
-//                 hpToReefChosen, eleHeightChosen, reefToHPChosen);
+//     /**
+//      * This should be bound to all our choosers so that when any of them change we redetermine which options are valid. 
+//      * This closes all our choosers and redetermines which options are valid.
+//      * @param cycleCount
+//      */
+//     private static void updateChoices(CycleCount cycleCount) {
+//         System.out.println("run update chooser");
 
-//             arrayCycles.add(cycle);
+//         firstScoreChooser.close();
+//         Optional<ArrayList<ReefLocs>> optimalStartScoringLocsOptional = getOptimalReefLocs(startingPositionChooser.getSelected());
+//         // this should only occur if startingPositionChooser.getSelected() == null, meaning there is no starting location selected (somehow)
+//         // this should not be possible for starting location but it will be possible a little farther in for other values so
+//         // the method needs to account for it
+//         if (optimalStartScoringLocsOptional.isEmpty()) {
+//             endAutonUpdate("No starting location available", 0, UpdateStages.REEF_LOCATION);
+//             return;
+//         }
+//         ArrayList<ReefLocs> optimalStartScoringLocs = optimalStartScoringLocsOptional.get();
+//         SendableChooser<ReefLocs> newFirstScoreChooser = new SendableChooser<ReefLocs>();
+//         for (ReefLocs reefLoc : optimalStartScoringLocs) {
+//             newFirstScoreChooser.addOption(reefLoc.name(), reefLoc);
+//         }
+//         firstScoreChooser = newFirstScoreChooser;
+//         SmartDashboard.putData(AutonChooserK.kFirstScoreLocChooserKey, firstScoreChooser);
+//         firstScoreChooser = (SendableChooser<ReefLocs>) SmartDashboard.getData(AutonChooserK.kFirstScoreLocChooserKey);
+
+//         firstHPStationChooser.close();
+//         Optional<ArrayList<HPStation>> optimalStartHPStationsOptional = getOptimalHPStations(firstScoreChooser.getSelected());
+//         if (optimalStartHPStationsOptional.isEmpty()) {
+//             endAutonUpdate("No first reef location available", 0, UpdateStages.HP_LOCATION);
+//             return;
+//         }
+//         ArrayList<HPStation> optimalStartHPStations = optimalStartHPStationsOptional.get();
+//         SendableChooser<HPStation> newFirstHPStationChooser = new SendableChooser<HPStation>();
+//         for (HPStation hpStation : optimalStartHPStations) {
+//             newFirstHPStationChooser.addOption(hpStation.name(), hpStation);
+//         }
+//         firstHPStationChooser = newFirstHPStationChooser;
+//         SmartDashboard.putData("First HP Location", firstHPStationChooser);
+
+//         SmartDashboard.updateValues();
+//     }
+
+//     /**
+//      * 
+//      * @param failureMessage
+//      * @param endCycle Should be [0, kMaxCycleCount]
+//      * @param endStage Notes what stage of AutonUpdate this ended during
+//      */
+//     private static void endAutonUpdate(String failureMessage, int endCycle, UpdateStages endStage) {
+//         SmartDashboard.updateValues();
+//         System.out.println("[AutonChooser]: updateChoices end with message: " + failureMessage);
+//         // this flag simply exists to ensure that we do complete cycles after account for the incomplete cycle
+//         boolean accountedForPartialUpdate = false;
+//         if (endCycle == 0) {
+//             switch (endStage) {
+//                 // note lack of breaks - this is intentional so it executes everything after
+//                 case STARTING_LOCATION:
+//                     accountedForPartialUpdate = true;
+
+//                     startingPositionChooser.close();
+//                     startingPositionChooser = new SendableChooser<StartingLocs>();
+//                     startingPositionChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+
+//                     startingPositionChooser.setDefaultOption("Mid", StartingLocs.MID);
+//                     startingPositionChooser.addOption("Left", StartingLocs.LEFT);
+//                     startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
+
+//                     SmartDashboard.putData(AutonChooserK.kStartingPosChooserKey, startingPositionChooser);
+//                     startingPositionChooser = (SendableChooser<StartingLocs>) SmartDashboard.getData("Startinng Position");
+//                 case REEF_LOCATION:
+//                     accountedForPartialUpdate = true;
+
+//                     firstScoreChooser.close();
+//                     firstScoreChooser = new SendableChooser<ReefLocs>();
+//                     firstScoreChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+
+//                     SmartDashboard.putData(AutonChooserK.kFirstScoreLocChooserKey, firstScoreChooser);
+//                     firstScoreChooser = (SendableChooser<ReefLocs>) SmartDashboard.getData(AutonChooserK.kFirstScoreLocChooserKey);
+//                 case HP_LOCATION:
+//                     accountedForPartialUpdate = true;
+
+//                     firstHPStationChooser.close();
+//                     firstHPStationChooser = new SendableChooser<HPStation>();
+//                     firstHPStationChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+
+//                     SmartDashboard.putData(AutonChooserK.kFirstHPStationChooserKey, firstHPStationChooser);
+//                     firstHPStationChooser = (SendableChooser<HPStation>) SmartDashboard.getData(AutonChooserK.kFirstHPStationChooserKey);
+//                 case SCORE_HEIGHT:
+//                     accountedForPartialUpdate = true;
+
+//                     firstScoreHeightChooser.close();
+//                     firstScoreHeightChooser = new SendableChooser<EleHeight>();
+//                     firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+
+//                     SmartDashboard.putData(AutonChooserK.kFirstScoreHeightChooserKey, firstScoreHeightChooser);
+//             }
+
+//             // BE REAL CAREFUL ACCESSING endCycle - IT HAS TO BE MODIFIED TO 1 HERE TO AVOID INDEX OUT OF BOUNDS.
+//             // TO ENSURE ACCURATE ACCESS OF endCycle ACCESS IT BEFORE THIS POINT
+//             endCycle = 1;
 //         }
 
-//         return arrayCycles;
+//         for (int cycleNum = endCycle; cycleNum < AutonChooserK.maxAutonCycleCount; cycleNum++) {
+//             // having two numbers for this makes life just a little easier
+//             int actualIndex = cycleNum - 1;
+//             // this makes sure we do full cycles every cycle after accounting for the one that completed partially
+//             if (endStage == UpdateStages.REEF_LOCATION || accountedForPartialUpdate) {
+//                 accountedForPartialUpdate = true;
+
+//                 hpToReefChoosers.remove(actualIndex).close();
+//                 SendableChooser<ReefLocs> currentChooser = new SendableChooser<ReefLocs>();
+//                 currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//                 hpToReefChoosers.add(actualIndex, currentChooser);
+
+//                 SmartDashboard.putData("Cycle " + Integer.toString(cycleNum) + " Scoring Location Chooser", currentChooser);
+//             }
+//             if (endStage == UpdateStages.HP_LOCATION || accountedForPartialUpdate) {
+//                 accountedForPartialUpdate = true;
+
+//                 reefToHPChoosers.remove(actualIndex).close();
+//                 SendableChooser<HPStation> currentChooser = new SendableChooser<HPStation>();
+//                 currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//                 reefToHPChoosers.add(actualIndex, currentChooser);
+//             }
+//             if (endStage == UpdateStages.SCORE_HEIGHT || accountedForPartialUpdate) {
+//                 accountedForPartialUpdate = true;
+
+//                 scoreHeightChoosers.remove(actualIndex).close();
+//                 SendableChooser<EleHeight> currentChooser = new SendableChooser<EleHeight>();
+//                 currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+//                 scoreHeightChoosers.add(actualIndex, currentChooser);
+//             }
+//         }
+
+//         SmartDashboard.updateValues();
 //     }
 
+//     private static Optional<ArrayList<ReefLocs>> getOptimalReefLocs(StartingLocs startingLocation) {
+//         // this will likely come straight from SendableChooser so you have to be prepared
+//         if (startingLocation == null) {
+//             return Optional.empty();
+//         }
+//         return Optional.of(ReefLocs.optimalPathsByMatchStartLocation.get(startingLocation));
+//     }
+
+//     private static Optional<ArrayList<ReefLocs>> getOptimalReefLocs(HPStation hpStation) {
+//         // this will likely come straight from SendableChooser so you have to be prepared
+//         if (hpStation == null) {
+//             return Optional.empty();
+//         }
+//         return Optional.of(ReefLocs.optimalPathsByHPStation.get(hpStation));
+//     }
+
+//     private static Optional<ArrayList<HPStation>> getOptimalHPStations(ReefLocs reefLocation) {
+//         if (reefLocation == null) {
+//             return Optional.empty();
+//         }
+//         Set<HPStation> allHPStationValues = ReefLocs.optimalPathsByHPStation.keySet();
+//         ArrayList<HPStation> outputList = new ArrayList<HPStation>();
+//         // TODO: just be warned that if this doesn't function look here - not sure using a foreach loop in this manner is perfect
+//         for (HPStation hpStation : allHPStationValues) {
+//             if (ReefLocs.optimalPathsByHPStation.get(hpStation).contains(reefLocation)) {
+//                 outputList.add(hpStation);
+//             }
+//         }
+
+//         return Optional.of(outputList);
+//     }
+
+//     private enum UpdateStages {
+//         STARTING_LOCATION(-1, "STARTING_LOCATION"),
+//         REEF_LOCATION(0, "REEF_LOCATION"),
+//         HP_LOCATION(1, "HP_LOCATION"),
+//         SCORE_HEIGHT(2, "SCORE_HEIGHT");
+
+//         public final int m_index;
+//         public final String m_name;
+
+//         private UpdateStages(int index, String name) {
+//             m_index = index;
+//             m_name = name;
+//         }
+//     }
 // }

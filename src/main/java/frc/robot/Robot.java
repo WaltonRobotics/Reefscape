@@ -144,7 +144,6 @@ public class Robot extends TimedRobot {
     //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
     //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
     // manipulator.rightBumper().onTrue(AutonChooser.getCycleCountChoiceDEBUG());
-    driver.povRight().onTrue(AutonChooser.getChoiceNameDEBUG());
     driver.rightBumper().onTrue(AutonChooser.forceUpdateDEBUG());
 
     drivetrain.registerTelemetry(logger::telemeterize);

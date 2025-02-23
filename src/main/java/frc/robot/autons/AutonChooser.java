@@ -1,6 +1,7 @@
 package frc.robot.autons;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,80 +51,15 @@ public class AutonChooser {
     private static SendableChooser<HPStation> firstHPStationChooser = new SendableChooser<>();
 
     // declare and define SendableChoosers for cycles
-    private static final ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<>();
-    private static final ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<>();
+    private static final ArrayList<SendableChooser<ReefLocs>> scoreLocationChoosers = new ArrayList<>();
+    private static final ArrayList<SendableChooser<HPStation>> hpStationChoosers = new ArrayList<>();
     private static final ArrayList<SendableChooser<EleHeight>> scoreHeightChoosers = new ArrayList<>();
 
-    public static void init() {
-        cycleCountChooser.onChange(AutonChooser::updateChoices);
-        cycleCountChooser.setDefaultOption("Zero True Cycles", CycleCount.ZERO_TRUE_CYCLES);
-        cycleCountChooser.addOption("One Cycle", CycleCount.ONE_CYCLE);
-        cycleCountChooser.addOption("Two Cycles", CycleCount.TWO_CYCLES);
-        cycleCountChooser.addOption("Three Cycles", CycleCount.THREE_CYCLES);
-        cycleCountChooser.addOption("Four Cycles", CycleCount.FOUR_CYCLES);
-        cycleCountChooser.addOption("Five Cycles", CycleCount.FIVE_CYCLES);
-        SmartDashboard.putData("Cycle Count", cycleCountChooser);
+    private static EnumMap<UpdateStages, String> updateStageToKeyText = new EnumMap<>(UpdateStages.class);
 
-        // staring position chooser
-        startingPositionChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-        startingPositionChooser.setDefaultOption("Mid", StartingLocs.MID);
-        startingPositionChooser.addOption("Left", StartingLocs.LEFT);
-        startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
-        SmartDashboard.putData("Starting Position", startingPositionChooser);
-
-        basicChooserConfig();
-        SmartDashboard.updateValues();
-    }
-
-    public static Command forceUpdateDEBUG() {
-        return Commands.runOnce(() -> updateChoices(cycleCountChooser.getSelected()));
-    }
-
-    /**
-     * Think about whether you actually need to use this!!! i'm just doing debug stuff iwth it
-     */
-    public static Command getChoiceNameDEBUG() {
-        String value;
-        if (firstScoreChooser.getSelected() != null) {
-            value = "value: " + firstScoreChooser.getSelected().name();
-        } else {
-            value = "value is null";
-        }
-        return Commands.print(value);
-    }
-
-    /**
-     * Runs and puts all empty choosers. Do not call this outside of initialization above
-     */
-    private static void basicChooserConfig() {
-        firstScoreChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-        SmartDashboard.putData("First Score Location", firstScoreChooser);
-        firstHPStationChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-        SmartDashboard.putData("First Human Station Location", firstHPStationChooser);
-        firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-        SmartDashboard.putData("First Score Height", firstScoreHeightChooser);
-        // hpToReefChoosers
-        for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
-            SendableChooser<ReefLocs> currentChooser = new SendableChooser<ReefLocs>();
-            currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-            hpToReefChoosers.add(currentChooser);
-            SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " Scoring Location Chooser", currentChooser);
-        }
-        // reefToHPChoosers
-        for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
-            SendableChooser<HPStation> currentChooser = new SendableChooser<HPStation>();
-            currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-            reefToHPChoosers.add(currentChooser);
-            SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " HP Station Chooser", currentChooser);
-        }
-        // scoreHeightChoosers
-        for (int i = 0; i < AutonChooserK.maxAutonCycleCount; i++) {
-            SendableChooser<EleHeight> currentChooser = new SendableChooser<EleHeight>();
-            currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-            scoreHeightChoosers.add(currentChooser);
-            SmartDashboard.putData("Cycle " + Integer.toString(i + 1) + " Score Height Chooser", currentChooser);
-        }
-    }
+    // ------------------
+    // ---- MAIN API ----
+    // ------------------
 
     public static StartingLocs getChosenStart() {
         return null;
@@ -144,139 +80,226 @@ public class AutonChooser {
     public static ArrayList<AutonCycle> getCycles() {
         return null;
     }
+
+    // ---------------
+    // ---- DEBUG ----
+    // ---------------
+
+    public static Command forceUpdateDEBUG() {
+        return Commands.runOnce(() -> updateChoices(cycleCountChooser.getSelected(), 0, UpdateStages.STARTING_LOCATION));
+    }
     
+    // ------------------------
+    // ---- PROGRAM DEPTHS ----
+    // ------------------------
+
     /**
-     * This should be bound to all our choosers so that when any of them change we redetermine which options are valid. 
-     * This closes all our choosers and redetermines which options are valid.
-     * @param cycleCount
+     * Should run at program init
      */
-    private static void updateChoices(CycleCount cycleCount) {
-        System.out.println("run update chooser");
+    public static void init() {
+        configGeneratedNTKeys();
 
-        firstScoreChooser.close();
-        Optional<ArrayList<ReefLocs>> optimalStartScoringLocsOptional = getOptimalReefLocs(startingPositionChooser.getSelected());
-        // this should only occur if startingPositionChooser.getSelected() == null, meaning there is no starting location selected (somehow)
-        // this should not be possible for starting location but it will be possible a little farther in for other values so
-        // the method needs to account for it
-        if (optimalStartScoringLocsOptional.isEmpty()) {
-            endAutonUpdate("No starting location available", 0, UpdateStages.REEF_LOCATION);
-            return;
-        }
-        ArrayList<ReefLocs> optimalStartScoringLocs = optimalStartScoringLocsOptional.get();
-        SendableChooser<ReefLocs> newFirstScoreChooser = new SendableChooser<ReefLocs>();
-        for (ReefLocs reefLoc : optimalStartScoringLocs) {
-            newFirstScoreChooser.addOption(reefLoc.name(), reefLoc);
-        }
-        firstScoreChooser = newFirstScoreChooser;
-        SmartDashboard.putData("First Score Location", firstScoreChooser);
+        cycleCountChooser.addOption("One Cycle", CycleCount.ONE_CYCLE);
+        cycleCountChooser.addOption("Two Cycles", CycleCount.TWO_CYCLES);
+        cycleCountChooser.addOption("Three Cycles", CycleCount.THREE_CYCLES);
+        cycleCountChooser.addOption("Four Cycles", CycleCount.FOUR_CYCLES);
+        cycleCountChooser.addOption("Five Cycles", CycleCount.FIVE_CYCLES);
+        cycleCountChooser.addOption("Zero True Cycles", CycleCount.ZERO_TRUE_CYCLES);
+        cycleCountChooser.setDefaultOption(AutonChooserK.kDefaultNullMessage, null);
+        cycleCountChooser.onChange(choice -> updateChoices(cycleCountChooser.getSelected(), 0, UpdateStages.STARTING_LOCATION));
+        SmartDashboard.putData("Cycle Count", cycleCountChooser);
 
-        firstHPStationChooser.close();
-        Optional<ArrayList<HPStation>> optimalStartHPStationsOptional = getOptimalHPStations(firstScoreChooser.getSelected());
-        if (optimalStartHPStationsOptional.isEmpty()) {
-            endAutonUpdate("No first reef location available", 0, UpdateStages.HP_LOCATION);
-            return;
-        }
-        ArrayList<HPStation> optimalStartHPStations = optimalStartHPStationsOptional.get();
-        SendableChooser<HPStation> newFirstHPStationChooser = new SendableChooser<HPStation>();
-        for (HPStation hpStation : optimalStartHPStations) {
-            newFirstHPStationChooser.addOption(hpStation.name(), hpStation);
-        }
-        firstHPStationChooser = newFirstHPStationChooser;
-        SmartDashboard.putData("First HP Location", firstHPStationChooser);
+        // staring position chooser
+        startingPositionChooser.onChange(choice -> updateChoices(cycleCountChooser.getSelected(), 0, UpdateStages.STARTING_LOCATION));
+        startingPositionChooser.addOption("Left", StartingLocs.LEFT);
+        startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
+        startingPositionChooser.addOption("Mid", StartingLocs.MID);
+        cycleCountChooser.setDefaultOption(AutonChooserK.kDefaultNullMessage, null);
+        SmartDashboard.putData(AutonChooserK.kStartingPosChooserKey, startingPositionChooser);
 
-        SmartDashboard.updateValues();
+        // populate arraylists
+        for (int i = 0; i < AutonChooserK.kMaxAutonCycleCount; i++) {
+            SendableChooser<ReefLocs> scoreLocationChooser = new SendableChooser<ReefLocs>();
+            scoreLocationChoosers.add(scoreLocationChooser);
+            scoreLocationChoosers.get(i).onChange(choice -> printNullOptionChanged());
+            SmartDashboard.putData(generateKey(i+1, UpdateStages.SCORE_LOCATION), scoreLocationChoosers.get(i));
+            
+            SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+            hpStationChoosers.add(hpStationChooser);
+            hpStationChoosers.get(i).onChange(choice -> printNullOptionChanged());
+            SmartDashboard.putData(generateKey(i+1, UpdateStages.HP_STATION_LOCATION), hpStationChoosers.get(i));
+
+            SendableChooser<EleHeight> scoreHeightChooser = new SendableChooser<EleHeight>();
+            scoreHeightChoosers.add(scoreHeightChooser);
+            scoreHeightChoosers.get(i).onChange(choice -> printNullOptionChanged());
+            SmartDashboard.putData(generateKey(i+1, UpdateStages.ELE_HEIGHT), scoreHeightChoosers.get(i));
+        }
+
+        // this should initialize things
+        resetOptions(0, UpdateStages.SCORE_LOCATION);
     }
 
     /**
-     * 
-     * @param failureMessage
-     * @param endCycle Should be [0, kMaxCycleCount]
-     * @param endStage Notes what stage of AutonUpdate this ended during
+     * This resets all the choices beyond
+     * @param endCycleNum 0 corresponds to a failure before the beginning of the first true cycle
+     * @param resetPastInclusive This is the stage of update that the update ended during
      */
-    private static void endAutonUpdate(String failureMessage, int endCycle, UpdateStages endStage) {
-        SmartDashboard.updateValues();
-        System.out.println("[AutonChooser]: updateChoices end with message: " + failureMessage);
-        // this flag simply exists to ensure that we do complete cycles after account for the incomplete cycle
-        boolean accountedForPartialUpdate = false;
-        if (endCycle == 0) {
-            switch (endStage) {
-                // note lack of breaks - this is intentional so it executes everything after
-                case STARTING_LOCATION:
-                    accountedForPartialUpdate = true;
+    private static void resetOptions(int endCycleNum, UpdateStages resetPastInclusive) {
+        System.out.println("reset options begins with endcyclenum " + endCycleNum + " and resetPastInclusive " + resetPastInclusive.m_name);
+        boolean accountedForPartialCycle = false;
+        for (int cycleNum = endCycleNum; cycleNum <= AutonChooserK.kMaxAutonCycleCount; cycleNum++) {
+            int realCycleIndex = cycleNum - 1;
+            if (cycleNum == 0) {
+                switch (resetPastInclusive) {
+                    case STARTING_LOCATION:
+                        System.out.println("It's time to be confused how resetOPtions found cycle 0 starting_locaiton reset");
+                    case SCORE_LOCATION:
+                        accountedForPartialCycle = true;
+                        firstScoreChooser.close();
 
-                    startingPositionChooser.close();
-                    startingPositionChooser = new SendableChooser<StartingLocs>();
-                    startingPositionChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+                        firstScoreChooser = new SendableChooser<ReefLocs>();
+                        firstScoreChooser.onChange(choice -> printNullOptionChanged());
+                        SmartDashboard.putData(AutonChooserK.kFirstScoreLocChooserKey, firstScoreChooser);
+                    case HP_STATION_LOCATION:
+                        accountedForPartialCycle = true;
+                        firstHPStationChooser.close();
 
-                    startingPositionChooser.setDefaultOption("Mid", StartingLocs.MID);
-                    startingPositionChooser.addOption("Left", StartingLocs.LEFT);
-                    startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
-                    SmartDashboard.putData("Starting Position", startingPositionChooser);
-                case REEF_LOCATION:
-                    accountedForPartialUpdate = true;
+                        firstHPStationChooser = new SendableChooser<HPStation>();
+                        firstHPStationChooser.onChange(choice -> printNullOptionChanged());
+                        SmartDashboard.putData(AutonChooserK.kFirstHPStationChooserKey, firstHPStationChooser);
+                    case ELE_HEIGHT:
+                        accountedForPartialCycle = true;
+                        firstScoreHeightChooser.close();
 
-                    firstScoreChooser.close();
-                    firstScoreChooser = new SendableChooser<ReefLocs>();
-                    firstScoreChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+                        firstScoreHeightChooser = new SendableChooser<EleHeight>();
+                        firstScoreHeightChooser.onChange(choice -> printNullOptionChanged());
+                        SmartDashboard.putData(AutonChooserK.kFirstScoreHeightChooserKey, firstScoreHeightChooser);
+                    default:
+                        break;
+                }
+            } else {
+                // handle cycles properly if the cycleNum is something other than the starting cycle (0)
+                if ((UpdateStages.SCORE_LOCATION == resetPastInclusive && endCycleNum == cycleNum) || accountedForPartialCycle) {
+                    accountedForPartialCycle = true;
+                    scoreLocationChoosers.remove(realCycleIndex).close();
 
-                    SmartDashboard.putData("First Score Location", firstScoreChooser);
-                case HP_LOCATION:
-                    accountedForPartialUpdate = true;
+                    SendableChooser<ReefLocs> scoreLocationChooser = new SendableChooser<ReefLocs>();
+                    scoreLocationChoosers.add(realCycleIndex, scoreLocationChooser);
+                    scoreLocationChoosers.get(realCycleIndex).onChange(choice -> printNullOptionChanged());
+                    SmartDashboard.putData(scoreLocationChoosers.get(realCycleIndex));
+                }
+                if ((UpdateStages.HP_STATION_LOCATION == resetPastInclusive && endCycleNum == cycleNum) || accountedForPartialCycle) {
+                    accountedForPartialCycle = true;
+                    hpStationChoosers.remove(realCycleIndex).close();
 
-                    firstHPStationChooser.close();
-                    firstHPStationChooser = new SendableChooser<HPStation>();
-                    firstHPStationChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
+                    SendableChooser<HPStation> hpStationChooser = new SendableChooser<HPStation>();
+                    hpStationChoosers.add(realCycleIndex, hpStationChooser);
+                    hpStationChoosers.get(realCycleIndex).onChange(choice -> printNullOptionChanged());
+                    SmartDashboard.putData(scoreLocationChoosers.get(realCycleIndex));
+                }
+                if ((UpdateStages.ELE_HEIGHT == resetPastInclusive && endCycleNum == cycleNum) || accountedForPartialCycle) {
+                    accountedForPartialCycle = true;
+                    scoreHeightChoosers.remove(realCycleIndex).close();
 
-                    SmartDashboard.putData("First Human Station Location", firstHPStationChooser);
-                case SCORE_HEIGHT:
-                    accountedForPartialUpdate = true;
-
-                    firstScoreHeightChooser.close();
-                    firstScoreHeightChooser = new SendableChooser<EleHeight>();
-                    firstScoreHeightChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-
-                    SmartDashboard.putData("First Score Height", firstScoreHeightChooser);
-            }
-
-            // BE REAL CAREFUL ACCESSING endCycle - IT HAS TO BE MODIFIED TO 1 HERE TO AVOID INDEX OUT OF BOUNDS.
-            // TO ENSURE ACCURATE ACCESS OF endCycle ACCESS IT BEFORE THIS POINT
-            endCycle = 1;
-        }
-
-        for (int cycleNum = endCycle; cycleNum < AutonChooserK.maxAutonCycleCount; cycleNum++) {
-            // having two numbers for this makes life just a little easier
-            int actualIndex = cycleNum - 1;
-            // this makes sure we do full cycles every cycle after accounting for the one that completed partially
-            if (endStage == UpdateStages.REEF_LOCATION || accountedForPartialUpdate) {
-                accountedForPartialUpdate = true;
-
-                hpToReefChoosers.remove(actualIndex).close();
-                SendableChooser<ReefLocs> currentChooser = new SendableChooser<ReefLocs>();
-                currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-                hpToReefChoosers.add(actualIndex, currentChooser);
-
-                SmartDashboard.putData("Cycle " + Integer.toString(cycleNum) + " Scoring Location Chooser", currentChooser);
-            }
-            if (endStage == UpdateStages.HP_LOCATION || accountedForPartialUpdate) {
-                accountedForPartialUpdate = true;
-
-                reefToHPChoosers.remove(actualIndex).close();
-                SendableChooser<HPStation> currentChooser = new SendableChooser<HPStation>();
-                currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-                reefToHPChoosers.add(actualIndex, currentChooser);
-            }
-            if (endStage == UpdateStages.SCORE_HEIGHT || accountedForPartialUpdate) {
-                accountedForPartialUpdate = true;
-
-                scoreHeightChoosers.remove(actualIndex).close();
-                SendableChooser<EleHeight> currentChooser = new SendableChooser<EleHeight>();
-                currentChooser.onChange(chooser -> updateChoices(cycleCountChooser.getSelected()));
-                scoreHeightChoosers.add(actualIndex, currentChooser);
+                    SendableChooser<EleHeight> scoreHeightChooser = new SendableChooser<EleHeight>();
+                    scoreHeightChoosers.add(realCycleIndex, scoreHeightChooser);
+                    scoreHeightChoosers.get(realCycleIndex).onChange(choice -> printNullOptionChanged());
+                    SmartDashboard.putData(scoreLocationChoosers.get(realCycleIndex));
+                }
             }
         }
-
-        SmartDashboard.updateValues();
     }
+
+    private static void updateChoices(CycleCount cycleCountChoice, int cycleNum, UpdateStages stageCalledFrom) {
+        boolean passedDangerPoint = false;
+        if (cycleCountChoice == null) {
+            System.out.println("cycle count choice is null for some reason (should not be null ever)");
+            resetOptions(0, UpdateStages.STARTING_LOCATION);
+            return;
+        }
+
+        // FIRST SCORE CHOOSER
+        // this only returns empty when startingPositionChooser.getSelected() is null so we can use this as null check
+        if (cycleNum == 0 && stageCalledFrom == UpdateStages.STARTING_LOCATION) {
+            passedDangerPoint = true;
+            Optional<ArrayList<ReefLocs>> optimalFirstScoresOptional = getOptimalReefLocs(startingPositionChooser.getSelected());
+            if (optimalFirstScoresOptional.isEmpty()) {
+                resetOptions(0, UpdateStages.SCORE_LOCATION);
+                return;
+            }
+            ArrayList<ReefLocs> optimalFirstScores = optimalFirstScoresOptional.get();
+            firstScoreChooser.close();
+            
+            firstScoreChooser = new SendableChooser<ReefLocs>();
+            for (int i = 0; i < optimalFirstScores.size(); i++) {
+                firstScoreChooser.addOption(optimalFirstScores.get(i).name(), optimalFirstScores.get(i));
+            }
+            firstScoreChooser.setDefaultOption(AutonChooserK.kDefaultNullMessage, null);
+            firstScoreChooser.onChange(choice -> updateChoices(cycleCountChooser.getSelected(), 0, UpdateStages.SCORE_LOCATION));
+            SmartDashboard.putData(AutonChooserK.kFirstScoreLocChooserKey, firstScoreChooser);
+        }
+
+        // FIRST HP CHOOSER
+        if ((cycleNum == 0 && stageCalledFrom == UpdateStages.SCORE_LOCATION) || passedDangerPoint) {
+            Optional<ArrayList<HPStation>> optimalFirstHPStationsOptional = getOptimalHPStations(firstScoreChooser.getSelected());
+            if (optimalFirstHPStationsOptional.isEmpty()) {
+                resetOptions(0, UpdateStages.HP_STATION_LOCATION);
+                return;
+            }
+            ArrayList<HPStation> optimalFirstHPStations = optimalFirstHPStationsOptional.get();
+            firstHPStationChooser.close();
+
+            firstHPStationChooser = new SendableChooser<HPStation>();
+            for (int i = 0; i < optimalFirstHPStations.size(); i++) {
+                firstHPStationChooser.addOption(optimalFirstHPStations.get(i).name(), optimalFirstHPStations.get(i));
+            }
+            firstHPStationChooser.setDefaultOption(AutonChooserK.kDefaultNullMessage, null);
+            firstHPStationChooser.onChange(choice -> updateChoices(cycleCountChooser.getSelected(), 0, UpdateStages.HP_STATION_LOCATION));
+            SmartDashboard.putData(AutonChooserK.kFirstHPStationChooserKey, firstHPStationChooser);
+        }
+    }
+
+    /**
+     * Uses keys defined through {@link configGeneratedNTKeys()} to generate full keys for NT
+     * @param cycle Cycle chooser needs to refer to
+     * @param updateStage UpdateStage that chooser refers to
+     * @return The key that it should use in network tables
+     */
+    private static String generateKey(int cycle, UpdateStages updateStage) {
+        return cycle + updateStageToKeyText.get(updateStage);
+    }
+
+    /**
+     * This generates the text required for keys for cycle choosers. Cycle number added in generateKey
+     */
+    private static void configGeneratedNTKeys() {
+        updateStageToKeyText.put(UpdateStages.STARTING_LOCATION, "DO NOT SEE THIS CHOOSER");
+        updateStageToKeyText.put(UpdateStages.SCORE_LOCATION, " - SCORE LOCATION");
+        updateStageToKeyText.put(UpdateStages.HP_STATION_LOCATION, " - HP STATION");
+        updateStageToKeyText.put(UpdateStages.ELE_HEIGHT, " - ELE HEIGHT");
+    } 
+
+    private static void printNullOptionChanged() {
+        System.out.println("ALERT A CHOOSER WITH NO OPTIONS JUST CHANGED GANG WTF");
+    }
+
+    private static enum UpdateStages {
+        STARTING_LOCATION(-1, "STARTING_LOCATION"),
+        SCORE_LOCATION(0, "SCORE_LOCATION"),
+        HP_STATION_LOCATION(1, "HP_STATION_LOCATION"),
+        ELE_HEIGHT(2, "ELE_HEIGHT");
+
+        public final int m_index;
+        public final String m_name;
+
+        private UpdateStages(int index, String name) {
+            m_index = index;
+            m_name = name;
+        }
+    }
+
+    // ---- STANDALONE UTILITIES ----
+    // These can likely be made public if needed else where
 
     private static Optional<ArrayList<ReefLocs>> getOptimalReefLocs(StartingLocs startingLocation) {
         // this will likely come straight from SendableChooser so you have to be prepared
@@ -308,20 +331,5 @@ public class AutonChooser {
         }
 
         return Optional.of(outputList);
-    }
-
-    private enum UpdateStages {
-        STARTING_LOCATION(-1, "STARTING_LOCATION"),
-        REEF_LOCATION(0, "REEF_LOCATION"),
-        HP_LOCATION(1, "HP_LOCATION"),
-        SCORE_HEIGHT(2, "SCORE_HEIGHT");
-
-        public final int m_index;
-        public final String m_name;
-
-        private UpdateStages(int index, String name) {
-            m_index = index;
-            m_name = name;
-        }
     }
 }

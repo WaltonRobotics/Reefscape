@@ -1,9 +1,5 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -98,7 +94,13 @@ public class Constants {
     }
 
     public class AutonChooserK {
-        public static final int maxAutonCycleCount = 5;
+        public static final int kMaxAutonCycleCount = 5;
+        public static final String kDefaultNullMessage = "PLEASE SELECT";
+
+        public static final String kStartingPosChooserKey = "Starting Position";
+        public static final String kFirstScoreLocChooserKey = "First Score Location";
+        public static final String kFirstHPStationChooserKey = "First HP Station Location";
+        public static final String kFirstScoreHeightChooserKey = "First Score Height";
     }
 
     public class Coralk {
