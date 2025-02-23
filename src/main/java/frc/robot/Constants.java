@@ -21,6 +21,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
@@ -32,6 +33,8 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+
+import org.photonvision.simulation.SimCameraProperties;
 
 //numbers are dummies
 public class Constants {
@@ -360,5 +363,56 @@ public class Constants {
 
     public class RobotK {
         public static final String kLogTab = "SuperStructure";
+    }
+
+    public static class VisionK {
+        // FIND SIM CAM PROPERTIES DEFINITIONS IN VISION
+        // simCameraProperties doesn't support decorators so you actually need to run code to define them
+
+        public static final SimCameraProperties kEleForwardCamSimProps = new SimCameraProperties();
+        static {
+            // See3CAM_24CUG
+            kEleForwardCamSimProps.setCalibration(1920, 1080, Rotation2d.fromDegrees(128.2));
+            kEleForwardCamSimProps.setCalibError(0.35, 0.10);
+            kEleForwardCamSimProps.setFPS(35);
+            kEleForwardCamSimProps.setAvgLatencyMs(30);
+            kEleForwardCamSimProps.setLatencyStdDevMs(15);
+        }
+
+        public static final SimCameraProperties kEleRearCamSimProps = new SimCameraProperties();
+        static {
+            // See3CAM_24CUG
+            kEleRearCamSimProps.setCalibration(1920, 1080, Rotation2d.fromDegrees(128.2));
+            kEleRearCamSimProps.setCalibError(0.35, 0.10);
+            kEleRearCamSimProps.setFPS(35);
+            kEleRearCamSimProps.setAvgLatencyMs(30);
+            kEleRearCamSimProps.setLatencyStdDevMs(15);
+        }
+
+
+        public static final SimCameraProperties kLowerFrontCamSimProps = new SimCameraProperties();
+        static {
+            // Arducam OV9281
+            kEleRearCamSimProps.setCalibration(1280, 720, Rotation2d.fromDegrees(100));
+            kEleRearCamSimProps.setCalibError(0.35, 0.10);
+            kEleRearCamSimProps.setFPS(45);
+            kEleRearCamSimProps.setAvgLatencyMs(25);
+            kEleRearCamSimProps.setLatencyStdDevMs(15);
+        }
+        
+
+        public static final String kElevatorForwardsCamName = "Cam";
+        public static final Transform3d kElevatorForwardsCamRoboToCam = new Transform3d(
+            Units.inchesToMeters(4.81), Units.inchesToMeters(8.238), Units.inchesToMeters(32), 
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
+        );
+        public static final String kElevatorForwardsCamSimVisualName = "EleForwardsVisionEstimation";
+
+        public static final String kSimTestCamName = "TestCam";
+        public static final Transform3d kSimTestCamRoboToCam = new Transform3d(
+            Units.inchesToMeters(-4.81), Units.inchesToMeters(-8.238), Units.inchesToMeters(32),
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-40), Units.degreesToRadians(170))
+        );
+        public static final String kSimTestCamSimVisualName = "SimTestCamVisionEstimation";
     }
 }

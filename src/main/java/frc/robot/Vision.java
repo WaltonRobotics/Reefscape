@@ -5,23 +5,19 @@ package frc.robot;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import java.util.List;
 import java.util.Optional;
+
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
-import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
@@ -33,42 +29,33 @@ public class Vision {
 
     // Simulation
     private PhotonCameraSim m_cameraSim;
-    private VisionSystemSim m_visionSim;
+    private final VisionSim m_visionSim;
+    private final String m_simVisualName;
+
+    private String m_cameraName;
+    private final Transform3d m_roboToCam;
 
     //Constants
-    private String kCameraName = "cam";
-    private final Transform3d kRoboToCam = new Transform3d(
-        Units.inchesToMeters(8.238), Units.inchesToMeters(4.81), Units.inchesToMeters(32), 
-        new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
-    );
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(1.5, 1.5, 6.24);
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 6.24);
 
-    public Vision() {
-        m_camera = new PhotonCamera(kCameraName);
+    public Vision(String cameraName, String simVisualName, Transform3d roboToCam, VisionSim visionSim, SimCameraProperties simCameraProperties) {
+        m_cameraName = cameraName;
+        m_camera = new PhotonCamera(m_cameraName);
+        m_roboToCam = roboToCam;
+        m_simVisualName = simVisualName;
+        m_visionSim = visionSim;
 
         photonEstimator =
-                new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, kRoboToCam);
+                new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, roboToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
         // Simulation
         if (Robot.isSimulation()) {
-            // Create the vision system simulation which handles cameras and targets on the field.
-            m_visionSim = new VisionSystemSim("main");
-            // Add all the AprilTags inside the tag layout as visible targets to this simulated field.
-            m_visionSim.addAprilTags(kTagLayout);
-
-            // TODO: set properties to actual values 
-            var cameraProp = new SimCameraProperties();
-            cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
-            cameraProp.setCalibError(0.35, 0.10);
-            cameraProp.setFPS(15);
-            cameraProp.setAvgLatencyMs(50);
-            cameraProp.setLatencyStdDevMs(15);
             // Create a PhotonCameraSim which will update the linked PhotonCamera's values with visible targets.
-            m_cameraSim = new PhotonCameraSim(m_camera, cameraProp);
+            m_cameraSim = new PhotonCameraSim(m_camera, simCameraProperties);
             // Add the simulated camera to view the targets on this simulated field.
-            m_visionSim.addCamera(m_cameraSim, kRoboToCam);
+            visionSim.addCamera(m_cameraSim, m_roboToCam);
 
             m_cameraSim.enableDrawWireframe(true);
         }
@@ -93,11 +80,11 @@ public class Vision {
             if (Robot.isSimulation()) {
                 visionEst.ifPresentOrElse(
                         est ->
-                                getSimDebugField()
-                                        .getObject("VisionEstimation")
-                                        .setPose(est.estimatedPose.toPose2d()),
+                                m_visionSim.getSimDebugField()
+                                    .getObject(m_simVisualName)
+                                    .setPose(est.estimatedPose.toPose2d()),
                         () -> {
-                            getSimDebugField().getObject("VisionEstimation").setPoses();
+                            m_visionSim.getSimDebugField().getObject("VisionEstimation").setPoses();
                         });
             }
         }
@@ -161,27 +148,5 @@ public class Vision {
      */
     public Matrix<N3, N1> getEstimationStdDevs() {
         return curStdDevs;
-    }
-
-    // Simulation
-
-    public void simulationPeriodic(Pose2d robotSimPose) {
-        m_visionSim.update(robotSimPose);
-    }
-
-    /** Reset pose history of the robot in the vision system simulation. */
-    public void resetSimPose(Pose2d pose) {
-        if (Robot.isSimulation()) {
-            m_visionSim.resetRobotPose(pose);  
-        }
-    }
-
-    /** A Field2d for visualizing our robot and objects on the field. */
-    public Field2d getSimDebugField() {
-        if (!Robot.isSimulation()) {
-            return null; 
-        }
-
-        return m_visionSim.getDebugField();
     }
 }
