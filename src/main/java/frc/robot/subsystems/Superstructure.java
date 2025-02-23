@@ -190,18 +190,14 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     m_coral.fastIntake().until(m_coral.bs_topBeamBreak),
-                    Commands.parallel(
-                        manipRumble(kRumbleIntensity, kRumbleTimeoutSecs),
-                        m_coral.slowIntake().until(m_coral.bs_botBeamBreak)
-                    )
+                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs),
+                    m_coral.slowIntake().until(m_coral.bs_botBeamBreak),
+                    m_coral.stopCoralMotor()
                 )
             );
         (stateTrg_intook)
             .onTrue(
-                Commands.sequence(
-                    m_coral.setCoralMotorAction(0),
-                   manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
-                )
+                manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
         (stateTrg_eleToScore)
             .onTrue(m_ele.toHeight(m_curHeightReq));
@@ -213,7 +209,7 @@ public class Superstructure {
                 )
             );
         (stateTrg_score)
-            .onTrue(m_coral.setCoralMotorAction(kCoralSpeed));
+            .onTrue(m_coral.score());
         (stateTrg_scored)
             .onTrue(
                 Commands.sequence(
