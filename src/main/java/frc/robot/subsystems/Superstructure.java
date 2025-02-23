@@ -49,8 +49,6 @@ public class Superstructure {
     private final Trigger trg_climbUpReq;
     private final Trigger trg_climbDownReq;
 
-    private final Trigger trg_eleOverride;
-
     private final Trigger trg_eleNearSetpoint;
 
     private final Trigger trg_teleopIntakeEleOverride;
@@ -77,9 +75,6 @@ public class Superstructure {
     public final Trigger stateTrg_climbing = new Trigger(stateEventLoop, () -> m_state == State.CLIMBING);
     public final Trigger stateTrg_climbed = new Trigger(stateEventLoop, () -> m_state == State.CLIMBED);
 
-    public final Trigger stateTrg_eleOverride = new Trigger(stateEventLoop, () -> m_state == State.ELE_OVERRIDE);
-    private final DoubleSupplier m_eleOverrideSupplier;
-
     private EleHeight m_curHeightReq = EleHeight.HOME;
 
     private IntLogger log_state = WaltLogger.logInt(kLogTab, "state");
@@ -96,8 +91,6 @@ public class Superstructure {
         Trigger toHomeOverride,
         Trigger climbUpReq,
         Trigger climbDownReq,
-        Trigger override,
-        DoubleSupplier eleOverrideSupplier,
         DoubleConsumer drivRumble, DoubleConsumer manipRumble
     ) {
         m_coral = coral;
@@ -119,9 +112,6 @@ public class Superstructure {
         trg_toHomeOverride = toHomeOverride;
         trg_climbUpReq = climbUpReq;
         trg_climbDownReq = climbDownReq;
-
-        trg_eleOverride = override;
-        m_eleOverrideSupplier = eleOverrideSupplier;
         
         m_state = State.IDLE;
 
@@ -175,15 +165,6 @@ public class Superstructure {
         (trg_teleopScoreEleOverride.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
         (trg_teleopScoreOverride.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
-
-        (trg_eleOverride.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_OVERRIDE));
-        (stateTrg_eleOverride.and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_INTAKE));
-        (stateTrg_eleOverride.and(trg_teleopScoreEleReq).and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (stateTrg_eleOverride.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
     }
 
@@ -249,9 +230,6 @@ public class Superstructure {
             .onTrue(m_ele.toHeight(EleHeight.CLIMB_DOWN));
         (stateTrg_climbed)
             .onTrue(Commands.print("yippeee we done we done"));
-        
-        (stateTrg_eleOverride)
-            .onTrue(m_ele.overrideToHeight(m_eleOverrideSupplier.getAsDouble()));
     }
 
     private Command driverRumble(double intensity, double secs) {
@@ -307,9 +285,7 @@ public class Superstructure {
         ELE_TO_CLIMB(8),
         CLIMB_READY(9),
         CLIMBING(10),
-        CLIMBED(11),
-
-        ELE_OVERRIDE(12);
+        CLIMBED(11);
 
         public final int idx;
   

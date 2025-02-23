@@ -125,20 +125,6 @@ public class Elevator extends SubsystemBase {
         ).until(() -> nearSetpoint());
     }
 
-    public Command overrideToHeight(double input) {
-        if(input > 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredHeight += Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's increaseAngle() method in Aim
-                toHeight(m_desiredHeight)
-            );
-        } else if(input < 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredHeight -= Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's decreaseAngle() method in Aim
-                toHeight(m_desiredHeight)
-            );
-        } else { return Commands.none();}
-    }
-
     public Command testVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));

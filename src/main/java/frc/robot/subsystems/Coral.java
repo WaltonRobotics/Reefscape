@@ -31,7 +31,8 @@ public class Coral extends SubsystemBase {
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
     private VoltageOut m_VoltOutReq = new VoltageOut(0);
 
-    private final double slowIntakeSpeed = 12 * .25;
+    private final double m_slowIntakeSpeed = 12 * .25;
+    private final double m_scoreSpeed = 6;
 
     private boolean m_coralIsCoast = false;
     private GenericEntry nte_coralIsCoast;
@@ -61,6 +62,7 @@ public class Coral extends SubsystemBase {
                   .getEntry();
     }
 
+    // good method
     public Command automaticCoralIntake() {
         return Commands.sequence(
             fastIntake().until(bs_topBeamBreak),
@@ -71,10 +73,6 @@ public class Coral extends SubsystemBase {
 
     public void setCoralCoast(boolean coast) {
         m_coralMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
-    }
-
-    public void setFingerCoast(boolean coast) {
-        m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
     /**
@@ -88,12 +86,12 @@ public class Coral extends SubsystemBase {
         );
     }
 
-    public Command stopCoralMotor() {
-        return runOnce(() -> m_coralMotor.setControl(m_VoltOutReq.withOutput(0)));
-    }
-
     public Command setCoralMotorAction(double destinationVelocity) {
         return setCoralMotorAction(destinationVelocity, 0);
+    }
+
+    public Command stopCoralMotor() {
+        return runOnce(() -> m_coralMotor.setControl(m_VoltOutReq.withOutput(0)));
     }
 
     public Command fastIntake() {
@@ -104,20 +102,11 @@ public class Coral extends SubsystemBase {
      * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
      */
     public Command slowIntake(){
-        return setCoralMotorAction(slowIntakeSpeed);
+        return setCoralMotorAction(m_slowIntakeSpeed);
     }
 
     public Command score() {
-        return setCoralMotorAction(slowIntakeSpeed);
-    }
-
-    public Command finger() {
-        return setCoralMotorAction(-8);
-    }
-
-    // this should be the regular speed
-    public Command fastScore() {
-        return setCoralMotorAction(6);
+        return setCoralMotorAction(m_scoreSpeed);
     }
 
     // finger methods
@@ -129,6 +118,14 @@ public class Coral extends SubsystemBase {
     public Command fingerIn() {
         return runOnce(
             () -> m_fingerMotor.setControl(m_PosVoltReq.withPosition(Angle.ofRelativeUnits(0, Degrees))));
+    }
+
+    public Command runFinger() {
+        return setCoralMotorAction(-m_scoreSpeed);
+    }
+
+    public void setFingerCoast(boolean coast) {
+        m_fingerMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
     @Override
