@@ -52,13 +52,13 @@ public class Constants {
             .withSensorToMechanismRatio(kWristSensorToMechanismRatio);
         private static final MotionMagicConfigs kWristMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(10))
-            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(100));
+            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(25))
+            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(300));
         private static final Slot0Configs kWristSlot0Configs = new Slot0Configs()
-            .withKS(0)
-            .withKV(0)
+            .withKS(0.25)
+            .withKV(4)
             .withKA(0)
-            .withKP(25) // gg ez
+            .withKP(10) // gg ez
             .withKI(0)
             .withKD(0);
         public static final MotorOutputConfigs kWristMotorOutputConfigs = new MotorOutputConfigs()
@@ -158,9 +158,10 @@ public class Constants {
         public static final double kGearRatio = 50/12;
         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
 
+        public static final double kP = 15;
         public static final double kV = 0;
         public static final double kA = 0;
-        public static final double kG = 0; 
+        public static final double kG = 2; 
 
         public static final Mass kCarriageMassKg = Pounds.of(5);
         public static final Distance kMinimumHeight = Feet.of(0);
@@ -190,10 +191,10 @@ public class Constants {
         }
 
         private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(300)
-            .withStatorCurrentLimitEnable(false)
+            .withStatorCurrentLimit(100)
+            .withStatorCurrentLimitEnable(true)
             .withSupplyCurrentLimit(75)
-            .withSupplyCurrentLimitEnable(false);
+            .withSupplyCurrentLimitEnable(true);
         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kGearRatio);
         private static final MotionMagicConfigs kMagicConfigs = new MotionMagicConfigs()
@@ -204,14 +205,19 @@ public class Constants {
             .withKS(0.25) 
             .withKV(kV) 
             .withGravityType(GravityTypeValue.Elevator_Static)
-            .withKP(10) 
+            .withKP(kP) 
             .withKG(kG);
         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
             .withInverted(InvertedValue.Clockwise_Positive);
         private static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitThreshold(12.845); // true hard 12.9849854
-        
+        private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
+            .withMotionMagicCruiseVelocity(12)
+            .withMotionMagicAcceleration(50)
+            .withMotionMagicJerk(200);
+
+
         public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
             .withCurrentLimits(kCurrentLimitConfigs)
             .withFeedback(kFeedbackConfigs)
