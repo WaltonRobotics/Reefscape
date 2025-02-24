@@ -35,6 +35,7 @@ import static frc.robot.Constants.ElevatorK.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
@@ -127,8 +128,9 @@ public class Elevator extends SubsystemBase {
     /* 
      * use for scoring
      */
-    public Command toHeight(EleHeight height) {
-        return toHeight(height.rotations);
+    
+    public Command toHeight(Supplier<EleHeight> height) {
+        return toHeight(height.get().rotations);
     }
 
     public Command toHeight(double rotations) {
@@ -216,7 +218,7 @@ public class Elevator extends SubsystemBase {
 
         public final double rotations;
 
-       private EleHeight(double rotations){
+        private EleHeight(double rotations){
             this.rotations = rotations;
         }
     }
