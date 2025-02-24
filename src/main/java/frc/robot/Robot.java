@@ -27,7 +27,7 @@ import frc.robot.autons.AutonChooser;
 import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
-import frc.robot.autons.WaltAutonFactory;
+// import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Algae.WristPos;
@@ -61,7 +61,7 @@ public class Robot extends TimedRobot {
   private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+  // private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -86,15 +86,12 @@ public class Robot extends TimedRobot {
 
   public Robot() {
     superstructure = new Superstructure(
-      coral, elevator, 
-      trg_intakeReq, 
+      coral, 
+      elevator, 
+      trg_intakeReq,
+      trg_toL4,
       trg_teleopScoreReq,
-      trg_forceIntakeState,
-      trg_forceScoreState, 
-      trg_forceIdleState,
-      trg_climbUp, trg_climbDown,
-      this::driverRumble, 
-      this::manipRumble);
+      this::driverRumble);
 
     // algae = new Algae(
     //   manipulator.a(), 
@@ -160,10 +157,10 @@ public class Robot extends TimedRobot {
       ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      trg_toL1.onTrue(superstructure.requestEleHeight(() -> EleHeight.L1));
-      trg_toL2.onTrue(superstructure.requestEleHeight(() -> EleHeight.L2));
-      trg_toL3.onTrue(superstructure.requestEleHeight(() -> EleHeight.L3));
-      trg_toL4.onTrue(superstructure.requestEleHeight(() -> EleHeight.L4));
+      trg_toL1.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L1)));
+      trg_toL2.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L2)));
+      trg_toL3.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L3)));
+      trg_toL4.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L4)));
 
       /* 
        * programmer buttons
