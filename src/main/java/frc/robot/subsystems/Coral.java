@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.Coralk.*;
+import static frc.robot.Constants.Coralk.FingerK.*;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;

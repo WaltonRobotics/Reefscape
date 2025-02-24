@@ -38,7 +38,6 @@ public class Constants {
  
     public static final double kRumbleIntensity = 1.0;
     public static final double kRumbleTimeoutSecs = 0.5;
-    public static final String kLogTab = "Robot";
     public static class AlgaeK {
         public static final String kLogTab = "AlgaeSubsys";
         
@@ -119,15 +118,18 @@ public class Constants {
         public static final int kTopBeamBreakChannel = 0;
         public static final int kBotBeamBreakChannel = 1;
 
-        public static final double kGearRatio = 1; //for arm spinup and coral intake
-        public static final double kArmGearRatio = 2; //for arm pivot
+        // TODO: ask alexandra and hrehaan what these are for (???)
+        // public static final double kGearRatio = 1; //for arm spinup and coral intake
+        // public static final double kArmGearRatio = 2; //for arm pivot
 
-        public static final double kCoralSpeed = 1; //TODO: make frsies
+        public static final double kCoralSpeed = 1;
 
         public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
             .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
 
-        // finger things
+
+        public class FingerK {
+            // finger things
         public static final int kFingerMotorCANID = 31;
 
         public static final double kMaxAngleRotations = -0.4;
@@ -176,6 +178,7 @@ public class Constants {
             .withExternalFeedback(kFingerExternalFeedbackConfig)
             .withSoftwareLimitSwitch(kFingerSoftwareLimitSwitchConfig)
             .withCommutation(kFingerCommutationConfig);
+        }
     }
 
     public class ElevatorK{
