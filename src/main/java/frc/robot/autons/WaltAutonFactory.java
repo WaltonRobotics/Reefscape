@@ -104,7 +104,7 @@ public class WaltAutonFactory {
             .onTrue(
                 Commands.sequence(
                     Commands.runOnce(() -> superstructure.requestIsPreload(true)),
-                    superstructure.autonRequestEleToScore(firstHeight),
+                    superstructure.requestEleHeight(() -> firstHeight, true),
                     Commands.runOnce(() -> superstructure.requestIsPreload(false))
                 )
             );
@@ -138,7 +138,7 @@ public class WaltAutonFactory {
                 lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
             }
 
-            hpToReefTraj.atTime("eleUp").onTrue(superstructure.autonRequestEleToScore(cycle.height));
+            hpToReefTraj.atTime("eleUp").onTrue(superstructure.requestEleHeight(() -> cycle.height, true));
             
             hpToReefTraj.done().onTrue(
                 Commands.sequence(

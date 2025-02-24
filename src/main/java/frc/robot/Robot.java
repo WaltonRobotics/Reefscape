@@ -58,48 +58,43 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Elevator elevator = new Elevator();
   private final Algae algae;
-  // private final Superstructure superstructure;
+  private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
 
-  private final Trigger trg_teleopEleHeightReq;
-  // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
-  private final Trigger trg_eleOverride;
+  private final Trigger trg_intakeReq = manipulator.rightBumper();
+  
+  private final Trigger trg_eleToScoreReq = manipulator.y().and(manipulator.b());
+
+  private final Trigger trg_toL1 = manipulator.povDown();
+  private final Trigger trg_toL2 = manipulator.povRight();
+  private final Trigger trg_toL3 = manipulator.povLeft();
+  private final Trigger trg_toL4 = manipulator.povUp();
+  
   // override button
-  private final Trigger trg_manipDanger;
-  private final Trigger trg_driverDanger;
+  private final Trigger trg_manipDanger = manipulator.b();
+  private final Trigger trg_driverDanger = driver.b();
+  private final Trigger trg_forceIntakeState = trg_manipDanger.and(manipulator.rightBumper());
+  private final Trigger trg_forceScoreState = trg_manipDanger.and(manipulator.leftTrigger());
+  private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
+
+  private final Trigger trg_climbUp = manipulator.a().and(manipulator.povUp());
+  private final Trigger trg_climbDown = manipulator.a().and(manipulator.povDown());
+
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger();
 
   public Robot() {
-    // pov is the same thing as dpad right?
-    trg_teleopEleHeightReq = manipulator.povDown() //L1
-      .or(manipulator.povRight()) // L2
-      .or(manipulator.povLeft()) // L3
-      .or(manipulator.povUp()); // L4
-
-    trg_eleOverride = 
-      manipulator.rightBumper().negate()
-      .and(manipulator.leftTrigger().negate())
-      .and(trg_teleopEleHeightReq.negate());
-    
-    trg_manipDanger = manipulator.b();
-    trg_driverDanger = driver.b();
-
-    // superstructure = new Superstructure(
-    //   coral, 
-    //   elevator, 
-    //   manipulator.rightBumper(), 
-    //   trg_teleopEleHeightReq,
-    //   driver.rightTrigger(), 
-    //   trg_manipDanger.and(manipulator.rightBumper()),
-    //   trg_manipDanger.and(manipulator.leftTrigger()), 
-    //   trg_manipDanger.and(trg_teleopEleHeightReq),
-    //   trg_driverDanger.and(driver.rightTrigger()), 
-    //   manipulator.leftBumper(),
-    //   manipulator.a().and(manipulator.povUp()),
-    //   manipulator.a().and(manipulator.povDown()),
-    //   (intensity) -> driverRumble(intensity), 
-    //   (intensity) -> manipRumble(intensity));
+    superstructure = new Superstructure(
+      coral, elevator, 
+      trg_intakeReq, 
+      trg_teleopScoreReq,
+      trg_forceIntakeState,
+      trg_forceScoreState, 
+      trg_forceIdleState,
+      trg_climbUp, trg_climbDown,
+      this::driverRumble, 
+      this::manipRumble);
 
     // algae = new Algae(
     //   manipulator.a(), 
@@ -118,8 +113,8 @@ public class Robot extends TimedRobot {
       null, 
       () -> 0);
 
-    // configureBindings();
-    configureTestBindings();
+    configureBindings();
+    // configureTestBindings();
   }
 
   private void configureTestBindings() {
@@ -138,12 +133,13 @@ public class Robot extends TimedRobot {
 
     driver.leftBumper().whileTrue(coral.automaticCoralIntake());
     driver.leftTrigger().whileTrue(coral.score());
-    driver.rightTrigger().whileTrue(coral.runFinger());
+    driver.rightTrigger().whileTrue(coral.runWheelsAlgaeRemovalCmd());
 
-    driver.b().whileTrue(coral.testFingerVoltageControl(() -> driver.getLeftY()));
-    driver.x().onTrue(coral.fingerOut());
-    driver.y().onTrue(coral.fingerIn());
-    driver.a().onTrue(elevator.toHeight(EleHeight.L4));
+    driver.b().whileTrue(coral.fastIntake());
+    driver.x().onTrue(coral.fingerOutCmd());
+    driver.y().onTrue(coral.fingerInCmd());
+    driver.a().whileTrue(coral.algaeIntake());
+
   }
 
   private void configureBindings() {
@@ -152,8 +148,8 @@ public class Robot extends TimedRobot {
       drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+              drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                  .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
@@ -163,6 +159,11 @@ public class Robot extends TimedRobot {
           point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
       ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+
+      trg_toL1.onTrue(superstructure.requestEleHeight(() -> EleHeight.L1));
+      trg_toL2.onTrue(superstructure.requestEleHeight(() -> EleHeight.L2));
+      trg_toL3.onTrue(superstructure.requestEleHeight(() -> EleHeight.L3));
+      trg_toL4.onTrue(superstructure.requestEleHeight(() -> EleHeight.L4));
 
       /* 
        * programmer buttons
@@ -195,11 +196,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
+    addPeriodic(() -> superstructure.periodic(), 0.01);
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
   }
 
   @Override

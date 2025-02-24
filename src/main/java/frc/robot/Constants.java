@@ -187,8 +187,8 @@ public class Constants {
         public static final double kGearRatio = 50/12;
         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
 
-        public static final double kP = 15;
-        public static final double kS = 0.25;
+        public static final double kP = 20;
+        public static final double kS = 0.5;
         public static final double kV = 0;
         public static final double kA = 0;
         public static final double kG = 2; 
@@ -197,7 +197,7 @@ public class Constants {
         public static final Distance kMinimumHeight = Feet.of(0);
         public static final Distance kMaximumHeight = Meters.of(8);
         public static final Distance kStartingHeightMeters = Feet.of(0);
-        public static final double kTolerancePulleyRotations = metersToRotation(Meters.of(0.01)).in(Rotations);
+        public static final double kTolerancePulleyRotations = 0.1;
         //SensorToMechanismRatio = kGearRatio
 
         public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
