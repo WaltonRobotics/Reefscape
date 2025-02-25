@@ -7,8 +7,8 @@ import static frc.robot.Constants.RobotK.*;
 import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
 
-import edu.wpi.first.util.datalog.BooleanArrayLogEntry;
-import edu.wpi.first.util.datalog.BooleanLogEntry;
+import com.ctre.phoenix6.Utils;
+
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -37,6 +37,9 @@ public class Superstructure {
     private boolean m_eleToScoreTransReq = false;
     private boolean m_scoreReq = false;
 
+    private boolean m_simIntook = false;
+    private boolean m_simScored = false;
+
     /* state transitions */
     /* autoTrgs */
     /* teleopTrgs */
@@ -45,6 +48,9 @@ public class Superstructure {
     private final Trigger trg_teleopScoreReq;
     /* teleopTrgs: overrides */
     private final Trigger transTrg_toIdleOverrideReq;
+    /* sim transitions */
+    private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
+    private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
     /* Frsies Transition Trigs */
     private final Trigger transTrg_eleToHP = new Trigger(() -> m_eleToHPStateTransReq);
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
@@ -89,6 +95,9 @@ public class Superstructure {
     private BooleanLogger log_botSensor = WaltLogger.logBoolean(kLogTab, "bot beam break");
     private BooleanLogger log_eleToScoreReq = WaltLogger.logBoolean(kLogTab, "ele to score lvl req");
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
+    /* sim stuff */
+    private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
+    private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
 
     public Superstructure(
         Coral coral,
@@ -119,6 +128,7 @@ public class Superstructure {
 
         configureRequests();
         configureStateTransitions();
+        configureSimTransitions();
         configureStateActions();
     }
 
@@ -157,6 +167,32 @@ public class Superstructure {
         (transTrg_toIdleOverrideReq)
             .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
     }
+
+    // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
+    private void configureSimTransitions() {
+        (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
+            .onTrue(
+                Commands.sequence(
+                    Commands.print("SIM TO ELE TO HP"),
+                    Commands.runOnce(() -> m_eleToHPStateTransReq = true)
+                )
+            );
+        (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+            .onTrue(simIntook());
+        (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> requestEleHeight(() -> L4)),
+                    Commands.runOnce(() -> m_eleToScoreTransReq = true)
+                )
+            );
+        (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+            .onTrue(simScored());
+
+        simTransTrg_intook
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        simTransTrg_scored
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
     }
 
     private void configureStateActions() {
@@ -169,7 +205,6 @@ public class Superstructure {
                     m_ele.toHeight(() -> HP),
                     Commands.runOnce(() -> m_eleToHPStateTransReq = false)
                 )
-
             );
 
         stateTrg_intaking
@@ -194,9 +229,9 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     Commands.print("eleToScore + " + m_curHeightReqSupplier.get()),
-                Commands.parallel(
+                    Commands.parallel(
                         eleToScoreCmd(),
-                    Commands.runOnce(() -> m_eleToScoreTransReq = false)
+                        Commands.runOnce(() -> m_eleToScoreTransReq = false)
                     )
                 )
             );
@@ -247,10 +282,9 @@ public class Superstructure {
 
     /* elevator things */
     // use in robot.java
-    public EleHeight requestEleHeight(Supplier<EleHeight> height) {
+    public void requestEleHeight(Supplier<EleHeight> height) {
         m_curHeightReq = height.get();
         System.out.println("HeightReq: " + m_curHeightReq);
-        return m_curHeightReq;
     }
 
     public Command eleToScoreCmd() {
@@ -272,6 +306,15 @@ public class Superstructure {
     }
 
     /* to be used in auton */
+
+    /* to be used in sim */
+    public Command simIntook() {
+        return Commands.runOnce(() -> m_simIntook = true);
+    }
+
+    public Command simScored() {
+        return Commands.runOnce(() -> m_simScored = true);
+    }
 
     /* rumblin' */
     private Command driverRumble(double intensity, double secs) {
@@ -303,6 +346,11 @@ public class Superstructure {
         log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
     }
 
+    public void logSimThings() {
+        log_simIntook.accept(m_simIntook);
+        log_simScored.accept(m_simScored);
+    }
+
     public void periodic() {
         stateEventLoop.poll();
         logRequests();
@@ -310,6 +358,10 @@ public class Superstructure {
         logState();
 
         log_eleReqHeight.accept(m_curHeightReqSupplier.get().rotations);
+
+        if(Utils.isSimulation()) {
+            logSimThings();
+        }
     }
 
     public enum State {
