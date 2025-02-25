@@ -76,7 +76,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
 
-  private final Trigger trg_teleopScoreReq = driver.rightTrigger();
+  private final Trigger trg_teleopScoreReq = manipulator.rightTrigger(); // for now
 
   public Robot() {
     superstructure = new Superstructure(
@@ -151,11 +151,6 @@ public class Robot extends TimedRobot {
           point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
       ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
-
-      trg_toL1.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L1)));
-      trg_toL2.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L2)));
-      trg_toL3.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L3)));
-      trg_toL4.onTrue(Commands.runOnce(() -> superstructure.requestEleHeight(() -> EleHeight.L4)));
 
       /* 
        * programmer buttons

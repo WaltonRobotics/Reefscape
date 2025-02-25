@@ -12,7 +12,7 @@
 
 ### State Diagram
 
-This diagram is very basic, and I'm sleepy. 
+This diagram is very basic, and I'm sleepy. NOTE: there are technically different states for each height in ELE_TO_SCORE
 
 ```mermaid
 stateDiagram
