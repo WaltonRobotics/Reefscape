@@ -65,8 +65,6 @@ public class Robot extends TimedRobot {
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
-  private final Trigger trg_eleToScoreReq = manipulator.y().and(manipulator.b());
-
   private final Trigger trg_toL1 = manipulator.povDown();
   private final Trigger trg_toL2 = manipulator.povRight();
   private final Trigger trg_toL3 = manipulator.povLeft();
@@ -76,13 +74,16 @@ public class Robot extends TimedRobot {
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
 
-  private final Trigger trg_teleopScoreReq = manipulator.rightTrigger(); // for now
+  private final Trigger trg_teleopScoreReq = manipulator.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
   public Robot() {
     superstructure = new Superstructure(
       coral, 
       elevator, 
       trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
       trg_toL4,
       trg_teleopScoreReq,
       trg_forceIdleState,
