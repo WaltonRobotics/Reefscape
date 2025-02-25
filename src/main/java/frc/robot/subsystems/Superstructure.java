@@ -5,7 +5,6 @@ import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.RobotK.*;
 
 import java.util.function.DoubleConsumer;
-import java.util.function.Supplier;
 
 import com.ctre.phoenix6.Utils;
 
@@ -16,7 +15,6 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.subsystems.Elevator.EleHeight.*;
 
-import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -173,8 +171,7 @@ public class Superstructure {
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_intook.and(transTrg_eleToL4))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4)
-            .alongWith(Commands.print("TESTING 2")));
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
@@ -197,13 +194,11 @@ public class Superstructure {
     }
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
+    // stuff will prolly get added as i need them
     private void configureSimTransitions() {
         (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
             .onTrue(
-                Commands.sequence(
-                    Commands.print("SIM TO ELE TO HP"),
-                    Commands.runOnce(() -> m_eleToHPStateTransReq = true)
-                )
+                Commands.runOnce(() -> m_eleToHPStateTransReq = true)
             );
         (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
             .onTrue(simIntook());
@@ -239,7 +234,8 @@ public class Superstructure {
                 Commands.sequence(
                     m_coral.fastIntake(),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
-                    driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                    Commands.print("RUMBLE coming to a controller near you soon...")
+                    // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
                 )
             );
 
@@ -286,8 +282,9 @@ public class Superstructure {
 
         stateTrg_scoreReady
             .onTrue(
-                driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
-                .alongWith(Commands.runOnce(() -> System.out.println("scoreReady"))));
+                Commands.print("RUMBLE coming to a controller near you soon...")
+                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+            );
 
         stateTrg_scoring
             .onTrue(
@@ -297,13 +294,14 @@ public class Superstructure {
                         Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
                         m_coral.stopCoralMotorCmd()
                     ),
-                    Commands.runOnce(() -> m_scoreReq = false).alongWith(Commands.print("SCORIN"))
+                    Commands.runOnce(() -> m_scoreReq = false)
                 )
             );
 
         stateTrg_scored
             .onTrue(
-                driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                Commands.print("RUMBLE coming to a controller near you soon...")
+                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
         // stateTrg_eleToClimb
