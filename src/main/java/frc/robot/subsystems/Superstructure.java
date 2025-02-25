@@ -28,7 +28,7 @@ public class Superstructure {
     private final Elevator m_ele;
 
     public final EventLoop stateEventLoop = new EventLoop();
-    private State m_state;
+    private State m_state = State.IDLE;
 
     /* requests */
     /* reqs: auton */
@@ -43,6 +43,8 @@ public class Superstructure {
     private final Trigger trg_teleopEleToHPReq;
     private final Trigger trg_teleopL4Req; //TODO: add all 4
     private final Trigger trg_teleopScoreReq;
+    /* teleopTrgs: overrides */
+    private final Trigger transTrg_toIdleOverrideReq;
     /* Frsies Transition Trigs */
     private final Trigger transTrg_eleToHP = new Trigger(() -> m_eleToHPStateTransReq);
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
@@ -69,6 +71,7 @@ public class Superstructure {
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
     private EleHeight m_curHeightReq = HOME;
+    private Supplier<EleHeight> m_curHeightReqSupplier = () -> m_curHeightReq;
 
     /* loggin' */
     private IntLogger log_stateIdx = WaltLogger.logInt(kLogTab, "state idx");
@@ -78,6 +81,7 @@ public class Superstructure {
     /* logs: state trans */
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
+    private BooleanLogger log_toIdleOverride = WaltLogger.logBoolean(kLogTab, "to idle override");
 
     private BooleanLogger log_eleToHPReq = WaltLogger.logBoolean(kLogTab, "ele to HP req");
     private BooleanLogger log_eleAtSetpt = WaltLogger.logBoolean(kLogTab, "ele at setpoint");
@@ -92,6 +96,7 @@ public class Superstructure {
         Trigger eleToHPReq,
         Trigger L4Req,
         Trigger scoreReq,
+        Trigger toIdleOverride,
         DoubleConsumer driverRumbler
     ) {
         m_coral = coral;
@@ -101,6 +106,8 @@ public class Superstructure {
         trg_teleopEleToHPReq = eleToHPReq;
         trg_teleopL4Req = L4Req;
         trg_teleopScoreReq = scoreReq;
+        /* overrides */
+        transTrg_toIdleOverrideReq = toIdleOverride;
 
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
@@ -120,7 +127,8 @@ public class Superstructure {
         (trg_teleopEleToHPReq.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
         (trg_teleopL4Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToScoreTransReq = true));
+            .onTrue(Commands.runOnce(() -> m_eleToScoreTransReq = true)
+                .alongWith(Commands.print("TESTING 1")));
         (trg_teleopScoreReq.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_scoreReq = true));
     }
@@ -133,15 +141,22 @@ public class Superstructure {
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_intook.and(transTrg_eleToScore))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE));
-        (stateTrg_eleToScore.debounce(0.02).and(transTrg_eleNearSetpt))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE)
+            .alongWith(Commands.print("TESTING 2")));
+        (stateTrg_eleToScore.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
         (stateTrg_scoreReady.and(transTrg_scoring)) 
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING)
+            .alongWith(Commands.print("BAD NO GO")));
         (stateTrg_scoring.and(transTrg_botSensor.negate())) 
             .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
         (stateTrg_scored.debounce(0.02))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_HP));
+
+
+        (transTrg_toIdleOverrideReq)
+            .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
+    }
     }
 
     private void configureStateActions() {
@@ -154,6 +169,7 @@ public class Superstructure {
                     m_ele.toHeight(() -> HP),
                     Commands.runOnce(() -> m_eleToHPStateTransReq = false)
                 )
+
             );
 
         stateTrg_intaking
@@ -176,14 +192,19 @@ public class Superstructure {
 
         stateTrg_eleToScore
             .onTrue(
+                Commands.sequence(
+                    Commands.print("eleToScore + " + m_curHeightReqSupplier.get()),
                 Commands.parallel(
-                    m_ele.toHeight(() -> m_curHeightReq),
+                        eleToScoreCmd(),
                     Commands.runOnce(() -> m_eleToScoreTransReq = false)
+                    )
                 )
             );
 
         stateTrg_scoreReady
-            .onTrue(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs));
+            .onTrue(
+                driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                .alongWith(Commands.runOnce(() -> System.out.println("scoreReady"))));
 
         stateTrg_scoring
             .onTrue(
@@ -193,7 +214,7 @@ public class Superstructure {
                         Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
                         m_coral.stopCoralMotorCmd()
                     ),
-                    Commands.runOnce(() -> m_scoreReq = false)
+                    Commands.runOnce(() -> m_scoreReq = false).alongWith(Commands.print("SCORIN"))
                 )
             );
 
@@ -224,23 +245,29 @@ public class Superstructure {
         );
     }
 
+    /* elevator things */
     // use in robot.java
-    public void requestEleHeight(Supplier<EleHeight> height) {
+    public EleHeight requestEleHeight(Supplier<EleHeight> height) {
         m_curHeightReq = height.get();
         System.out.println("HeightReq: " + m_curHeightReq);
+        return m_curHeightReq;
     }
 
     public Command eleToScoreCmd() {
-        if(m_curHeightReq == L1) {
-            return m_ele.toHeight(() -> L1);
-        } else if(m_curHeightReq == L2) {
-            return m_ele.toHeight(() -> L2);
-        } else if(m_curHeightReq == L3) {
-            return m_ele.toHeight(() -> L3);
-        } else if(m_curHeightReq == L4) {
-            return m_ele.toHeight(() -> L4);
+        if(m_curHeightReqSupplier.get() == L1) {
+            return m_ele.toHeight(() -> L1)
+            .alongWith(Commands.print("INSIDE eleToScoreCmd L1"));
+        } else if(m_curHeightReqSupplier.get() == L2) {
+            return m_ele.toHeight(() -> L2)
+            .alongWith(Commands.print("INSIDE eleToScoreCmd L2"));
+        } else if(m_curHeightReqSupplier.get() == L3) {
+            return m_ele.toHeight(() -> L3)
+            .alongWith(Commands.print("INSIDE eleToScoreCmd L3"));
+        } else if(m_curHeightReqSupplier.get() == L4) {
+            return m_ele.toHeight(() -> L4)
+                .alongWith(Commands.print("INSIDE eleToScoreCmd L4"));
         } else {
-            return Commands.print("invalid height :( wanted " + m_curHeightReq);
+            return Commands.print("invalid height :( wanted " + m_curHeightReqSupplier.get());
         }
     }
 
@@ -272,6 +299,8 @@ public class Superstructure {
         log_botSensor.accept(transTrg_botSensor);
         log_eleToScoreReq.accept(transTrg_eleToScore);
         log_scoringReq.accept(transTrg_scoring);
+
+        log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
     }
 
     public void periodic() {
@@ -280,7 +309,7 @@ public class Superstructure {
         logStateChangeReqs();
         logState();
 
-        log_eleReqHeight.accept(m_curHeightReq.rotations);
+        log_eleReqHeight.accept(m_curHeightReqSupplier.get().rotations);
     }
 
     public enum State {
