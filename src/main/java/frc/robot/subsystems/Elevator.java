@@ -139,7 +139,7 @@ public class Elevator extends SubsystemBase {
                 m_desiredHeight = rotations;
                 // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
                 m_MMVRequest = m_MMVRequest.withPosition(rotations);
-                System.out.println(m_MMVRequest.Position);
+                System.out.println("going to " + m_MMVRequest.Position);
                 log_elevatorDesiredPosition.accept(rotations);
                 m_frontMotor.setControl(m_MMVRequest);
             }

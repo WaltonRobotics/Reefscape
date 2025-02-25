@@ -20,7 +20,6 @@ import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import frc.util.WaltLogger.IntLogger;
 import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
@@ -34,7 +33,7 @@ public class Superstructure {
     /* reqs: auton */
     /* reqs: state trans */
     private boolean m_eleToHPStateTransReq = false;
-    private boolean m_eleToScoreTransReq = false;
+    private boolean m_eleToL4Req = false;
     private boolean m_scoreReq = false;
 
     private boolean m_simIntook = false;
@@ -56,7 +55,7 @@ public class Superstructure {
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
-    private final Trigger transTrg_eleToScore = new Trigger(() -> m_eleToScoreTransReq);
+    private final Trigger transTrg_eleToL4 = new Trigger(() -> m_eleToL4Req);
     private final Trigger transTrg_scoring = new Trigger(() -> m_scoreReq);
 
     /* states */
@@ -64,7 +63,7 @@ public class Superstructure {
     public final Trigger stateTrg_eleToHP = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_HP);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
-    public final Trigger stateTrg_eleToScore = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_SCORE);
+    public final Trigger stateTrg_eleToL4 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L4);
     public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_state == State.SCORE_READY);
     public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
@@ -76,14 +75,11 @@ public class Superstructure {
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
-    private EleHeight m_curHeightReq = HOME;
-    private Supplier<EleHeight> m_curHeightReqSupplier = () -> m_curHeightReq;
 
     /* loggin' */
-    private IntLogger log_stateIdx = WaltLogger.logInt(kLogTab, "state idx");
+    private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
     private StringLogger log_stateName = WaltLogger.logString(kLogTab, "state name");
-
-    private DoubleLogger log_eleReqHeight = WaltLogger.logDouble(kLogTab, "requested height rotations");
+    
     /* logs: state trans */
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
@@ -93,7 +89,7 @@ public class Superstructure {
     private BooleanLogger log_eleAtSetpt = WaltLogger.logBoolean(kLogTab, "ele at setpoint");
     private BooleanLogger log_topSensor = WaltLogger.logBoolean(kLogTab, "top beam break");
     private BooleanLogger log_botSensor = WaltLogger.logBoolean(kLogTab, "bot beam break");
-    private BooleanLogger log_eleToScoreReq = WaltLogger.logBoolean(kLogTab, "ele to score lvl req");
+    private BooleanLogger log_eleToL4Req = WaltLogger.logBoolean(kLogTab, "ele to score lvl req");
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
@@ -137,7 +133,7 @@ public class Superstructure {
         (trg_teleopEleToHPReq.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
         (trg_teleopL4Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToScoreTransReq = true)
+            .onTrue(Commands.runOnce(() -> m_eleToL4Req = true)
                 .alongWith(Commands.print("TESTING 1")));
         (trg_teleopScoreReq.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_scoreReq = true));
@@ -150,14 +146,13 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intook.and(transTrg_eleToScore))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_SCORE)
+        (stateTrg_intook.and(transTrg_eleToL4))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4)
             .alongWith(Commands.print("TESTING 2")));
-        (stateTrg_eleToScore.debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL4.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
         (stateTrg_scoreReady.and(transTrg_scoring)) 
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORING)
-            .alongWith(Commands.print("BAD NO GO")));
+            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         (stateTrg_scoring.and(transTrg_botSensor.negate())) 
             .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
         (stateTrg_scored.debounce(0.02))
@@ -182,8 +177,7 @@ public class Superstructure {
         (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
             .onTrue(
                 Commands.sequence(
-                    Commands.runOnce(() -> requestEleHeight(() -> L4)),
-                    Commands.runOnce(() -> m_eleToScoreTransReq = true)
+                    Commands.runOnce(() -> m_eleToL4Req = true)
                 )
             );
         (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
@@ -225,14 +219,11 @@ public class Superstructure {
                 )
             );
 
-        stateTrg_eleToScore
+        stateTrg_eleToL4
             .onTrue(
-                Commands.sequence(
-                    Commands.print("eleToScore + " + m_curHeightReqSupplier.get()),
-                    Commands.parallel(
-                        eleToScoreCmd(),
-                        Commands.runOnce(() -> m_eleToScoreTransReq = false)
-                    )
+                Commands.parallel(
+                        m_ele.toHeight(() -> L4),
+                        Commands.runOnce(() -> m_eleToL4Req = false)
                 )
             );
 
@@ -280,31 +271,6 @@ public class Superstructure {
         );
     }
 
-    /* elevator things */
-    // use in robot.java
-    public void requestEleHeight(Supplier<EleHeight> height) {
-        m_curHeightReq = height.get();
-        System.out.println("HeightReq: " + m_curHeightReq);
-    }
-
-    public Command eleToScoreCmd() {
-        if(m_curHeightReqSupplier.get() == L1) {
-            return m_ele.toHeight(() -> L1)
-            .alongWith(Commands.print("INSIDE eleToScoreCmd L1"));
-        } else if(m_curHeightReqSupplier.get() == L2) {
-            return m_ele.toHeight(() -> L2)
-            .alongWith(Commands.print("INSIDE eleToScoreCmd L2"));
-        } else if(m_curHeightReqSupplier.get() == L3) {
-            return m_ele.toHeight(() -> L3)
-            .alongWith(Commands.print("INSIDE eleToScoreCmd L3"));
-        } else if(m_curHeightReqSupplier.get() == L4) {
-            return m_ele.toHeight(() -> L4)
-                .alongWith(Commands.print("INSIDE eleToScoreCmd L4"));
-        } else {
-            return Commands.print("invalid height :( wanted " + m_curHeightReqSupplier.get());
-        }
-    }
-
     /* to be used in auton */
 
     /* to be used in sim */
@@ -340,7 +306,7 @@ public class Superstructure {
         log_eleAtSetpt.accept(transTrg_eleNearSetpt);
         log_topSensor.accept(transTrg_topSensor);
         log_botSensor.accept(transTrg_botSensor);
-        log_eleToScoreReq.accept(transTrg_eleToScore);
+        log_eleToL4Req.accept(transTrg_eleToL4);
         log_scoringReq.accept(transTrg_scoring);
 
         log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
@@ -357,8 +323,6 @@ public class Superstructure {
         logStateChangeReqs();
         logState();
 
-        log_eleReqHeight.accept(m_curHeightReqSupplier.get().rotations);
-
         if(Utils.isSimulation()) {
             logSimThings();
         }
@@ -369,7 +333,10 @@ public class Superstructure {
         ELE_TO_HP(1, "ele to intake"),
         INTAKING(2, "intaking"),
         INTOOK(3, "intook"),
-        ELE_TO_SCORE(4, "ele to score"),
+        ELE_TO_L1(4.1, "ele to L1"),
+        ELE_TO_L2(4.2, "ele to L2"),
+        ELE_TO_L3(4.3, "ele to L3"),
+        ELE_TO_L4(4.4, "ele to L4"),
         SCORE_READY(5, "score ready"),
         SCORING(6, "scoring"),
         SCORED(7, "scored"),
@@ -379,10 +346,10 @@ public class Superstructure {
         CLIMBING(10, "climbing"),
         CLIMBED(11, "climbed");
 
-        public final int idx;
+        public final double idx;
         public final String name;
   
-        private State(int index, String _name) {
+        private State(double index, String _name) {
             idx = index;
             name = _name;
         }
