@@ -74,13 +74,7 @@ public class Robot extends TimedRobot {
   
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
-  private final Trigger trg_driverDanger = driver.b();
-  private final Trigger trg_forceIntakeState = trg_manipDanger.and(manipulator.rightBumper());
-  private final Trigger trg_forceScoreState = trg_manipDanger.and(manipulator.leftTrigger());
   private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
-
-  private final Trigger trg_climbUp = manipulator.a().and(manipulator.povUp());
-  private final Trigger trg_climbDown = manipulator.a().and(manipulator.povDown());
 
   private final Trigger trg_teleopScoreReq = driver.rightTrigger();
 
@@ -91,6 +85,7 @@ public class Robot extends TimedRobot {
       trg_intakeReq,
       trg_toL4,
       trg_teleopScoreReq,
+      trg_forceIdleState,
       this::driverRumble);
 
     // algae = new Algae(

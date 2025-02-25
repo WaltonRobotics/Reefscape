@@ -139,7 +139,8 @@ public class Elevator extends SubsystemBase {
                 m_desiredHeight = rotations;
                 // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
                 m_MMVRequest = m_MMVRequest.withPosition(rotations);
-                log_elevatorDesiredPosition.accept(Meters.of(rotations).magnitude());
+                System.out.println(m_MMVRequest.Position);
+                log_elevatorDesiredPosition.accept(rotations);
                 m_frontMotor.setControl(m_MMVRequest);
             }
         ).until(() -> nearSetpoint());
