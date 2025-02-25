@@ -85,13 +85,6 @@ public class Superstructure {
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
-    private final Trigger trg_hasCoral = 
-            stateTrg_intook
-        .or(stateTrg_eleToL1)
-        .or(stateTrg_eleToL2)
-        .or(stateTrg_eleToL3)
-        .or(stateTrg_eleToL4)
-        .or(stateTrg_scoreReady);
 
     /* loggin' */
     private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
@@ -150,7 +143,7 @@ public class Superstructure {
 
         configureRequests();
         configureStateTransitions();
-        configureAutomaticSimTransitions();
+        configureSimTransitions();
         configureStateActions();
     }
 
@@ -177,16 +170,8 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-
-        (trg_hasCoral.and(transTrg_eleToL1))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
-        (trg_hasCoral.and(transTrg_eleToL2))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L2));
-        (trg_hasCoral.and(transTrg_eleToL3))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L3));
-        (trg_hasCoral.and(transTrg_eleToL4))
+        (stateTrg_intook.and(transTrg_eleToL4))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4));
-
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
@@ -196,7 +181,6 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
         (stateTrg_eleToL4.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
-
         (stateTrg_scoreReady.and(transTrg_scoring)) 
             .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
         (stateTrg_scoring.and(transTrg_botSensor.negate())) 
@@ -211,7 +195,7 @@ public class Superstructure {
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
     // stuff will prolly get added as i need them
-    private void configureAutomaticSimTransitions() {
+    private void configureSimTransitions() {
         (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
             .onTrue(
                 Commands.runOnce(() -> m_eleToHPStateTransReq = true)
