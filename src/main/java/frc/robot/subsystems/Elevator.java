@@ -215,7 +215,7 @@ public class Elevator extends SubsystemBase {
         L4(12.8),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         CLIMB_DOWN(5), //this height will ove robot down for climb
-        HP(2.0); //human player station intake height
+        HP(1.937744); //human player station intake height
 
         public final double rotations;
 
