@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
 
-  private final Trigger trg_teleopScoreReq = manipulator.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
   public Robot() {
     superstructure = new Superstructure(
@@ -107,7 +107,7 @@ public class Robot extends TimedRobot {
       () -> 0);
 
     configureBindings();
-    // configureTestBindings();
+    configureTestBindings();
   }
 
   private void configureTestBindings() {
@@ -118,20 +118,11 @@ public class Robot extends TimedRobot {
     //   )
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
-    // driver.y().whileTrue(elevator.testVoltageControl(() -> driver.getLeftY()));
+    driver.y().whileTrue(elevator.testVoltageControl(() -> driver.getLeftY()));
     // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
-
-    driver.leftBumper().whileTrue(coral.automaticCoralIntake());
-    driver.leftTrigger().whileTrue(coral.score());
-    driver.rightTrigger().whileTrue(coral.runWheelsAlgaeRemovalCmd());
-
-    driver.b().whileTrue(coral.fastIntake());
-    driver.x().onTrue(coral.fingerOutCmd());
-    driver.y().onTrue(coral.fingerInCmd());
-    driver.a().whileTrue(coral.algaeIntake());
 
   }
 
@@ -148,9 +139,9 @@ public class Robot extends TimedRobot {
       );
 
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-      driver.y().whileTrue(drivetrain.applyRequest(() ->
-          point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-      ));
+      // driver.y().whileTrue(drivetrain.applyRequest(() ->
+      //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+      // ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
       /* 
