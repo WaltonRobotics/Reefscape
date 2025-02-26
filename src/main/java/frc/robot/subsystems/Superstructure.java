@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.subsystems.Elevator.EleHeight.*;
 
+import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -29,6 +30,12 @@ public class Superstructure {
 
     /* requests */
     /* reqs: auton */
+    private boolean m_autonEleToHPReq = false;
+    private boolean m_autonEleToL1Req = false;
+    private boolean m_autonEleToL2Req = false;
+    private boolean m_autonEleToL3Req = false;
+    private boolean m_autonEleToL4Req = false;
+    private boolean m_autonScoreReq = false;
     /* reqs: state trans */
     private boolean m_eleToHPStateTransReq = false;
     private boolean m_alreadyIntooked = false;
@@ -43,6 +50,12 @@ public class Superstructure {
 
     /* state transitions */
     /* autoTrgs */
+    private final Trigger trg_autonEleToHPReq = new Trigger(() -> m_autonEleToHPReq);
+    private final Trigger trg_autonL1Req = new Trigger(() -> m_autonEleToL1Req); 
+    private final Trigger trg_autonL2Req = new Trigger(() -> m_autonEleToL2Req); 
+    private final Trigger trg_autonL3Req = new Trigger(() -> m_autonEleToL3Req); 
+    private final Trigger trg_autonL4Req = new Trigger(() -> m_autonEleToL4Req); 
+    private final Trigger trg_autonScoreReq = new Trigger(() -> m_autonScoreReq);
     /* teleopTrgs */
     private final Trigger trg_teleopEleToHPReq;
     private final Trigger trg_teleopL1Req; 
@@ -102,6 +115,9 @@ public class Superstructure {
     private StringLogger log_stateName = WaltLogger.logString(kLogTab, "state name");
     
     /* logs: state trans */
+    private BooleanLogger log_autonToHPReq = WaltLogger.logBoolean(kLogTab, "AUTON to HP req");
+    private BooleanLogger log_autonScoreReq = WaltLogger.logBoolean(kLogTab, "AUTON score req");
+
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
     private BooleanLogger log_toIdleOverride = WaltLogger.logBoolean(kLogTab, "to idle override");
@@ -162,6 +178,19 @@ public class Superstructure {
 
     /* configs */
     private void configureRequests() {
+        (trg_autonEleToHPReq.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
+        (trg_autonL1Req.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_eleToL1Req = true));
+        (trg_autonL2Req.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_eleToL2Req = true));
+        (trg_autonL3Req.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_eleToL3Req = true));
+        (trg_autonL4Req.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_eleToL4Req = true));
+        (trg_autonScoreReq.and(RobotModeTriggers.autonomous()))
+            .onTrue(Commands.runOnce(() -> m_scoreReq = true));
+
         (trg_teleopEleToHPReq.and(RobotModeTriggers.teleop()))
             .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
         (trg_teleopL1Req.and(RobotModeTriggers.teleop()))
@@ -391,6 +420,44 @@ public class Superstructure {
     }
 
     /* to be used in auton */
+    public Command autonEleToHPReq() {
+        return Commands.runOnce(() -> m_autonEleToHPReq = true);
+    }
+
+    private Command autonEleToL1Req() {
+        return Commands.runOnce(() -> m_autonEleToL1Req = true);
+    }
+
+    private Command autonEleToL2Req() {
+        return Commands.runOnce(() -> m_autonEleToL2Req = true);
+    }
+
+    private Command autonEleToL3Req() {
+        return Commands.runOnce(() -> m_autonEleToL3Req = true);
+    }
+
+    private Command autonEleToL4Req() {
+        return Commands.runOnce(() -> m_autonEleToL4Req = true);
+    }
+
+    // use this in autonfactory
+    public Command autonEleToScoringPosReq(EleHeight height) {
+        if(height == L1) {
+            return autonEleToL1Req();
+        } else if(height == L2) {
+            return autonEleToL2Req();
+        } else if(height == L3) {
+            return autonEleToL3Req();
+        } else if(height == L4) {
+            return autonEleToL4Req();
+        } else {
+            return Commands.print("invalid height for auton score req. wanted " + height);
+        }
+    }
+
+    public Command autonScoreReq() {
+        return Commands.runOnce(() -> m_autonScoreReq = true);
+    }
 
     /* to be used in sim */
     public Command simIntook() {
@@ -416,6 +483,9 @@ public class Superstructure {
     }
 
     public void logRequests() {
+        log_autonToHPReq.accept(trg_autonEleToHPReq);
+        log_autonScoreReq.accept(trg_autonScoreReq);
+
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
     }
