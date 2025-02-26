@@ -190,11 +190,12 @@ public class Constants {
         public static final double kGearRatio = 50/12;
         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
 
-        public static final double kP = 20;
+        public static final double kP = 40;
+        public static final double kI = 50;
         public static final double kS = 0.5;
         public static final double kV = 0;
         public static final double kA = 0;
-        public static final double kG = 2; 
+        public static final double kG = 0; 
 
         public static final Mass kCarriageMassKg = Pounds.of(5);
         public static final Distance kMinimumHeight = Feet.of(0);
@@ -234,7 +235,8 @@ public class Constants {
             .withKS(kS) 
             .withKV(kV) 
             .withGravityType(GravityTypeValue.Elevator_Static)
-            .withKP(kP) 
+            .withKP(kP)
+            .withKI(kI) 
             .withKG(kG);
         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
