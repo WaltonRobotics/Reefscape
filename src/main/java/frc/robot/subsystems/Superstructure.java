@@ -31,6 +31,7 @@ public class Superstructure {
     /* reqs: auton */
     /* reqs: state trans */
     private boolean m_eleToHPStateTransReq = false;
+    private boolean m_alreadyIntooked = false;
     private boolean m_eleToL1Req = false;
     private boolean m_eleToL2Req = false;
     private boolean m_eleToL3Req = false;
@@ -59,6 +60,7 @@ public class Superstructure {
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
+    private final Trigger transTrg_alreadyIntooked = new Trigger(() -> m_alreadyIntooked);
     private final Trigger transTrg_eleToL1 = new Trigger(() -> m_eleToL1Req);
     private final Trigger transTrg_eleToL2 = new Trigger(() -> m_eleToL2Req);
     private final Trigger transTrg_eleToL3 = new Trigger(() -> m_eleToL3Req);
@@ -70,6 +72,7 @@ public class Superstructure {
     public final Trigger stateTrg_eleToHP = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_HP);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
+    public final Trigger stateTrg_intooked = new Trigger(stateEventLoop, () -> m_state == State.INTOOKED);
     public final Trigger stateTrg_eleToL1 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L1);
     public final Trigger stateTrg_eleToL2 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L2);
     public final Trigger stateTrg_eleToL3 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L3);
@@ -87,6 +90,7 @@ public class Superstructure {
     private final DoubleConsumer m_driverRumbler;
     private final Trigger trg_hasCoral = 
             stateTrg_intook
+        .or(stateTrg_intooked)
         .or(stateTrg_eleToL1)
         .or(stateTrg_eleToL2)
         .or(stateTrg_eleToL3)
@@ -179,6 +183,8 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        (stateTrg_intaking.and(transTrg_alreadyIntooked))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOKED));
         (trg_hasCoral.and(transTrg_eleToL1))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
         (trg_hasCoral.and(transTrg_eleToL2))
@@ -235,6 +241,7 @@ public class Superstructure {
                     Commands.runOnce(() -> m_simIntook = false)
                 )
             );
+
         simTransTrg_scored
             .onTrue(
                 Commands.sequence(
@@ -273,6 +280,14 @@ public class Superstructure {
                     m_coral.slowIntake(),
                     Commands.waitUntil(m_coral.trg_botBeamBreak),
                     m_coral.stopCoralMotorCmd()
+                )
+            );
+
+        stateTrg_intooked  
+            .onTrue(
+                Commands.sequence(
+                    m_coral.stopCoralMotorCmd(),
+                    Commands.runOnce(() -> m_alreadyIntooked = false)
                 )
             );
         
@@ -361,6 +376,20 @@ public class Superstructure {
         );
     }
 
+    // to intake, or not to intake, that is the question
+    public Command shakespeareanIntake() {
+        if(m_coral.trg_botBeamBreak.getAsBoolean()) {
+            return Commands.runOnce(() -> m_alreadyIntooked = true);
+        } else {
+            return Commands.sequence(
+                m_coral.fastIntake(),
+                Commands.waitUntil(m_coral.trg_topBeamBreak),
+                Commands.print("RUMBLE coming to a controller near you soon...")
+                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+            );
+        }
+    }
+
     /* to be used in auton */
 
     /* to be used in sim */
@@ -428,6 +457,7 @@ public class Superstructure {
         ELE_TO_HP(1, "ele to intake"),
         INTAKING(2, "intaking"),
         INTOOK(3, "intook"),
+        INTOOKED(3.5, "already had coral going into intake"),
         ELE_TO_L1(4.1, "ele to L1"),
         ELE_TO_L2(4.2, "ele to L2"),
         ELE_TO_L3(4.3, "ele to L3"),
