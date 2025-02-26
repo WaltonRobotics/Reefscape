@@ -85,6 +85,13 @@ public class Superstructure {
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
+    private final Trigger trg_hasCoral = 
+            stateTrg_intook
+        .or(stateTrg_eleToL1)
+        .or(stateTrg_eleToL2)
+        .or(stateTrg_eleToL3)
+        .or(stateTrg_eleToL4)
+        .or(stateTrg_scoreReady);
 
     /* loggin' */
     private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
@@ -104,6 +111,8 @@ public class Superstructure {
     private BooleanLogger log_eleToL3Req = WaltLogger.logBoolean(kLogTab, "ele to lvl 3 req");
     private BooleanLogger log_eleToL4Req = WaltLogger.logBoolean(kLogTab, "ele to lvl 4 req");
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
+
+    private BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "has coral");
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
     private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
@@ -170,7 +179,13 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intook.and(transTrg_eleToL4))
+        (trg_hasCoral.and(transTrg_eleToL1))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
+        (trg_hasCoral.and(transTrg_eleToL2))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L2));
+        (trg_hasCoral.and(transTrg_eleToL3))
+            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L3));
+        (trg_hasCoral.and(transTrg_eleToL4))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
@@ -196,25 +211,38 @@ public class Superstructure {
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
     // stuff will prolly get added as i need them
     private void configureSimTransitions() {
-        (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
-            .onTrue(
-                Commands.runOnce(() -> m_eleToHPStateTransReq = true)
-            );
+        // (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
+        //     .onTrue(
+        //         Commands.runOnce(() -> m_eleToHPStateTransReq = true)
+        //     );
         (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
             .onTrue(simIntook());
-        (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
-            .onTrue(
-                Commands.sequence(
-                    Commands.runOnce(() -> m_eleToL4Req = true)
-                )
-            );
-        (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        // (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
+        //     .onTrue(
+        //         Commands.sequence(
+        //             Commands.runOnce(() -> m_eleToL4Req = true)
+        //         )
+        //     );
+        (stateTrg_scoreReady.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
             .onTrue(simScored());
+        // (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        //     .onTrue(simScored());
 
         simTransTrg_intook
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> m_state = State.INTOOK),
+                    Commands.runOnce(() -> m_simIntook = false)
+                )
+            );
         simTransTrg_scored
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> m_state = State.SCORING),
+                    Commands.waitSeconds(.5),
+                    Commands.runOnce(() -> m_state = State.SCORED),
+                    Commands.runOnce(() -> m_simScored = false)
+                ));
     }
 
     private void configureStateActions() {
@@ -322,7 +350,14 @@ public class Superstructure {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
             m_ele.toHeight(() -> HOME),
-            driverRumble(0, kRumbleTimeoutSecs)
+            driverRumble(0, kRumbleTimeoutSecs),
+
+            Commands.runOnce(() -> m_eleToHPStateTransReq = false),
+            Commands.runOnce(() -> m_eleToL1Req = false),
+            Commands.runOnce(() -> m_eleToL2Req = false),
+            Commands.runOnce(() -> m_eleToL3Req = false),
+            Commands.runOnce(() -> m_eleToL4Req = false),
+            Commands.runOnce(() -> m_scoreReq = false)
         );
     }
 
@@ -368,6 +403,8 @@ public class Superstructure {
         log_scoringReq.accept(transTrg_scoring);
 
         log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
+
+        log_hasCoral.accept(trg_hasCoral);
     }
 
     public void logSimThings() {
