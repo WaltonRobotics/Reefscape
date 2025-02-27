@@ -38,7 +38,6 @@ public class Superstructure {
     private boolean m_autonScoreReq = false;
     /* reqs: state trans */
     private boolean m_eleToHPStateTransReq = false;
-    private boolean m_alreadyIntooked = false;
     private boolean m_eleToL1Req = false;
     private boolean m_eleToL2Req = false;
     private boolean m_eleToL3Req = false;
@@ -73,7 +72,6 @@ public class Superstructure {
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
-    private final Trigger transTrg_alreadyIntooked = new Trigger(() -> m_alreadyIntooked);
     private final Trigger transTrg_eleToL1 = new Trigger(() -> m_eleToL1Req);
     private final Trigger transTrg_eleToL2 = new Trigger(() -> m_eleToL2Req);
     private final Trigger transTrg_eleToL3 = new Trigger(() -> m_eleToL3Req);
@@ -84,8 +82,8 @@ public class Superstructure {
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_eleToHP = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_HP);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
-    public final Trigger stateTrg_intooked = new Trigger(stateEventLoop, () -> m_state == State.INTOOKED);
+    public final Trigger stateTrg_slowIntake = new Trigger(stateEventLoop, () -> m_state == State.SLOW_INTAKE);
+    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.SLOW_INTAKE);
     public final Trigger stateTrg_eleToL1 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L1);
     public final Trigger stateTrg_eleToL2 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L2);
     public final Trigger stateTrg_eleToL3 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L3);
@@ -102,8 +100,8 @@ public class Superstructure {
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
     private final Trigger trg_hasCoral = 
-            stateTrg_intook
-        .or(stateTrg_intooked)
+            stateTrg_slowIntake
+        .or(stateTrg_intook)
         .or(stateTrg_eleToL1)
         .or(stateTrg_eleToL2)
         .or(stateTrg_eleToL3)
@@ -211,9 +209,9 @@ public class Superstructure {
         (stateTrg_eleToHP.debounce(0.02).and(transTrg_eleNearSetpt))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
+            .onTrue(Commands.runOnce(() -> m_state = State.SLOW_INTAKE));
+        (stateTrg_slowIntake.and(transTrg_botSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intaking.and(transTrg_alreadyIntooked))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOKED));
         (trg_hasCoral.and(transTrg_eleToL1))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
         (trg_hasCoral.and(transTrg_eleToL2))
@@ -303,20 +301,18 @@ public class Superstructure {
                 )
             );
 
-        stateTrg_intook
+        stateTrg_slowIntake
             .onTrue(
                 Commands.sequence(
                     m_coral.slowIntake(),
-                    Commands.waitUntil(m_coral.trg_botBeamBreak),
-                    m_coral.stopCoralMotorCmd()
+                    Commands.waitUntil(m_coral.trg_botBeamBreak)
                 )
             );
-
-        stateTrg_intooked  
+        
+        stateTrg_intook
             .onTrue(
                 Commands.sequence(
-                    m_coral.stopCoralMotorCmd(),
-                    Commands.runOnce(() -> m_alreadyIntooked = false)
+                    m_coral.stopCoralMotorCmd()
                 )
             );
         
@@ -403,20 +399,6 @@ public class Superstructure {
             Commands.runOnce(() -> m_eleToL4Req = false),
             Commands.runOnce(() -> m_scoreReq = false)
         );
-    }
-
-    // to intake, or not to intake, that is the question
-    public Command shakespeareanIntake() {
-        if(m_coral.trg_botBeamBreak.getAsBoolean()) {
-            return Commands.runOnce(() -> m_alreadyIntooked = true);
-        } else {
-            return Commands.sequence(
-                m_coral.fastIntake(),
-                Commands.waitUntil(m_coral.trg_topBeamBreak),
-                Commands.print("RUMBLE coming to a controller near you soon...")
-                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
-            );
-        }
     }
 
     /* to be used in auton */
@@ -526,20 +508,20 @@ public class Superstructure {
         IDLE(0, "idle"),
         ELE_TO_HP(1, "ele to intake"),
         INTAKING(2, "intaking"),
-        INTOOK(3, "intook"),
-        INTOOKED(3.5, "already had coral going into intake"),
-        ELE_TO_L1(4.1, "ele to L1"),
-        ELE_TO_L2(4.2, "ele to L2"),
-        ELE_TO_L3(4.3, "ele to L3"),
-        ELE_TO_L4(4.4, "ele to L4"),
-        SCORE_READY(5, "score ready"),
-        SCORING(6, "scoring"),
-        SCORED(7, "scored"),
+        SLOW_INTAKE(3, "slow intake"),
+        INTOOK(4, "intook"),
+        ELE_TO_L1(5.1, "ele to L1"),
+        ELE_TO_L2(5.2, "ele to L2"),
+        ELE_TO_L3(5.3, "ele to L3"),
+        ELE_TO_L4(5.4, "ele to L4"),
+        SCORE_READY(6, "score ready"),
+        SCORING(7, "scoring"),
+        SCORED(8, "scored"),
 
-        ELE_TO_CLIMB(8, "ele to climb"),
-        CLIMB_READY(9, "climb ready"),
-        CLIMBING(10, "climbing"),
-        CLIMBED(11, "climbed");
+        ELE_TO_CLIMB(9, "ele to climb"),
+        CLIMB_READY(10, "climb ready"),
+        CLIMBING(11, "climbing"),
+        CLIMBED(12, "climbed");
 
         public final double idx;
         public final String name;
