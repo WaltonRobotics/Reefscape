@@ -132,7 +132,7 @@ public class Constants {
             // finger things
         public static final int kFingerMotorCANID = 31;
 
-        public static final double kMaxAngleRotations = -0.4;
+        public static final double kMaxAngleRotations = -0.1;
         public static final double kMinAngleRotations = -0.75;
         public static final double kParallelToGroundRotations = -0.6;
 
