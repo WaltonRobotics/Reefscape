@@ -437,6 +437,10 @@ public class Superstructure {
         }
     }
 
+    public Command autonPreloadReq() {
+        return Commands.runOnce(() -> m_state = State.INTOOK);
+    }
+
     public Command autonScoreReq() {
         return Commands.runOnce(() -> m_autonScoreReq = true);
     }
