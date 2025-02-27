@@ -139,7 +139,7 @@ public class Robot extends TimedRobot {
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
     manipulator.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
-    manipulator.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));    // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
+    // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
