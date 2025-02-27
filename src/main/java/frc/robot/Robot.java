@@ -69,9 +69,6 @@ public class Robot extends TimedRobot {
   private final Trigger trg_toL2 = manipulator.povRight();
   private final Trigger trg_toL3 = manipulator.povLeft();
   private final Trigger trg_toL4 = manipulator.povUp();
-
-  private final Trigger simTrg_botBeamBreak = driver.back();
-  private final Trigger simTrg_topBeamBreak = driver.start();
   
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
@@ -80,8 +77,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_teleopScoreReq = driver.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
   public Robot() {
-    if (Robot.isReal()) {
-      superstructure = new Superstructure(
+    superstructure = new Superstructure(
       coral, 
       elevator, 
       trg_intakeReq,
@@ -91,24 +87,7 @@ public class Robot extends TimedRobot {
       trg_toL4,
       trg_teleopScoreReq,
       trg_forceIdleState,
-      new Trigger(() -> false), // simulated sensors should be false when the robot is real
-      new Trigger(() -> false),
       this::driverRumble);
-    } else {
-      superstructure = new Superstructure(
-      coral, 
-      elevator, 
-      trg_intakeReq,
-      trg_toL1,
-      trg_toL2,
-      trg_toL3,
-      trg_toL4,
-      trg_teleopScoreReq,
-      trg_forceIdleState,
-      simTrg_botBeamBreak,
-      simTrg_topBeamBreak,
-      this::driverRumble);
-    }
 
     // algae = new Algae(
     //   manipulator.a(), 
