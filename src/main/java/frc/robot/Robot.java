@@ -102,7 +102,6 @@ public class Robot extends TimedRobot {
       new Trigger(() -> false), 
       new Trigger(() -> false), 
       new Trigger(() -> false), 
-      new Trigger(() -> false), 
       null, 
       () -> 0);
 
