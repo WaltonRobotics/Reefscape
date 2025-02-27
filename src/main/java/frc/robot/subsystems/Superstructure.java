@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.subsystems.Elevator.EleHeight.*;
 
+import frc.robot.Robot;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
@@ -27,6 +28,8 @@ public class Superstructure {
 
     public final EventLoop stateEventLoop = new EventLoop();
     private State m_state = State.IDLE;
+
+    private final Trigger trg_isSimulation = new Trigger(() -> Robot.isSimulation());
 
     /* requests */
     /* reqs: auton */
@@ -67,6 +70,8 @@ public class Superstructure {
     /* sim transitions */
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
     private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
+    private final Trigger simTransTrg_topSensor;
+    private final Trigger simTransTrg_botSensor;
     /* Frsies Transition Trigs */
     private final Trigger transTrg_eleToHP = new Trigger(() -> m_eleToHPStateTransReq);
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
@@ -135,6 +140,8 @@ public class Superstructure {
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
     private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
 
+
+
     public Superstructure(
         Coral coral,
         Elevator ele,
@@ -145,6 +152,8 @@ public class Superstructure {
         Trigger L4Req,
         Trigger scoreReq,
         Trigger toIdleOverride,
+        Trigger simCoralBotBeamBreak,
+        Trigger simCoralTopBeamBreak,
         DoubleConsumer driverRumbler
     ) {
         m_coral = coral;
@@ -162,8 +171,12 @@ public class Superstructure {
 
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
-        transTrg_topSensor = new Trigger(m_coral.trg_topBeamBreak);
-        transTrg_botSensor = new Trigger(m_coral.trg_botBeamBreak);
+        transTrg_topSensor = new Trigger(m_coral.trg_topBeamBreak)
+            .or(trg_isSimulation.and(simCoralTopBeamBreak));
+        transTrg_botSensor = new Trigger(m_coral.trg_botBeamBreak)
+            .or(trg_isSimulation.and(simCoralBotBeamBreak));
+        simTransTrg_topSensor = new Trigger(simCoralTopBeamBreak);
+        simTransTrg_botSensor = new Trigger(simCoralBotBeamBreak);
 
         /* binded things */
         m_driverRumbler = driverRumbler;
@@ -210,7 +223,8 @@ public class Superstructure {
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.SLOW_INTAKE));
-        (stateTrg_slowIntake.and(transTrg_botSensor))
+        // if you are intaking or slow intaking and the bottom break breaks you're done intaking
+        ((stateTrg_intaking.or(stateTrg_slowIntake)).and(transTrg_botSensor))
             .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (trg_hasCoral.and(transTrg_eleToL1))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
@@ -243,13 +257,14 @@ public class Superstructure {
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
     // stuff will prolly get added as i need them
+    // be careful though we have binds for sim sensors
     private void configureSimTransitions() {
         // (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
         //     .onTrue(
         //         Commands.runOnce(() -> m_eleToHPStateTransReq = true)
         //     );
-        (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
-            .onTrue(simIntook());
+        // (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        //     .onTrue(simIntook());
         // (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
         //     .onTrue(
         //         Commands.sequence(
