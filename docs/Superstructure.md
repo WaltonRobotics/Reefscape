@@ -19,9 +19,8 @@ stateDiagram
     state "IDLE" as s1
     state "ELE_TO_INTAKE" as s2
     state "INTAKING" as s3
-    state "SLOW-INTAKE" as s4
-    state "INTOOK" as s5
-    state "ELE_TO_SCORE" as s6
+    state "INTOOK" as s4
+    state "ELE_TO_SCORE" as s5
     state "SCORE_READY" as s6
     state "SCORING" as s7
     state "SCORED" as s8
@@ -33,14 +32,13 @@ stateDiagram
     s1 --> s2: IntakeReq->T
     s1 --> s4: BotSensor->T
     s2 --> s3: EleAtIntake->T
-    s3 --> s4: TopSensor->T
-    s4 --> s5: BotSensor->T
-    s5 --> s6: ScoreEleReq->Ta
-    s6 --> s7: EleAtScore->T
-    s7 --> s8: ScoreReq->T
-    s8 --> s9: BotSensor->F & ScoreReq->F
-    s9 --> s2: Automatic
-    s9 --> s1: ToHomeReq->T
+    s3 --> s4: BotSensor->T
+    s4 --> s5: ScoreEleReq->T
+    s5 --> s6: EleAtScore->T
+    s6 --> s7: ScoreReq->T
+    s7 --> s8: BotSensor->F & ScoreReq->F
+    s8 --> s2: Automatic
+    s8 --> s1: ToHomeReq->T
     s1 --> s9: ClimbUpReq->T
     s9 --> s10: EleAtClimb->T
     s10 --> s11: ClimbDownReq->T
@@ -55,8 +53,7 @@ stateDiagram
 |     **IDLE**     | Unrunning |    HOME       | IntakeReq, ClimbReq|
 |**ELE_TO_INTAKE** | Unrunning |Move->INTAKE   | n/a                |
 |  **INTAKING**    | Running   | INTAKE        | n/a                |
-|  **SLOW-INTAKE** |Slowrunning| INTAKE        | n/a                |
-| **INTOOK**       | Unrunning | INTAKE        | ScoreEleReq        |
+|  **INTOOK**      | Unrunning | INTAKE        | ScoreEleReq        |
 |  **ELE_TO_SCORE**| Unrunning |Move->SCORE    | n/a                |
 | **SCORE_READY**  | Unrunning | SCORE         | ScoreReq           |
 | **SCORING**      | Running   |  SCORE        | n/a                |
@@ -65,3 +62,41 @@ stateDiagram
 | **CLIMB_READY**  | Unrunning | CLIMBUP       | ClimbDownReq       |
 | **CLIMBING**     | Unrunning |Move->CLIMBDOWN| n/a                |
 | **CLIMBED**      | Unrunning | HOME          | n/a                |     
+
+
+
+## Inputs
+
+### Hardware
+
+#### Digital Inputs
+
+- TopSensor: watching for CORAL entering system
+- BotSensor: watching for:
+    - CORAL being fully intook
+    - CORAL exiting the system
+
+#### Numeric Signals (Motors/Encoders)
+
+-   Elevator At Height
+    - it's a MMEV thingy
+
+### Software
+
+#### Control Signals (Human/Autonomous Requests)
+
+- Auton
+    - Auton Elevator Requests:
+        - Two (HP, Reef)
+    Override Requests:
+        - Intake Override: goes to Intaking anyway if robot path reaches the HP station without being Intake Ready
+        - Score Override: scores anyway if robot has been at the reef for more than a second without being Score Ready
+        - Preload Request: goes straight from Idle -> Intook
+            - Only exists during the first scoring iteration in Auton
+- Teleop (Button Binds)
+    - Driver Requests:
+        - Elevator Request
+        - Score Request
+    - Override Requests:
+        - Intake Override (intake is usually automatic)
+        - Score Override: scores anyway regardless of state
