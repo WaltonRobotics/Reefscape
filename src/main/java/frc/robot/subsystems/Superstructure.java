@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.RobotK.*;
 
@@ -70,8 +69,6 @@ public class Superstructure {
     /* sim transitions */
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
     private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
-    private final Trigger simTransTrg_topSensor;
-    private final Trigger simTransTrg_botSensor;
     /* Frsies Transition Trigs */
     private final Trigger transTrg_eleToHP = new Trigger(() -> m_eleToHPStateTransReq);
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
@@ -175,8 +172,6 @@ public class Superstructure {
             .or(trg_isSimulation.and(simCoralTopBeamBreak));
         transTrg_botSensor = new Trigger(m_coral.trg_botBeamBreak)
             .or(trg_isSimulation.and(simCoralBotBeamBreak));
-        simTransTrg_topSensor = new Trigger(simCoralTopBeamBreak);
-        simTransTrg_botSensor = new Trigger(simCoralBotBeamBreak);
 
         /* binded things */
         m_driverRumbler = driverRumbler;
