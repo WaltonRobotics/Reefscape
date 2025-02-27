@@ -111,8 +111,8 @@ public class Algae extends SubsystemBase {
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_groundReq))
             .onTrue(Commands.runOnce(() -> m_state = State.TO_GROUND));
-        (stateTrg_intake.and(trg_nearSetPt))
-            .onTrue(Commands.runOnce(() -> m_state = State.GROUND));
+        (stateTrg_intake.and(trg_hasAlgae))
+            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
         (stateTrg_intook.and(trg_nearSetPt))
             .onTrue(Commands.runOnce(() -> m_state = State.HOME));
         (stateTrg_home.and(trg_processorReq))
