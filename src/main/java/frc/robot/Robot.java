@@ -136,7 +136,7 @@ public class Robot extends TimedRobot {
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
     manipulator.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
-    // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
+    manipulator.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
@@ -173,6 +173,8 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+      driver.povUp().onTrue(coral.fingerInCmd());
+      driver.povDown().onTrue(coral.fingerOutCmd());
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
