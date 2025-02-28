@@ -48,16 +48,12 @@ public class Algae extends SubsystemBase {
 
     private final Trigger trg_groundReq;
     private final Trigger trg_nearSetPt = new Trigger(() -> nearSetpoint());
-    private final Trigger trg_intakeReq;
     private final Trigger trg_hasAlgae = new Trigger(() -> isAlgaeThere());
     private final Trigger trg_processorReq;
     private final Trigger trg_shootReq;
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
-    public final Trigger stateTrg_toGround = new Trigger(stateEventLoop, () -> m_state == State.TO_GROUND);
-    public final Trigger stateTrg_ground = new Trigger(stateEventLoop, () -> m_state == State.GROUND);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
     public final Trigger stateTrg_home = new Trigger(stateEventLoop, () -> m_state == State.HOME);
     public final Trigger stateTrg_toProcessor = new Trigger(stateEventLoop, () -> m_state == State.TO_PROCESSOR);
     public final Trigger stateTrg_processor = new Trigger(stateEventLoop, () -> m_state == State.PROCESSOR);
@@ -73,11 +69,9 @@ public class Algae extends SubsystemBase {
 
     public Algae(
         Trigger groundReq, 
-        Trigger intakeReq, 
         Trigger processorReq, 
         Trigger shootReq, 
-        DoubleConsumer manipRumbler,
-        DoubleSupplier overrideAngle
+        DoubleConsumer manipRumbler
     ) {
         m_wrist.getConfigurator().apply(kWristConfiguration);
         m_intake.getConfigurator().apply(kIntakeConfiguration);
@@ -90,7 +84,6 @@ public class Algae extends SubsystemBase {
         m_state = State.IDLE;
 
         trg_groundReq = groundReq;
-        trg_intakeReq = intakeReq;
         trg_processorReq = processorReq;
         trg_shootReq = shootReq;
 
@@ -115,16 +108,10 @@ public class Algae extends SubsystemBase {
 
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_groundReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.TO_GROUND));
-        (stateTrg_toGround.and(trg_nearSetPt))
-            .onTrue(Commands.runOnce(() -> m_state = State.GROUND));
-        (stateTrg_ground.and(trg_intakeReq))
             .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
         (stateTrg_intaking.and(trg_hasAlgae))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intook.and(trg_nearSetPt))
             .onTrue(Commands.runOnce(() -> m_state = State.HOME));
-        (stateTrg_home.and(trg_processorReq))
+       (stateTrg_home.and(trg_processorReq))
             .onTrue(Commands.runOnce(() -> m_state = State.TO_PROCESSOR));
         (stateTrg_toProcessor.and(trg_nearSetPt))
             .onTrue(Commands.runOnce(() -> m_state = State.PROCESSOR));
@@ -139,18 +126,13 @@ public class Algae extends SubsystemBase {
     private void configureStateActions() {
         (stateTrg_idle)
             .onTrue(Commands.runOnce(() -> resetEverything()));
-        (stateTrg_toGround)
-            .onTrue(toAngle(WristPos.GROUND));
-        (stateTrg_ground)
+        (stateTrg_intaking)
             .onTrue(
                 Commands.parallel(
-                    /* TODO: write a wristSpring method. for now, that doesn't exist. */
-                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                    toAngle(WristPos.GROUND),
+                    intake()
                 )
             );
-        (stateTrg_intaking)
-            .onTrue(intake());
-        // intook has no actions so far
         (stateTrg_home)
             .onTrue(toAngle(WristPos.HOME)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
         (stateTrg_toProcessor)
@@ -243,10 +225,7 @@ public class Algae extends SubsystemBase {
     }
 
     public Command intake() {
-        return Commands.startEnd(
-            () -> setWheelAction(12),
-            () -> setWheelAction(0)
-        );
+        return Commands.runOnce(() -> setWheelAction(12));
     }
 
     public Command shoot() {
@@ -277,10 +256,7 @@ public class Algae extends SubsystemBase {
 
     public enum State {
         IDLE(0),
-        TO_GROUND(1),
-        GROUND(2),
-        INTAKING(3),
-        INTOOK(4),
+        INTAKING(1),
         HOME(5),
         TO_PROCESSOR(6),
         PROCESSOR(7),
