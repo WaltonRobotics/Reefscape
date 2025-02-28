@@ -162,9 +162,8 @@ public class WaltAutonFactory {
             .onTrue(
                 Commands.sequence(
                     Commands.runOnce(() -> System.out.println("eleUp")),
-                    Commands.runOnce(() -> superstructure.requestIsPreload(true)),
-                    superstructure.autonRequestEleToScore(firstHeight),
-                    Commands.runOnce(() -> superstructure.requestIsPreload(false))
+                    Commands.runOnce(() -> superstructure.autonPreloadReq()),
+                    superstructure.autonEleToScoringPosReq(firstHeight)
                 )
             );
         firstScoreTraj.done().onTrue(
@@ -179,8 +178,8 @@ public class WaltAutonFactory {
             )
         );
 
-        firstLoadTraj.atTime("intake")
-                .onTrue(superstructure.autonRequestToIntake());
+        // firstLoadTraj.atTime("intake")
+        //         .onTrue(superstructure.autonEleToHPReq());
 
         // now ur at the HP
 
@@ -201,9 +200,9 @@ public class WaltAutonFactory {
                 lastCycleDone.and(superstructure.stateTrg_intook).onTrue(hpToReefTraj.cmd());
             }
 
-            hpToReefTraj.atTime("eleUp").onTrue(
-                superstructure.autonRequestEleToScore(cycle.height)
-            );
+            // hpToReefTraj.atTime("eleUp").onTrue(
+            //     superstructure.autonEleToScoringPosReq(cycle.height)
+            // );
             
             hpToReefTraj.done().onTrue(
                 Commands.sequence(
@@ -218,7 +217,7 @@ public class WaltAutonFactory {
             reefToHpTraj.atTime("intake").onTrue(
                 Commands.sequence(
                     Commands.runOnce(() -> System.out.println("b4 intaking - cycles")),
-                    superstructure.autonRequestToIntake(),
+                    superstructure.autonEleToHPReq(),
                     Commands.runOnce(() -> System.out.println("after intaking - cycles"))
                 )
             );

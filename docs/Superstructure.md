@@ -12,7 +12,7 @@
 
 ### State Diagram
 
-This diagram is very basic, and I'm sleepy. Also at any point, we might go back to IDLE with driver req. Also also an OVERRIDE request may happen at any time. This will let the manipulator move the elevator freely. You can exit OVERRIDE with any driver request except climb requests.
+This diagram is very basic, and I'm sleepy. NOTE: there are technically different states for each height in ELE_TO_SCORE
 
 ```mermaid
 stateDiagram
@@ -28,7 +28,6 @@ stateDiagram
     state "CLIMB_READY" as s10
     state "CLIMBING" as s11
     state "CLIMBED" as s12
-    state "OVERRIDE" as s13
 
     s1 --> s2: IntakeReq->T
     s1 --> s4: BotSensor->T
@@ -101,5 +100,3 @@ stateDiagram
     - Override Requests:
         - Intake Override (intake is usually automatic)
         - Score Override: scores anyway regardless of state
-        - Elevator Override: moves elevator to various level. Will force state change to either ELE_TO_SCORE or ELE_TO_INTAKE
-        - Home Request: moves robot ele to HOME state; will override state machine to return to IDLE

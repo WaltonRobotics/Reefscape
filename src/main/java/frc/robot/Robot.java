@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
@@ -39,6 +40,7 @@ import frc.robot.autons.WaltAutonFactory;
 import frc.robot.autons.AutonChooser.NumCycles;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Algae.WristPos;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
@@ -66,6 +68,9 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Vision vision = new Vision();
   private final Elevator elevator = new Elevator();
+
+  private final Algae algae;
+  private final Superstructure superstructure;
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
@@ -117,35 +122,60 @@ public class Robot extends TimedRobot {
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_driverDanger = driver.b();
 
-  private final Superstructure superstructure =  new Superstructure(
-    coral, 
-    elevator, 
-    manipulator.rightBumper(), 
-    trg_teleopEleHeightReq,
-    driver.rightTrigger(), 
-    trg_manipDanger.and(manipulator.rightBumper()),
-    trg_manipDanger.and(manipulator.leftTrigger()), 
-    trg_manipDanger.and(trg_teleopEleHeightReq),
-    trg_driverDanger.and(driver.rightTrigger()), 
-    manipulator.leftBumper(),
-    manipulator.a().and(manipulator.povUp()),
-    manipulator.a().and(manipulator.povDown()),
-    trg_manipDanger.and(trg_eleOverride),
-    () -> manipulator.getLeftY(),
-    (intensity) -> driverRumble(intensity), 
-    (intensity) -> manipRumble(intensity));
+  private final Trigger trg_intakeReq = manipulator.rightBumper();
+  
+  private final Trigger trg_toL1 = manipulator.povDown();
+  private final Trigger trg_toL2 = manipulator.povRight();
+  private final Trigger trg_toL3 = manipulator.povLeft();
+  private final Trigger trg_toL4 = manipulator.povUp();
+
+  private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
+
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger();
 
   public static final Field2d field2d = new Field2d();
 
   private Command m_autonomousCmd;
 
   public Robot() {
-    DriverStation.silenceJoystickConnectionWarning(true);
-    if(Robot.isSimulation()) {
-      DriverStation.silenceJoystickConnectionWarning(true);
-    }
+    superstructure = new Superstructure(
+      coral, 
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_forceIdleState,
+      this::driverRumble);
+
+    algae = new Algae(
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      new Trigger(() -> false), 
+      null, 
+      () -> 0);
 
     configureBindings();
+    configureTestBindings();
+  }
+
+  private void configureTestBindings() {
+    // driver.a().onTrue(
+    //   Commands.sequence(
+    //     algae.toAngle(WristPos.GROUND),
+    //     algae.intake()
+    //   )
+    // ).onFalse(algae.toAngle(WristPos.HOME));
+  
+    manipulator.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
+    // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
+
+    // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
+    // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
+
   }
 
   private void configureBindings() {
@@ -154,16 +184,16 @@ public class Robot extends TimedRobot {
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() ->
-            drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+            drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+                .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with X (left)
                 .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
         )
     );
 
     driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    driver.y().whileTrue(drivetrain.applyRequest(() ->
-        point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-    ));
+    // driver.y().whileTrue(drivetrain.applyRequest(() ->
+    //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+    // ));
     driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
     /* 
@@ -195,6 +225,20 @@ public class Robot extends TimedRobot {
     AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
   }
 
+  
+  private void mapAutonCommands() {
+    AutonChooser.configureFirstCycle();
+  }
+
+  /* needed to continue choosing schtuffs */
+  private void configAutonChooser() {
+    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+    AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
+    AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
+    AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
+    AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
+  }
+
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
@@ -211,6 +255,7 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     mapAutonCommands();
     configAutonChooser();
+    addPeriodic(() -> superstructure.periodic(), 0.01);
   }
 
   @Override
@@ -271,8 +316,14 @@ public class Robot extends TimedRobot {
       AutonChooser.hpStation, 
       AutonChooser.getAutonCycles());
 
-    if(m_autonomousCmd != null) {
-      m_autonomousCmd.schedule();
+    if (m_autonomousCommand != null) {
+      Commands.parallel(
+        algae.currentSenseHoming(),
+        Commands.sequence(
+          Commands.run(()->{}).until(() -> elevator.getIsHomed()),
+          m_autonomousCommand
+        )
+      ).schedule();
     }
   }
 
@@ -284,6 +335,17 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.cancel();
+    }
+
+    // if(!elevator.getIsHomed()) {
+      // elevator.currentSenseHoming().schedule();
+    // }
+
+    // if(!algae.getIsHomed()) {
+      // algae.currentSenseHoming().schedule();
+    // }
   }
 
   @Override
