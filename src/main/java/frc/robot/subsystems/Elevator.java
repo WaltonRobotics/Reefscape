@@ -209,13 +209,13 @@ public class Elevator extends SubsystemBase {
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.1),
-        L1(2.5),
+        L1(4.419922),
         L2(5.5),
         L3(8.5),
         L4(12.8),
         CLIMB_UP(1.5), // this height will move the robot up for climb
         CLIMB_DOWN(5), //this height will ove robot down for climb
-        HP(1.937744); //human player station intake height
+        HP(2.094971); //human player station intake height
 
         public final double rotations;
 

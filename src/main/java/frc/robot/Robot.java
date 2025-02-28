@@ -86,7 +86,7 @@ public class Robot extends TimedRobot {
   
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
-  private final Trigger trg_forceIdleState = trg_manipDanger.and(manipulator.leftBumper());
+  private final Trigger trg_forceIdleState = manipulator.leftBumper();
 
   private final Trigger trg_teleopScoreReq = driver.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
