@@ -151,12 +151,12 @@ public class Robot extends TimedRobot {
       this::driverRumble);
 
     algae = new Algae(
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      null, 
-      () -> 0);
+      manipulator.a(), 
+      manipulator.leftTrigger(), 
+      manipulator.y(), 
+      manipulator.rightTrigger(), 
+      this::manipRumble
+    );
 
     configureBindings();
     configureTestBindings();
@@ -212,20 +212,6 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
-  private void mapAutonCommands() {
-    AutonChooser.configureFirstCycle();
-  }
-
-  /* needed to continue choosing schtuffs */
-  private void configAutonChooser() {
-    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
-    AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
-    AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
-    AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
-    AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
-  }
-
-  
   private void mapAutonCommands() {
     AutonChooser.configureFirstCycle();
   }
@@ -316,12 +302,12 @@ public class Robot extends TimedRobot {
       AutonChooser.hpStation, 
       AutonChooser.getAutonCycles());
 
-    if (m_autonomousCommand != null) {
+    if (m_autonomousCmd != null) {
       Commands.parallel(
         algae.currentSenseHoming(),
         Commands.sequence(
           Commands.run(()->{}).until(() -> elevator.getIsHomed()),
-          m_autonomousCommand
+          m_autonomousCmd
         )
       ).schedule();
     }
@@ -335,8 +321,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
+    if (m_autonomousCmd != null) {
+      m_autonomousCmd.cancel();
     }
 
     // if(!elevator.getIsHomed()) {

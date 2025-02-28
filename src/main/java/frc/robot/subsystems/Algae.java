@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.util.WaltLogger.IntLogger;
 
 import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
@@ -71,13 +72,14 @@ public class Algae extends SubsystemBase {
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_wrist.getVelocity().getValueAsDouble()) < 0.01;
 
+    private IntLogger log_state = WaltLogger.logInt(kLogTab, "Algae State idx");
+
     public Algae(
         Trigger groundReq, 
         Trigger intakeReq, 
         Trigger processorReq, 
         Trigger shootReq, 
-        DoubleConsumer manipRumbler,
-        DoubleSupplier overrideAngle
+        DoubleConsumer manipRumbler
     ) {
         m_wrist.getConfigurator().apply(kWristConfiguration);
         m_intake.getConfigurator().apply(kIntakeConfiguration);
@@ -272,6 +274,7 @@ public class Algae extends SubsystemBase {
     
         setWristCoast(nte_wristIsCoast.getBoolean(false));
 
+        log_state.accept(m_state.idx);
         log_desiredAngleDegs.accept(m_desiredWristRotations);
     }
 
