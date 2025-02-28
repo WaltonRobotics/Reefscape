@@ -161,6 +161,20 @@ public class Robot extends TimedRobot {
 
   }
 
+  
+  private void mapAutonCommands() {
+    AutonChooser.configureFirstCycle();
+  }
+
+  /* needed to continue choosing schtuffs */
+  private void configAutonChooser() {
+    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+    AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
+    AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
+    AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
+    AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
+  }
+
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
