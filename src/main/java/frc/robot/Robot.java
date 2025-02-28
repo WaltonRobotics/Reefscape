@@ -7,6 +7,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.Coralk.kCoralSpeed;
 
+import java.util.function.Consumer;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -23,8 +25,12 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.autons.AutonChooser;
+// import frc.robot.autons.AutonChooser;
+import frc.robot.autons.SimpleAutons;
+// import frc.robot.autons.AutonChooser.NumCycles;
 import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.WaltAutonFactory;
+import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 // import frc.robot.autons.WaltAutonFactory;
@@ -38,7 +44,6 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
 
   private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -60,8 +65,10 @@ public class Robot extends TimedRobot {
   private final Algae algae;
   private final Superstructure superstructure;
 
+  private Command m_autonomousCommand;
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  // private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+  private final SimpleAutons simpleAutons;
+  private final WaltAutonFactory waltAutonFactory;
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -69,6 +76,13 @@ public class Robot extends TimedRobot {
   private final Trigger trg_toL2 = manipulator.povRight();
   private final Trigger trg_toL3 = manipulator.povLeft();
   private final Trigger trg_toL4 = manipulator.povUp();
+
+  private boolean numCycleChange = false;
+  private boolean startingPositionChange = false;
+  private boolean firstScoringPositionChange = false;
+  private boolean startingHeightChange = false;
+  private boolean initialHPStationChange = false;
+ 
   
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
@@ -105,6 +119,9 @@ public class Robot extends TimedRobot {
       new Trigger(() -> false), 
       null, 
       () -> 0);
+
+    simpleAutons = new SimpleAutons(autoFactory, superstructure);
+    waltAutonFactory = new WaltAutonFactory(autoFactory, superstructure);
 
     configureBindings();
     configureTestBindings();
@@ -161,19 +178,39 @@ public class Robot extends TimedRobot {
 
   }
 
+  // private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
+  //   AutonChooser.m_cycles = numCycles;
+  //   numCycleChange = true;
+  // };
+  // private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+  //   AutonChooser.startingPosition = startingPosition;
+  //   startingPositionChange = true;
+  // }  ;
+  // private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
+  //   AutonChooser.startingHeight = startingHeight;
+  //   numCycleChange = true;
+  // }  ;
+  // private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+  //   AutonChooser.scoringPosition = scoringPosition;
+  //   firstScoringPositionChange = true;
+  // }  ;
+  // private final Consumer<HPStation> initalHPStationConsumer = hpStation -> {
+  //   AutonChooser.hpStation = hpStation;
+  //   initialHPStationChange = true;
+  // };
   
-  private void mapAutonCommands() {
-    AutonChooser.configureFirstCycle();
-  }
+  // private void mapAutonCommands() {
+  //   AutonChooser.configureFirstCycle();
+  // }
 
-  /* needed to continue choosing schtuffs */
-  private void configAutonChooser() {
-    AutonChooser.cyclesChooser.onChange(cyclesConsumer);
-    AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
-    AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
-    AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
-    AutonChooser.firstToHPStationChooser.onChange(initialHPStationConsumer);
-  }
+  // /* needed to continue choosing schtuffs */
+  // private void configAutonChooser() {
+  //   AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+  //   AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
+  //   AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
+  //   AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
+  //   AutonChooser.firstToHPStationChooser.onChange(initalHPStationConsumer);
+  // }
 
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
@@ -190,6 +227,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit(){
     addPeriodic(() -> superstructure.periodic(), 0.01);
+    // mapAutonCommands();
+    // configAutonChooser();
   }
 
   @Override
@@ -209,7 +248,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = null; // TODO: fill out
+    m_autonomousCommand = waltAutonFactory.generateAuton().cmd(); // TODO: fill out
 
     if (m_autonomousCommand != null) {
       Commands.parallel(

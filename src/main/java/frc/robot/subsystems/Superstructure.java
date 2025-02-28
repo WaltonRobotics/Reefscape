@@ -310,11 +310,7 @@ public class Superstructure {
             );
         
         stateTrg_intook
-            .onTrue(
-                Commands.sequence(
-                    m_coral.stopCoralMotorCmd()
-                )
-            );
+            .onTrue(m_coral.stopCoralMotorCmd());
         
         stateTrg_eleToL1
             .onTrue(
