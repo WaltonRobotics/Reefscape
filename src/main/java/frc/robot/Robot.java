@@ -71,11 +71,15 @@ public class Robot extends TimedRobot {
   private final WaltAutonFactory waltAutonFactory;
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
+  private final Trigger trg_processorReq = manipulator.y();
+  private final Trigger trg_shootReq = manipulator.rightTrigger();
   
   private final Trigger trg_toL1 = manipulator.povDown();
   private final Trigger trg_toL2 = manipulator.povRight();
   private final Trigger trg_toL3 = manipulator.povLeft();
   private final Trigger trg_toL4 = manipulator.povUp();
+
+  private final Trigger trg_algaeIntake = manipulator.a();
 
   private boolean numCycleChange = false;
   private boolean startingPositionChange = false;
@@ -113,12 +117,10 @@ public class Robot extends TimedRobot {
     //   () -> manipulator.getRightY());
 
     algae = new Algae(
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      null, 
-      () -> 0);
+      trg_algaeIntake, 
+      trg_processorReq,
+      trg_shootReq,
+      this::manipRumble);
 
     simpleAutons = new SimpleAutons(autoFactory, superstructure);
     waltAutonFactory = new WaltAutonFactory(autoFactory, superstructure);
