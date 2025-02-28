@@ -248,6 +248,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    superstructure.stateToIdle();
     m_autonomousCommand = waltAutonFactory.generateAuton().cmd(); // TODO: fill out
 
     if (m_autonomousCommand != null) {
@@ -269,6 +270,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    superstructure.stateToIdle();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }

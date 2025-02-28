@@ -382,6 +382,11 @@ public class Superstructure {
     }
 
     /* methods that Actually Do Things */
+
+    public Command stateToIdle() {
+        return stateToIdle();
+    }
+
     public Command resetEverything() {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
