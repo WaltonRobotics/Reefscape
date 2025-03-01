@@ -99,14 +99,7 @@ public class Superstructure {
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
-    private final Trigger trg_hasCoral = 
-            stateTrg_slowIntake
-        .or(stateTrg_intook)
-        .or(stateTrg_eleToL1)
-        .or(stateTrg_eleToL2)
-        .or(stateTrg_eleToL3)
-        .or(stateTrg_eleToL4)
-        .or(stateTrg_scoreReady);
+    private final Trigger trg_hasCoral;
 
     /* loggin' */
     private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
@@ -159,6 +152,7 @@ public class Superstructure {
         trg_teleopScoreReq = scoreReq;
         /* overrides */
         transTrg_toIdleOverrideReq = toIdleOverride;
+        trg_hasCoral = m_coral.trg_botBeamBreak.or(m_coral.trg_topBeamBreak);
 
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
@@ -181,7 +175,12 @@ public class Superstructure {
         (trg_autonL1Req.and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_eleToL1Req = true));
         (trg_autonL2Req.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_eleToL2Req = true));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> m_eleToL2Req = true),
+                    Commands.runOnce(() -> System.out.println("ele to l2 req " + m_eleToL2Req))
+                )
+            );
         (trg_autonL3Req.and(RobotModeTriggers.autonomous()))
             .onTrue(Commands.runOnce(() -> m_eleToL3Req = true));
         (trg_autonL4Req.and(RobotModeTriggers.autonomous()))
@@ -215,7 +214,12 @@ public class Superstructure {
         (trg_hasCoral.and(transTrg_eleToL1))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
         (trg_hasCoral.and(transTrg_eleToL2))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L2));
+            .onTrue(
+                Commands.sequence(
+                    Commands.runOnce(() -> m_state = State.ELE_TO_L2),
+                    Commands.runOnce(() -> System.out.println("at state: " + m_state.name))
+                )
+            );
         (trg_hasCoral.and(transTrg_eleToL3))
             .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L3));
         (trg_hasCoral.and(transTrg_eleToL4))
@@ -323,6 +327,7 @@ public class Superstructure {
         stateTrg_eleToL2
             .onTrue(
                 Commands.parallel(
+                        Commands.print("in state trg"),
                         m_ele.toHeight(() -> L2),
                         Commands.runOnce(() -> m_eleToL2Req = false)
                 )
@@ -352,13 +357,11 @@ public class Superstructure {
 
         stateTrg_scoring
             .onTrue(
-                Commands.parallel(
-                    Commands.sequence(
-                        m_coral.score(),
-                        Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
-                        m_coral.stopCoralMotorCmd()
-                    ),
-                    Commands.runOnce(() -> m_scoreReq = false)
+                Commands.sequence(
+                    m_coral.score(),
+                    Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
+                    Commands.runOnce(() -> m_scoreReq = false),
+                    m_coral.stopCoralMotorCmd()
                 )
             );
 
@@ -384,7 +387,7 @@ public class Superstructure {
     /* methods that Actually Do Things */
 
     public Command stateToIdle() {
-        return stateToIdle();
+        return Commands.runOnce(() -> m_state = State.IDLE);
     }
 
     public Command resetEverything() {
@@ -402,24 +405,31 @@ public class Superstructure {
         );
     }
 
+    public Trigger isBotBeamBreamBrokey() {
+        return m_coral.trg_botBeamBreak;
+    }
+
     /* to be used in auton */
     public Command autonEleToHPReq() {
         return Commands.runOnce(() -> m_autonEleToHPReq = true);
     }
 
-    private Command autonEleToL1Req() {
+    public Command autonEleToL1Req() {
         return Commands.runOnce(() -> m_autonEleToL1Req = true);
     }
 
-    private Command autonEleToL2Req() {
-        return Commands.runOnce(() -> m_autonEleToL2Req = true);
+    public Command autonEleToL2Req() {
+        return Commands.sequence(
+            Commands.print("autonEleToL2"),
+            Commands.runOnce(() -> m_autonEleToL2Req = true)
+        );
     }
 
-    private Command autonEleToL3Req() {
+    public Command autonEleToL3Req() {
         return Commands.runOnce(() -> m_autonEleToL3Req = true);
     }
 
-    private Command autonEleToL4Req() {
+    public Command autonEleToL4Req() {
         return Commands.runOnce(() -> m_autonEleToL4Req = true);
     }
 
@@ -439,11 +449,18 @@ public class Superstructure {
     }
 
     public Command autonPreloadReq() {
-        return Commands.runOnce(() -> m_state = State.INTOOK);
+        return Commands.sequence(
+            Commands.print("preload got called"),
+            Commands.runOnce(() -> m_state = State.INTOOK),
+            Commands.print(m_state.name)
+        );
     }
 
     public Command autonScoreReq() {
-        return Commands.runOnce(() -> m_autonScoreReq = true);
+        return Commands.sequence(
+            Commands.print("score"),
+            Commands.runOnce(() -> m_autonScoreReq = true)
+        );
     }
 
     /* to be used in sim */
