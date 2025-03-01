@@ -205,7 +205,7 @@ public class Algae extends SubsystemBase {
             m_wrist.setControl(zeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
-            System.out.println("Zeroed Elevator!!!");
+            System.out.println("Zeroed Algae!!!");
         };
 
         BooleanSupplier isFinished = () ->
