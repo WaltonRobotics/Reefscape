@@ -102,23 +102,22 @@ public class Robot extends TimedRobot {
       trg_teleopScoreReq,
       trg_forceIdleState,
       this::driverRumble);
+      
+      algae = new Algae(
+        manipulator.a(), 
+        manipulator.leftTrigger(), 
+        manipulator.y(), 
+        manipulator.rightTrigger(), 
+        this::manipRumble
+      );
 
     // algae = new Algae(
-    //   manipulator.a(), 
-    //   manipulator.leftTrigger(), 
-    //   manipulator.y(), 
-    //   manipulator.rightTrigger(), 
-    //   manipulator.back(), 
-    //   (intensity) -> manipRumble(intensity), 
-    //   () -> manipulator.getRightY());
-
-    algae = new Algae(
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      new Trigger(() -> false), 
-      null, 
-      () -> 0);
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   null, 
+    //   () -> 0);
 
     simpleAutons = new SimpleAutons(autoFactory, superstructure);
     waltAutonFactory = new WaltAutonFactory(autoFactory, superstructure);

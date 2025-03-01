@@ -48,7 +48,7 @@ public class Constants {
         // wrist motor
         public static final int kWristGearRatio = 40;   //TODO: check if still accurate
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
-        public static final int kAngleTolerance = 3;//DUMMY VALUE
+        public static final int kAngleTolerance = 3; //DUMMY VALUE
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(20)
             .withSupplyCurrentLimit(20)
