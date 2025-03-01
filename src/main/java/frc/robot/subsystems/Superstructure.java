@@ -204,45 +204,40 @@ public class Superstructure {
     
     private void configureStateTransitions() {
         (stateTrg_idle.and(transTrg_eleToHP))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_HP));
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.debounce(0.02).and(transTrg_eleNearSetpt))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+            .onTrue(changeStateCmd(State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
-            .onTrue(Commands.runOnce(() -> m_state = State.SLOW_INTAKE));
+            .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_slowIntake.and(transTrg_botSensor))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+            .onTrue(changeStateCmd(State.INTOOK));
         (trg_hasCoral.and(transTrg_eleToL1))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L1));
+            .onTrue(changeStateCmd(State.ELE_TO_L1));
         (trg_hasCoral.and(transTrg_eleToL2))
-            .onTrue(
-                Commands.sequence(
-                    Commands.runOnce(() -> m_state = State.ELE_TO_L2),
-                    Commands.runOnce(() -> System.out.println("at state: " + m_state.name))
-                )
-            );
+            .onTrue(changeStateCmd(State.ELE_TO_L2));
         (trg_hasCoral.and(transTrg_eleToL3))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L3));
+            .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(transTrg_eleToL4))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_L4));
+            .onTrue(changeStateCmd(State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
+            .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL2.debounce(1).and(transTrg_eleNearSetpt))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
+            .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL3.debounce(1).and(transTrg_eleNearSetpt))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
+            .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL4.debounce(1).and(transTrg_eleNearSetpt))
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORE_READY)); 
+            .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_scoreReady.and(transTrg_scoring)) 
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORING));
+            .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(transTrg_botSensor.negate())) 
-            .onTrue(Commands.runOnce(() -> m_state = State.SCORED));
+            .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.debounce(0.02))
-            .onTrue(Commands.runOnce(() -> m_state = State.ELE_TO_HP));
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
 
 
         (transTrg_toIdleOverrideReq)
-            .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
+            .onTrue(changeStateCmd(State.IDLE));
     }
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
@@ -268,7 +263,7 @@ public class Superstructure {
         simTransTrg_intook
             .onTrue(
                 Commands.sequence(
-                    Commands.runOnce(() -> m_state = State.INTOOK),
+                    changeStateCmd(State.INTOOK),
                     Commands.runOnce(() -> m_simIntook = false)
                 )
             );
@@ -276,9 +271,9 @@ public class Superstructure {
         simTransTrg_scored
             .onTrue(
                 Commands.sequence(
-                    Commands.runOnce(() -> m_state = State.SCORING),
+                    changeStateCmd(State.SCORING),
                     Commands.waitSeconds(.5),
-                    Commands.runOnce(() -> m_state = State.SCORED),
+                    changeStateCmd(State.SCORED),
                     Commands.runOnce(() -> m_simScored = false)
                 ));
     }
@@ -387,7 +382,7 @@ public class Superstructure {
     /* methods that Actually Do Things */
 
     public Command stateToIdle() {
-        return Commands.runOnce(() -> m_state = State.IDLE);
+        return changeStateCmd(State.IDLE);
     }
 
     public Command resetEverything() {
@@ -448,12 +443,17 @@ public class Superstructure {
         }
     }
 
+    private Command changeStateCmd(State newState) {
+        return Commands.runOnce(() -> {
+            System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
+            m_state = newState;
+            log_stateIdx.accept(m_state.idx);
+            log_stateName.accept(m_state.name);
+        });
+    }
+
     public Command autonPreloadReq() {
-        return Commands.sequence(
-            Commands.print("preload got called"),
-            Commands.runOnce(() -> m_state = State.INTOOK),
-            Commands.print(m_state.name)
-        );
+        return (changeStateCmd(State.INTOOK));
     }
 
     public Command autonScoreReq() {
