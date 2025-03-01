@@ -2,11 +2,25 @@ package frc.robot;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.TrajectoryUtil;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import frc.robot.Constants.FieldK;
+import frc.robot.Constants.FieldK.Reef.ReefHeight;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -14,7 +28,10 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
+
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
 
@@ -22,6 +39,7 @@ public class Vision {
     private final PhotonCamera m_camera;
     private final PhotonPoseEstimator photonEstimator;
     private Matrix<N3, N1> curStdDevs;
+    private Optional<PhotonPipelineResult> m_latestPhotonPipelineResultOptional = Optional.empty();
 
     // Simulation
     private PhotonCameraSim m_cameraSim;
@@ -57,6 +75,109 @@ public class Vision {
         }
     }
 
+    // /**
+    //  * @param currentPosition Current robot position
+    //  * @param rightReef Negative left reef, positive right reef
+    //  * @param swerveDriveKinematics This method generates a trajectory - generation requires kinematics
+    //  * @return Returns empty optional if a trajectory could not be generated for some reason, otherwise returns Trajectory
+    //  */
+    // public Optional<Trajectory> generateAlignmentTrajectory(Pose2d currentPosition, Vboolean rightReef, SwerveDriveKinematics swerveDriveKinematics) {
+    //     Optional<PhotonTrackedTarget> bestReefTagOptional = getBestReefTag();
+    //     if (bestReefTagOptional.isEmpty()) {
+    //         return Optional.empty();
+    //     }
+    //     PhotonTrackedTarget bestReefTag = bestReefTagOptional.get();
+    //     int tagId = bestReefTag.getFiducialId();
+    //     ReefLocs correctReefLocation;
+    //     // map nearest tag and left vs right to correct reef branch
+    //     if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().equals(Alliance.Blue)) {
+    //         // blue
+    //         switch (tagId) {
+    //             case 16:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+    //                 break;
+    //             case 17:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+    //                 break;
+    //             case 18:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+    //                 break;
+    //             case 19:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+    //                 break;
+    //             case 20:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+    //                 break;
+    //             case 21:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+    //                 break;
+    //             default:
+    //                 System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
+    //                 return Optional.empty();
+    //         }
+    //     } else {
+    //         // red
+    //         switch (tagId) {
+    //             case 5:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+    //                 break;
+    //             case 6:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+    //                 break;
+    //             case 7:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+    //                 break;
+    //             case 8:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+    //                 break;
+    //             case 9:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+    //                 break;
+    //             case 10:
+    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+    //                 break;
+    //             default:
+    //                 System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
+    //                 return Optional.empty();
+    //         }
+    //     }
+    //     Pose2d destinationPose = FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation);
+    // }
+
+    /**
+     * This code selects the best reef tag.
+     * Only selects from tags on the correct reef for the correct alliance as selected in FMS/DS.
+     * @return Returns the a PhotonTrackedTarget for the best reef tag if possible. <p>
+     *  Otherwise return empty
+     */
+    public Optional<PhotonTrackedTarget> getBestReefTag() {
+        // if no latest result is available, then we can't find the best reef tag
+        if (m_latestPhotonPipelineResultOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        PhotonPipelineResult latestPhotonPipelineResult = m_latestPhotonPipelineResultOptional.get();
+        // if there are no april tags available, then we can't find the best reef tag
+        if (!latestPhotonPipelineResult.hasTargets()) {
+            return Optional.empty();
+        }
+
+        // if the best target is on the reef, just return ts (that shit)
+        if (isTagIdOnAllianceReef(latestPhotonPipelineResult.getBestTarget().getFiducialId())) {
+            return Optional.of(latestPhotonPipelineResult.getBestTarget());
+        }
+        
+        // PhotonPipelineResult::getTargets() should return the targets in sort order as set in photonvision UI
+        List<PhotonTrackedTarget> trackedTargets = latestPhotonPipelineResult.getTargets();
+        for (int i = 0; i < trackedTargets.size(); i++) {
+            if (isTagIdOnAllianceReef(trackedTargets.get(i).getFiducialId())) {
+                return Optional.of(trackedTargets.get(i));
+            }
+        }
+        
+        // if we get to the end, there must not be any april tags on the reef
+        return Optional.empty();
+    }
+
     /**
      * The latest estimated robot pose on the field from vision data. This may be empty. This should
      * only be called once per loop.
@@ -69,7 +190,19 @@ public class Vision {
      */
     public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
         Optional<EstimatedRobotPose> visionEst = Optional.empty();
-        for (var change : m_camera.getAllUnreadResults()) {
+        List<PhotonPipelineResult> unreadCameraResults = m_camera.getAllUnreadResults();
+
+        // update m_latestPhotonPipelineResult
+        if (unreadCameraResults.size() > 0) {
+            m_latestPhotonPipelineResultOptional = Optional.of(unreadCameraResults.get(unreadCameraResults.size()-1));
+        } else {
+            // i could make a threshold of time difference between result time and current time
+            // to make it stale after a time, but that adds potential for silliness and i would
+            // rather just not use something older when something new should come in regularly
+            m_latestPhotonPipelineResultOptional = Optional.empty();
+        }
+
+        for (var change : unreadCameraResults) {
             visionEst = photonEstimator.update(change);
             updateEstimationStdDevs(visionEst, change.getTargets());
 
@@ -86,6 +219,19 @@ public class Vision {
         }
         return visionEst;
     }
+
+    private boolean isTagIdOnAllianceReef(int givenId) {
+        if ((DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Blue)) || DriverStation.getAlliance().isEmpty()) {
+            if (DriverStation.getAlliance().isEmpty()) {
+                System.out.println("VISION[165] WARN: DriverStation not providing alliance color, default to blue");
+            }
+            
+            // this sets our function to use correct bounds to determine if a given tag is on the correct reef
+            return givenId >= 16 && givenId <= 21;
+        } else {
+            return givenId >= 5 && givenId <= 10;
+        }
+    } 
 
     /**
      * Calculates new standard deviations This algorithm is a heuristic that creates dynamic standard
