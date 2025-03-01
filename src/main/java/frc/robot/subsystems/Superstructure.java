@@ -36,13 +36,6 @@ public class Superstructure {
     private boolean m_autonEleToL3Req = false;
     private boolean m_autonEleToL4Req = false;
     private boolean m_autonScoreReq = false;
-    /* reqs: state trans */
-    private boolean m_eleToHPStateTransReq = false;
-    private boolean m_eleToL1Req = false;
-    private boolean m_eleToL2Req = false;
-    private boolean m_eleToL3Req = false;
-    private boolean m_eleToL4Req = false;
-    private boolean m_scoreReq = false;
 
     private boolean m_simIntook = false;
     private boolean m_simScored = false;
@@ -68,22 +61,16 @@ public class Superstructure {
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
     private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
     /* Frsies Transition Trigs */
-    private final Trigger transTrg_eleToHP = new Trigger(() -> m_eleToHPStateTransReq);
-    private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
+   private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
-    private final Trigger transTrg_eleToL1 = new Trigger(() -> m_eleToL1Req);
-    private final Trigger transTrg_eleToL2 = new Trigger(() -> m_eleToL2Req);
-    private final Trigger transTrg_eleToL3 = new Trigger(() -> m_eleToL3Req);
-    private final Trigger transTrg_eleToL4 = new Trigger(() -> m_eleToL4Req);
-    private final Trigger transTrg_scoring = new Trigger(() -> m_scoreReq);
 
     /* states */
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_eleToHP = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_HP);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_slowIntake = new Trigger(stateEventLoop, () -> m_state == State.SLOW_INTAKE);
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.SLOW_INTAKE);
+    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
     public final Trigger stateTrg_eleToL1 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L1);
     public final Trigger stateTrg_eleToL2 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L2);
     public final Trigger stateTrg_eleToL3 = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_L3);
@@ -162,62 +149,27 @@ public class Superstructure {
         /* binded things */
         m_driverRumbler = driverRumbler;
 
-        configureRequests();
         configureStateTransitions();
         configureSimTransitions();
         configureStateActions();
     }
-
-    /* configs */
-    private void configureRequests() {
-        (trg_autonEleToHPReq.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
-        (trg_autonL1Req.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_eleToL1Req = true));
-        (trg_autonL2Req.and(RobotModeTriggers.autonomous()))
-            .onTrue(
-                Commands.sequence(
-                    Commands.runOnce(() -> m_eleToL2Req = true),
-                    Commands.runOnce(() -> System.out.println("ele to l2 req " + m_eleToL2Req))
-                )
-            );
-        (trg_autonL3Req.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_eleToL3Req = true));
-        (trg_autonL4Req.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_eleToL4Req = true));
-        (trg_autonScoreReq.and(RobotModeTriggers.autonomous()))
-            .onTrue(Commands.runOnce(() -> m_scoreReq = true));
-
-        (trg_teleopEleToHPReq.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToHPStateTransReq = true));
-        (trg_teleopL1Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToL1Req = true));
-        (trg_teleopL2Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToL2Req = true));
-        (trg_teleopL3Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToL3Req = true));
-        (trg_teleopL4Req.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_eleToL4Req = true));
-        (trg_teleopScoreReq.and(RobotModeTriggers.teleop()))
-            .onTrue(Commands.runOnce(() -> m_scoreReq = true));
-    }
     
     private void configureStateTransitions() {
-        (stateTrg_idle.and(transTrg_eleToHP))
+        (stateTrg_idle.and(trg_teleopEleToHPReq).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.02).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToHP.debounce(0.04).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
         (stateTrg_intaking.and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_slowIntake.and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
-        (trg_hasCoral.and(transTrg_eleToL1))
+        (trg_hasCoral.and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        (trg_hasCoral.and(transTrg_eleToL2))
+        (trg_hasCoral.and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        (trg_hasCoral.and(transTrg_eleToL3))
+        (trg_hasCoral.and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
-        (trg_hasCoral.and(transTrg_eleToL4))
+        (trg_hasCoral.and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
@@ -228,13 +180,25 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL4.debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_scoreReady.and(transTrg_scoring)) 
+        (stateTrg_scoreReady.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.debounce(0.02))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
+        (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
+        (trg_hasCoral.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.ELE_TO_L1));
+        (trg_hasCoral.and(trg_autonL2Req).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.ELE_TO_L2));
+        (trg_hasCoral.and(trg_autonL3Req).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.ELE_TO_L3));
+        (trg_hasCoral.and(trg_autonL4Req).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.ELE_TO_L4));
+        (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous())) 
+            .onTrue(changeStateCmd(State.SCORING));
 
         (transTrg_toIdleOverrideReq)
             .onTrue(changeStateCmd(State.IDLE));
@@ -284,10 +248,7 @@ public class Superstructure {
 
         stateTrg_eleToHP
             .onTrue(
-                Commands.parallel(
-                    m_ele.toHeight(() -> HP),
-                    Commands.runOnce(() -> m_eleToHPStateTransReq = false)
-                )
+                m_ele.toHeight(() -> HP)
             );
 
         stateTrg_intaking
@@ -303,46 +264,31 @@ public class Superstructure {
         stateTrg_slowIntake
             .onTrue(
                 Commands.sequence(
-                    m_coral.slowIntake(),
-                    Commands.waitUntil(m_coral.trg_botBeamBreak)
+                    Commands.deadline(Commands.waitUntil(m_coral.trg_botBeamBreak),
+                        Commands.repeatingSequence(
+                            m_coral.slowIntake(),
+                            Commands.waitSeconds(1),
+                            m_coral.slowIntakeReversal(),
+                            Commands.waitSeconds(0.05)
+                        )
+                    )
                 )
             );
         
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd());
+            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
-            .onTrue(
-                Commands.parallel(
-                        m_ele.toHeight(() -> L1),
-                        Commands.runOnce(() -> m_eleToL1Req = false)
-                )
-            );
+            .onTrue(m_ele.toHeight(() -> L1));
 
         stateTrg_eleToL2
-            .onTrue(
-                Commands.parallel(
-                        Commands.print("in state trg"),
-                        m_ele.toHeight(() -> L2),
-                        Commands.runOnce(() -> m_eleToL2Req = false)
-                )
-            );
+            .onTrue(m_ele.toHeight(() -> L2));
 
         stateTrg_eleToL3
-            .onTrue(
-                Commands.parallel(
-                        m_ele.toHeight(() -> L3),
-                        Commands.runOnce(() -> m_eleToL3Req = false)
-                )
-            );
+            .onTrue(m_ele.toHeight(() -> L3));
 
         stateTrg_eleToL4
-            .onTrue(
-                Commands.parallel(
-                        m_ele.toHeight(() -> L4),
-                        Commands.runOnce(() -> m_eleToL4Req = false)
-                )
-            );
+            .onTrue(m_ele.toHeight(() -> L4));
 
         stateTrg_scoreReady
             .onTrue(
@@ -355,14 +301,17 @@ public class Superstructure {
                 Commands.sequence(
                     m_coral.score(),
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
-                    Commands.runOnce(() -> m_scoreReq = false),
-                    m_coral.stopCoralMotorCmd()
+                   m_coral.stopCoralMotorCmd(),
+                    Commands.print("in scoring the state")
                 )
             );
 
         stateTrg_scored
             .onTrue(
-                Commands.print("RUMBLE coming to a controller near you soon...")
+                Commands.sequence(
+                    Commands.waitSeconds(0.1),
+                    Commands.print("RUMBLE coming to a controller near you soon...")
+                )
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
@@ -388,15 +337,9 @@ public class Superstructure {
     public Command resetEverything() {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
+            Commands.print("in reset everything"),
             m_ele.toHeight(() -> HOME),
-            driverRumble(0, kRumbleTimeoutSecs),
-
-            Commands.runOnce(() -> m_eleToHPStateTransReq = false),
-            Commands.runOnce(() -> m_eleToL1Req = false),
-            Commands.runOnce(() -> m_eleToL2Req = false),
-            Commands.runOnce(() -> m_eleToL3Req = false),
-            Commands.runOnce(() -> m_eleToL4Req = false),
-            Commands.runOnce(() -> m_scoreReq = false)
+            driverRumble(0, kRumbleTimeoutSecs)
         );
     }
 
@@ -414,10 +357,7 @@ public class Superstructure {
     }
 
     public Command autonEleToL2Req() {
-        return Commands.sequence(
-            Commands.print("autonEleToL2"),
-            Commands.runOnce(() -> m_autonEleToL2Req = true)
-        );
+        return Commands.runOnce(() -> m_autonEleToL2Req = true);
     }
 
     public Command autonEleToL3Req() {
@@ -454,6 +394,10 @@ public class Superstructure {
 
     public Command autonPreloadReq() {
         return (changeStateCmd(State.INTOOK));
+    }
+
+    public Command forceShoot() {
+        return (changeStateCmd(State.SCORING));
     }
 
     public Command autonScoreReq() {
@@ -495,15 +439,11 @@ public class Superstructure {
     }
 
     public void logStateChangeReqs() {
-        log_eleToHPReq.accept(transTrg_eleToHP);
+        // TODO: readd logging back in
+
         log_eleAtSetpt.accept(transTrg_eleNearSetpt);
         log_topSensor.accept(transTrg_topSensor);
         log_botSensor.accept(transTrg_botSensor);
-        log_eleToL1Req.accept(transTrg_eleToL1);
-        log_eleToL2Req.accept(transTrg_eleToL2);
-        log_eleToL3Req.accept(transTrg_eleToL3);
-        log_eleToL4Req.accept(transTrg_eleToL4);
-        log_scoringReq.accept(transTrg_scoring);
 
         log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
 
