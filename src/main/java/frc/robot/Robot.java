@@ -255,19 +255,24 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {}
 
-  @Override
-  public void autonomousInit() {
-    m_autonomousCommand = AutonChooser.autoChooser.selectedCommand();
-
-    if(m_autonomousCommand != null) {
-      Commands.parallel(
-          superstructure.autonPreloadReq().alongWith(Commands.print("at preloadReq calling")),
+  private Command autonCmdBuilder(Command chooserCommand) {
+    return Commands.parallel(
+          superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
           Commands.sequence(
-            Commands.run(()->{}).until(() -> elevator.getIsHomed()),
-            m_autonomousCommand
-            )
-      ).schedule();
+            elevator.externalWaitUntilHomed(),
+            chooserCommand
+          )
+      );
+  }
+
+  @Override
+  public void autonomousInit() {
+    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
+    m_autonomousCommand = autonCmdBuilder(chosen);
+
+    if(m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
     }
   }
 
