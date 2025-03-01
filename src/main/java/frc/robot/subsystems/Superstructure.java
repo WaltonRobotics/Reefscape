@@ -431,13 +431,13 @@ public class Superstructure {
 
     // use this in autonfactory
     public Command autonEleToScoringPosReq(EleHeight height) {
-        if(height == L1) {
+        if (height == L1) {
             return autonEleToL1Req();
-        } else if(height == L2) {
+        } else if (height == L2) {
             return autonEleToL2Req();
-        } else if(height == L3) {
+        } else if (height == L3) {
             return autonEleToL3Req();
-        } else if(height == L4) {
+        } else if (height == L4) {
             return autonEleToL4Req();
         } else {
             return Commands.print("invalid height for auton score req. wanted " + height);
