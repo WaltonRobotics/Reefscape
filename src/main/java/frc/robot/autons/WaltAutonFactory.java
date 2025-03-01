@@ -4,23 +4,31 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
+import frc.robot.autons.TrajsAndLocs.HPReefPair;
+import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
-    private final Superstructure m_superstructure;
     private AutoRoutine m_routine;
+    private final Superstructure m_superstructure;
 
-    public WaltAutonFactory(AutoFactory autoFactory, Superstructure superstructure) {
+    private final Debouncer m_debouncer = new Debouncer(0.5);
+
+    public WaltAutonFactory(
+        AutoFactory autoFactory, 
+        Superstructure superstructure) {
         m_autoFactory = autoFactory;
-        m_superstructure = superstructure;
         m_routine = m_autoFactory.newRoutine("auton");
+        m_superstructure = superstructure;
     }
 
     public AutoRoutine generateAuton(
@@ -35,6 +43,13 @@ public class WaltAutonFactory {
             )
         );
 
+        firstScoreTraj.done()
+            .onTrue(
+                Commands.sequence(
+                    m_superstructure.autonEleToL2Req(),
+                    m_superstructure.autonScoreReq(),
+                )
+            );
         return m_routine;
     }
 }
