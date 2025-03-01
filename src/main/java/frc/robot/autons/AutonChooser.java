@@ -19,9 +19,10 @@ public class AutonChooser {
 
     public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
         autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
+        autoChooser.select("auton");
 
         SmartDashboard.putData("AutonChooser", autoChooser);
-    }
+}
 
 //     // auton factory
 //     private static final Swerve drivetrain = TunerConstants.createDrivetrain();
