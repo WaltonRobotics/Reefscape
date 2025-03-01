@@ -31,6 +31,8 @@ import frc.robot.autons.AutonChooser;
 import frc.robot.autons.SimpleAutons;
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
+
 import frc.robot.autons.WaltAutonFactory;
 // import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
@@ -128,7 +130,9 @@ public class Robot extends TimedRobot {
       superstructure,
       StartingLocs.MID,
       ReefLocs.REEF_H,
-      HPStation.HP_RIGHT);
+      HPStation.HP_RIGHT,
+      REEF_H, // woah should change this not real
+      HPStation.HP_RIGHT); // woah should change this not real
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
