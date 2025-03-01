@@ -53,6 +53,14 @@ public class WaltAutonFactory {
                     firstHPTraj.cmd()
                 )
             );
+            
+        firstHPTraj.done()
+            .onTrue(
+                Commands.sequence(
+                    Commands.waitUntil(m_superstructure.isBotBeamBreamBrokey())
+                )
+            );
+
         return m_routine;
     }
 }
