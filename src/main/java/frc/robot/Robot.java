@@ -7,6 +7,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.Coralk.kCoralSpeed;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -31,6 +33,7 @@ import frc.robot.autons.AutonChooser;
 import frc.robot.autons.SimpleAutons;
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 
 import frc.robot.autons.WaltAutonFactory;
@@ -68,8 +71,11 @@ public class Robot extends TimedRobot {
 
   private Command m_autonomousCommand;
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final SimpleAutons simpleAutons;
   private final WaltAutonFactory waltAutonFactory;
+
+  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_H, REEF_A)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L2, EleHeight.L2));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   private final Trigger trg_processorReq = manipulator.y();
@@ -124,15 +130,13 @@ public class Robot extends TimedRobot {
       trg_shootReq,
       this::manipRumble);
 
-    simpleAutons = new SimpleAutons(autoFactory, superstructure);
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
-      superstructure,
-      StartingLocs.MID,
-      ReefLocs.REEF_H,
-      HPStation.HP_RIGHT,
-      REEF_H, // woah should change this not real
-      HPStation.HP_RIGHT); // woah should change this not real
+      superstructure, 
+      StartingLocs.MID, 
+      reefLocs, 
+      heights, 
+      hpStations);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
