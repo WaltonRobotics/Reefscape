@@ -21,21 +21,33 @@ public class WaltAutonFactory {
     private AutoRoutine m_routine;
     private final Superstructure m_superstructure;
 
+    private StartingLocs m_startLoc;
+    private ReefLocs m_firstScoreLoc;
+    private HPStation m_firstHPLoc;
+
     private final Debouncer m_debouncer = new Debouncer(0.5);
 
     public WaltAutonFactory(
         AutoFactory autoFactory, 
-        Superstructure superstructure) {
+        Superstructure superstructure,
+        StartingLocs startLoc,
+        ReefLocs firstScoreLoc,
+        HPStation firstHPLoc
+    ) {
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton");
         m_superstructure = superstructure;
+
+        m_startLoc = startLoc;
+        m_firstScoreLoc = firstScoreLoc;
+        m_firstHPLoc = firstHPLoc;
     }
 
     public AutoRoutine generateAuton(
 
     ) {
-        AutoTrajectory firstScoreTraj = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID, ReefLocs.REEF_H)));
-        AutoTrajectory firstHPTraj = m_routine.trajectory(ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_RIGHT)));
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_firstScoreLoc)));
+        AutoTrajectory firstHPTraj = m_routine.trajectory(ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_firstScoreLoc, m_firstHPLoc)));
 
         m_routine.active().onTrue(
             Commands.sequence(
