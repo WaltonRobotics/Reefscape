@@ -30,11 +30,8 @@ import frc.robot.autons.AutonChooser;
 // import frc.robot.autons.AutonChooser;
 import frc.robot.autons.SimpleAutons;
 // import frc.robot.autons.AutonChooser.NumCycles;
-import frc.robot.autons.TrajsAndLocs;
+import static frc.robot.autons.TrajsAndLocs.*;
 import frc.robot.autons.WaltAutonFactory;
-import frc.robot.autons.TrajsAndLocs.HPStation;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.autons.TrajsAndLocs.StartingLocs;
 // import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
@@ -125,7 +122,12 @@ public class Robot extends TimedRobot {
       this::manipRumble);
 
     simpleAutons = new SimpleAutons(autoFactory, superstructure);
-    waltAutonFactory = new WaltAutonFactory(autoFactory, superstructure);
+    waltAutonFactory = new WaltAutonFactory(
+      autoFactory, 
+      superstructure,
+      StartingLocs.MID,
+      ReefLocs.REEF_H,
+      HPStation.HP_RIGHT);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
