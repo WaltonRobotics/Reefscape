@@ -400,7 +400,7 @@ public class Superstructure {
         );
     }
 
-    public Trigger isBotBeamBreamBrokey() {
+    public Trigger getBottomBeamBreak() {
         return m_coral.trg_botBeamBreak;
     }
 
