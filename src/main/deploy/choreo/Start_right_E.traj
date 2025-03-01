@@ -14,7 +14,7 @@
  },
  "params":{
   "waypoints":[
-    {"x":{"exp":"start_right.x", "val":7.163252830505371}, "y":{"exp":"start_right.y", "val":2.4640626907348633}, "heading":{"exp":"start_right.heading", "val":3.141592653589793}, "intervals":16, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"start_right.x", "val":7.2489423751831055}, "y":{"exp":"start_right.y", "val":2.417}, "heading":{"exp":"start_right.heading", "val":3.141592653589793}, "intervals":16, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.929815769195557 m", "val":5.929815769195557}, "y":{"exp":"2.021545886993408 m", "val":2.021545886993408}, "heading":{"exp":"2.3339762339788557 rad", "val":2.3339762339788557}, "intervals":12, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"reef_E.x", "val":5.031859874725342}, "y":{"exp":"reef_E.y", "val":2.822006940841675}, "heading":{"exp":"reef_E.heading", "val":2.1120906798548456}, "intervals":40, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
