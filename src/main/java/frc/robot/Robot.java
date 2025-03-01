@@ -152,8 +152,8 @@ public class Robot extends TimedRobot {
     //   )
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
-    manipulator.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
-    manipulator.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
+    driver.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
+    driver.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
@@ -166,8 +166,8 @@ public class Robot extends TimedRobot {
       drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                  .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
+                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
@@ -177,6 +177,8 @@ public class Robot extends TimedRobot {
       //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
       // ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+
+      driver.b().and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
 
       /* 
        * programmer buttons
@@ -294,7 +296,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    superstructure.stateToIdle();
+    superstructure.stateToIdle().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
