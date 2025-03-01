@@ -24,7 +24,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.autons.AutonChooser;
 // import frc.robot.autons.AutonChooser;
 import frc.robot.autons.SimpleAutons;
 // import frc.robot.autons.AutonChooser.NumCycles;
@@ -124,6 +126,8 @@ public class Robot extends TimedRobot {
 
     simpleAutons = new SimpleAutons(autoFactory, superstructure);
     waltAutonFactory = new WaltAutonFactory(autoFactory, superstructure);
+
+    AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
     configureTestBindings();
@@ -250,17 +254,17 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    superstructure.stateToIdle();
-    m_autonomousCommand = waltAutonFactory.generateAuton().cmd(); // TODO: fill out
+    m_autonomousCommand = AutonChooser.autoChooser.selectedCommand();
 
-    if (m_autonomousCommand != null) {
+    if(m_autonomousCommand != null) {
       Commands.parallel(
-      algae.currentSenseHoming(),
-      Commands.sequence(
-        Commands.run(()->{}).until(() -> elevator.getIsHomed()),
-        m_autonomousCommand
-      )
-    ).schedule();
+          superstructure.autonPreloadReq().alongWith(Commands.print("at preloadReq calling")),
+          algae.currentSenseHoming(),
+          Commands.sequence(
+            Commands.run(()->{}).until(() -> elevator.getIsHomed()),
+            m_autonomousCommand
+            )
+      ).schedule();
     }
   }
 
