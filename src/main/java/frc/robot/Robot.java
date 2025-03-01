@@ -94,6 +94,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_teleopScoreReq = driver.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
   public Robot() {
+    DriverStation.silenceJoystickConnectionWarning(true);
     superstructure = new Superstructure(
       coral, 
       elevator, 
