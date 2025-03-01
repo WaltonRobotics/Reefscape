@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -98,6 +99,7 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putData("Elevator Sim", m_mech2d);
 
         setDefaultCommand(currentSenseHoming());
+
     }
 
     private void setCoast(boolean coast) {
@@ -173,6 +175,10 @@ public class Elevator extends SubsystemBase {
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+
+    public Command externalWaitUntilHomed() {
+        return Commands.run(() -> {}).until(() -> m_isHomed);
     }
     
     public boolean getIsHomed() {
