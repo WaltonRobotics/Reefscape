@@ -35,6 +35,7 @@ public class WaltAutonFactory {
 
     ) {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID, ReefLocs.REEF_H)));
+        AutoTrajectory firstHPTraj = m_routine.trajectory(ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_RIGHT)));
 
         m_routine.active().onTrue(
             Commands.sequence(
@@ -48,6 +49,8 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     m_superstructure.autonEleToL2Req(),
                     m_superstructure.autonScoreReq(),
+                    Commands.waitUntil(m_superstructure.isBotBeamBreamBrokey().negate()),
+                    firstHPTraj.cmd()
                 )
             );
         return m_routine;
