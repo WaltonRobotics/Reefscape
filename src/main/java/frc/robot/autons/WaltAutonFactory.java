@@ -4,20 +4,15 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
-
-import frc.robot.autons.TrajsAndLocs.HPReefPair;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
-import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.Elastic;
@@ -86,10 +81,13 @@ public class WaltAutonFactory {
 
     private ArrayList<AutoTrajectory> trajMaker() {
         ArrayList<AutoTrajectory> trajsList = new ArrayList<>();
-
         for (int i = 0; i < m_scoreLocs.size(); i++) {
-            trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)))));
-            trajsList.add(m_routine.trajectory(HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)))));
+            String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+            trajsList.add(m_routine.trajectory(rToH));
+            if (i < m_scoreLocs.size() - 1) {
+                String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
+                trajsList.add(m_routine.trajectory(hToR));
+            }
         }
 
         // for .5 autos.
@@ -109,7 +107,7 @@ public class WaltAutonFactory {
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
-            Commands.waitUntil(m_superstructure.isBotBeamBreamBrokey().negate())
+            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
         );
     }
 
@@ -134,7 +132,7 @@ public class WaltAutonFactory {
         }
 
         if(!notOtherwiseBrokeyChecker()) {
-
+            System.out.println("!!!!!!! BROKE !!!!!!!");
         }
 
         AutoTrajectory firstScoreTraj = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0))));
@@ -158,29 +156,40 @@ public class WaltAutonFactory {
                 )
             );
         
-        for (int i = 0; i < allTheTrajs.size(); i++) {
-            // to HP
-            allTheTrajs.get(i).done()
-                .onTrue(
-                    Commands.sequence(
-                    Commands.waitUntil(m_superstructure.isBotBeamBreamBrokey()),
-                    allTheTrajs.get(i + 1).cmd()
+        int allTrajIdx = 0;
+        while(allTrajIdx < allTheTrajs.size()) {
+            
+            Command trajCmd = Commands.none();
+            if ((allTrajIdx + 1) < allTheTrajs.size()) {
+                trajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
+            }
+
+            allTheTrajs.get(allTrajIdx).done()
+            .onTrue(Commands.sequence(
+               Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+               trajCmd
+            ));
+
+            
+            allTrajIdx++;
+            if (allTrajIdx > allTheTrajs.size() - 1) {
+                break;
+            }
+
+            Command nextTrajCmd = Commands.none();
+            if (allTrajIdx + 1 <allTheTrajs.size() - 1) {
+                nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
+            }
+
+            allTheTrajs.get(allTrajIdx).done().onTrue(
+                Commands.sequence(
+                    scoreCmd(m_heights.get(heightCounter)),
+                    Commands.parallel(
+                        Commands.runOnce(() -> heightCounter++),
+                        nextTrajCmd
+                    )
                 )
             );
-
-            i++;
-
-            // to score
-            allTheTrajs.get(i).done()
-                .onTrue(
-                    Commands.sequence(
-                        scoreCmd(m_heights.get(heightCounter)),
-                        Commands.parallel(
-                            Commands.runOnce(() -> heightCounter++),
-                            allTheTrajs.get(i + 1).cmd()
-                        )
-                    )
-                );
         }
 
         return m_routine;
