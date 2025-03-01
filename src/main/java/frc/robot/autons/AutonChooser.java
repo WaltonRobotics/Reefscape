@@ -1,19 +1,28 @@
-// package frc.robot.autons;
+package frc.robot.autons;
 
-// import java.util.ArrayList;
+import java.util.ArrayList;
 
-// import choreo.auto.AutoFactory;
-// import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-// import frc.robot.autons.TrajsAndLocs.HPStation;
-// import frc.robot.autons.TrajsAndLocs.ReefLocs;
-// import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import choreo.auto.AutoChooser;
+import choreo.auto.AutoFactory;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.autons.TrajsAndLocs.HPStation;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.StartingLocs;
 // import frc.robot.autons.WaltAutonFactory.AutonCycle;
-// import frc.robot.generated.TunerConstants;
-// import frc.robot.subsystems.Elevator.EleHeight;
-// import frc.robot.subsystems.Swerve;
+import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Swerve;
 
-// public class AutonChooser {
+public class AutonChooser {
+    public static final AutoChooser autoChooser = new AutoChooser();
+
+    public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
+        autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
+
+        SmartDashboard.putData("AutonChooser", autoChooser);
+    }
+
 //     // auton factory
 //     private static final Swerve drivetrain = TunerConstants.createDrivetrain();
 //     private static final AutoFactory autoFactory = drivetrain.createAutoFactory();
@@ -191,4 +200,4 @@
 //             return String.valueOf(m_cycles);
 //         }
 //     }
-// }
+}
