@@ -18,7 +18,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
+import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.util.WaltLogger.IntLogger;
 
 import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
@@ -55,9 +57,9 @@ public class Algae extends SubsystemBase {
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_toGround = new Trigger(stateEventLoop, () -> m_state == State.TO_GROUND);
-    public final Trigger stateTrg_ground = new Trigger(stateEventLoop, () -> m_state == State.GROUND);
-    public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
-    public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
+    // public final Trigger stateTrg_ground = new Trigger(stateEventLoop, () -> m_state == State.GROUND);
+    // public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
+    // public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
     public final Trigger stateTrg_home = new Trigger(stateEventLoop, () -> m_state == State.HOME);
     public final Trigger stateTrg_toProcessor = new Trigger(stateEventLoop, () -> m_state == State.TO_PROCESSOR);
     public final Trigger stateTrg_processor = new Trigger(stateEventLoop, () -> m_state == State.PROCESSOR);
@@ -71,13 +73,16 @@ public class Algae extends SubsystemBase {
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_wrist.getVelocity().getValueAsDouble()) < 0.01;
 
+    private IntLogger log_state = WaltLogger.logInt(kLogTab, "Algae State idx");
+    private BooleanLogger log_nearSetPt = WaltLogger.logBoolean(kLogTab, "trgNearSetPt");
+    private BooleanLogger log_groundReq = WaltLogger.logBoolean(kLogTab, "toProcessor");
+
     public Algae(
         Trigger groundReq, 
         Trigger intakeReq, 
         Trigger processorReq, 
         Trigger shootReq, 
-        DoubleConsumer manipRumbler,
-        DoubleSupplier overrideAngle
+        DoubleConsumer manipRumbler
     ) {
         m_wrist.getConfigurator().apply(kWristConfiguration);
         m_intake.getConfigurator().apply(kIntakeConfiguration);
@@ -116,22 +121,38 @@ public class Algae extends SubsystemBase {
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_groundReq))
             .onTrue(Commands.runOnce(() -> m_state = State.TO_GROUND));
-        (stateTrg_toGround.and(trg_nearSetPt))
-            .onTrue(Commands.runOnce(() -> m_state = State.GROUND));
-        (stateTrg_ground.and(trg_intakeReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        (stateTrg_intaking.and(trg_hasAlgae))
-            .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (stateTrg_intook.and(trg_nearSetPt))
+        // (stateTrg_toGround.and(trg_nearSetPt.debounce(0.2)))
+        //     .onTrue(Commands.runOnce(() -> m_state = State.GROUND));
+        // (stateTrg_ground.and(trg_intakeReq))
+        //     .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
+        // (stateTrg_intaking.and(trg_hasAlgae))
+        //     .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
+        (trg_hasAlgae.and(trg_nearSetPt.debounce(0.2)))
             .onTrue(Commands.runOnce(() -> m_state = State.HOME));
         (stateTrg_home.and(trg_processorReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.TO_PROCESSOR));
-        (stateTrg_toProcessor.and(trg_nearSetPt))
+            .onTrue(
+                Commands.parallel(
+                    Commands.runOnce(() -> m_state = State.TO_PROCESSOR),
+                    Commands.runOnce(() -> System.out.println("to processor"))
+                )
+            );
+        (stateTrg_toProcessor.and(trg_nearSetPt.debounce(0.2)))
             .onTrue(Commands.runOnce(() -> m_state = State.PROCESSOR));
         (stateTrg_processor.and(trg_shootReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.SHOOTING));
+            .onTrue(
+                Commands.parallel(
+                    Commands.runOnce(() -> m_state = State.SHOOTING),
+                    Commands.runOnce(() -> System.out.println("shooting"))
+                )  
+            );
         (stateTrg_shooting.and(trg_hasAlgae.negate()))
-            .onTrue(Commands.runOnce(() -> m_state = State.SHOT));
+            .onTrue(
+                Commands.parallel(
+                    Commands.runOnce(() -> m_state = State.SHOT),
+                    Commands.runOnce(() -> System.out.println("shot"))
+                )  
+            );
+           
         (stateTrg_shot)
             .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
     }
@@ -140,17 +161,12 @@ public class Algae extends SubsystemBase {
         (stateTrg_idle)
             .onTrue(Commands.runOnce(() -> resetEverything()));
         (stateTrg_toGround)
-            .onTrue(toAngle(WristPos.GROUND));
-        (stateTrg_ground)
             .onTrue(
                 Commands.parallel(
-                    /* TODO: write a wristSpring method. for now, that doesn't exist. */
-                    manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                    toAngle(WristPos.GROUND),
+                    intake()
                 )
             );
-        (stateTrg_intaking)
-            .onTrue(intake());
-        // intook has no actions so far
         (stateTrg_home)
             .onTrue(toAngle(WristPos.HOME)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
         (stateTrg_toProcessor)
@@ -272,21 +288,20 @@ public class Algae extends SubsystemBase {
     
         setWristCoast(nte_wristIsCoast.getBoolean(false));
 
+        log_state.accept(m_state.idx);
         log_desiredAngleDegs.accept(m_desiredWristRotations);
+        log_nearSetPt.accept(trg_nearSetPt);
+        log_groundReq.accept(stateTrg_toProcessor);
     }
 
     public enum State {
         IDLE(0),
         TO_GROUND(1),
-        GROUND(2),
-        INTAKING(3),
-        INTOOK(4),
-        HOME(5),
-        TO_PROCESSOR(6),
-        PROCESSOR(7),
-        SHOOTING(8),
-        SHOT(9),
-        OVERRIDE(10);
+        HOME(2),
+        TO_PROCESSOR(3),
+        PROCESSOR(4),
+        SHOOTING(5),
+        SHOT(6);
 
         public int idx;
         private State(int index) {
