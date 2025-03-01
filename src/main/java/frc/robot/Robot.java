@@ -78,15 +78,17 @@ public class Robot extends TimedRobot {
   private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
-  private final Trigger trg_processorReq = manipulator.y();
-  private final Trigger trg_shootReq = manipulator.rightTrigger();
   
   private final Trigger trg_toL1 = manipulator.povDown();
   private final Trigger trg_toL2 = manipulator.povRight();
   private final Trigger trg_toL3 = manipulator.povLeft();
   private final Trigger trg_toL4 = manipulator.povUp();
 
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger(); 
+
   private final Trigger trg_algaeIntake = manipulator.a();
+  private final Trigger trg_processorReq = manipulator.y();
+  private final Trigger trg_shootReq = manipulator.rightTrigger();
 
   private boolean numCycleChange = false;
   private boolean startingPositionChange = false;
@@ -98,8 +100,6 @@ public class Robot extends TimedRobot {
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = manipulator.leftBumper();
-
-  private final Trigger trg_teleopScoreReq = driver.rightTrigger(); // IMPORTANT: CHANGE BACK TO DRIVER BUTTON
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -114,21 +114,21 @@ public class Robot extends TimedRobot {
       trg_teleopScoreReq,
       trg_forceIdleState,
       this::driverRumble);
+      
+      algae = new Algae(
+        trg_algaeIntake, 
+        trg_processorReq, 
+        trg_shootReq, 
+        this::manipRumble
+      );
 
     // algae = new Algae(
-    //   manipulator.a(), 
-    //   manipulator.leftTrigger(), 
-    //   manipulator.y(), 
-    //   manipulator.rightTrigger(), 
-    //   manipulator.back(), 
-    //   (intensity) -> manipRumble(intensity), 
-    //   () -> manipulator.getRightY());
-
-    algae = new Algae(
-      trg_algaeIntake, 
-      trg_processorReq,
-      trg_shootReq,
-      this::manipRumble);
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   new Trigger(() -> false), 
+    //   null, 
+    //   () -> 0);
 
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
@@ -153,7 +153,7 @@ public class Robot extends TimedRobot {
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
     manipulator.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
-    // driver.x().whileTrue(algae.testVoltageControl(() -> driver.getLeftY()));
+    manipulator.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
@@ -190,6 +190,8 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+      driver.povUp().onTrue(coral.fingerInCmd());
+      driver.povDown().onTrue(coral.fingerOutCmd());
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
