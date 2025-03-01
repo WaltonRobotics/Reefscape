@@ -133,7 +133,7 @@ public class Algae extends SubsystemBase {
                     Commands.runOnce(() -> System.out.println("to processor"))
                 )
             );
-        (stateTrg_toProcessor.and(trg_nearSetPt.debounce(0.2)))
+        (stateTrg_toProcessor.debounce(0.02).and(trg_nearSetPt))
             .onTrue(Commands.runOnce(() -> m_state = State.PROCESSOR));
         (stateTrg_processor.and(trg_shootReq))
             .onTrue(
