@@ -29,6 +29,7 @@ import frc.robot.autons.WaltAutonFactory;
 // import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Finger;
 import frc.robot.subsystems.Algae;
@@ -81,8 +82,10 @@ public class Robot extends TimedRobot {
   private final Trigger trg_shootReq = manipulator.rightTrigger();
  
   // override button
+  private final Trigger trg_driverDanger = driver.b();
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = manipulator.leftBumper();
+  private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -97,6 +100,7 @@ public class Robot extends TimedRobot {
       trg_toL4,
       trg_teleopScoreReq,
       trg_forceIdleState,
+      trg_inOverride,
       this::driverRumble);
       
       algae = new Algae(
@@ -154,8 +158,6 @@ public class Robot extends TimedRobot {
       // ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      driver.b().and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
-
       manipulator.x().onTrue(algae.toIdleCmd());
 
       /* 
@@ -170,8 +172,19 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-      driver.povUp().onTrue(finger.fingerInCmd());
-      driver.povDown().onTrue(finger.fingerOutCmd());
+      manipulator.back().whileTrue(superstructure.algaeRemoval());
+
+      trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
+     
+      trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
+      trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
+      trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
+      trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
+      trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+
+      manipulator.x().and(trg_toL2).onTrue(elevator.toHeightAlgae(() -> AlgaeHeight.L2));
+      manipulator.x().and(trg_toL3).onTrue(elevator.toHeightAlgae(() -> AlgaeHeight.L3));
+
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
@@ -249,7 +262,6 @@ public class Robot extends TimedRobot {
     return Commands.parallel(
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
-          finger.currentSenseHoming(),
           Commands.sequence(
             elevator.externalWaitUntilHomed(),
             chooserCommand
@@ -275,8 +287,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    superstructure.stateToIdle().schedule();
+    superstructure.forceIdle().schedule();
     algae.toIdleCmd().schedule();
+    finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
