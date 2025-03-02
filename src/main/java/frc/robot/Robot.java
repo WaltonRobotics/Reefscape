@@ -5,32 +5,21 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.Coralk.kCoralSpeed;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
-// import frc.robot.autons.AutonChooser;
-import frc.robot.autons.SimpleAutons;
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
@@ -40,8 +29,8 @@ import frc.robot.autons.WaltAutonFactory;
 // import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Algae.WristPos;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Finger;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
@@ -65,6 +54,7 @@ public class Robot extends TimedRobot {
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
+  private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
   private final Algae algae;
   private final Superstructure superstructure;
@@ -89,14 +79,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_algaeIntake = manipulator.a();
   private final Trigger trg_processorReq = manipulator.y();
   private final Trigger trg_shootReq = manipulator.rightTrigger();
-
-  private boolean numCycleChange = false;
-  private boolean startingPositionChange = false;
-  private boolean firstScoringPositionChange = false;
-  private boolean startingHeightChange = false;
-  private boolean initialHPStationChange = false;
  
-  
   // override button
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_forceIdleState = manipulator.leftBumper();
@@ -122,14 +105,6 @@ public class Robot extends TimedRobot {
         this::manipRumble
       );
 
-    // algae = new Algae(
-    //   new Trigger(() -> false), 
-    //   new Trigger(() -> false), 
-    //   new Trigger(() -> false), 
-    //   new Trigger(() -> false), 
-    //   null, 
-    //   () -> 0);
-
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
       superstructure, 
@@ -153,7 +128,7 @@ public class Robot extends TimedRobot {
     // ).onFalse(algae.toAngle(WristPos.HOME));
   
     driver.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
-    driver.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
+    // driver.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
 
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
@@ -180,6 +155,8 @@ public class Robot extends TimedRobot {
 
       driver.b().and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
 
+      manipulator.x().onTrue(algae.toIdleCmd());
+
       /* 
        * programmer buttons
        * make sure u comment out when not in use
@@ -192,8 +169,8 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-      driver.povUp().onTrue(coral.fingerInCmd());
-      driver.povDown().onTrue(coral.fingerOutCmd());
+      driver.povUp().onTrue(finger.fingerInCmd());
+      driver.povDown().onTrue(finger.fingerOutCmd());
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
@@ -271,6 +248,7 @@ public class Robot extends TimedRobot {
     return Commands.parallel(
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
+          finger.currentSenseHoming(),
           Commands.sequence(
             elevator.externalWaitUntilHomed(),
             chooserCommand
@@ -297,6 +275,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     superstructure.stateToIdle().schedule();
+    algae.toIdleCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
