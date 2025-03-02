@@ -59,7 +59,7 @@ public class Coral extends SubsystemBase {
         return runOnce(() -> setCoralMotorAction(voltage));
     }
 
-    private void stopCoralMotor() {
+    public void stopCoralMotor() {
         m_motor.setControl(m_neutralOut);
     }
 
@@ -84,6 +84,10 @@ public class Coral extends SubsystemBase {
 
     public Command score() {
         return setCoralMotorActionCmd(m_scoreSpeed);
+    }
+
+    public void runWheelsAlgaeRemoval() {
+        setCoralMotorAction(-m_scoreSpeed);
     }
 
     @Override
