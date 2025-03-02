@@ -99,7 +99,6 @@ public class Robot extends TimedRobot {
       trg_toL3,
       trg_toL4,
       trg_teleopScoreReq,
-      trg_forceIdleState,
       trg_inOverride,
       this::driverRumble);
       
@@ -158,7 +157,12 @@ public class Robot extends TimedRobot {
       // ));
       driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      manipulator.x().onTrue(algae.toIdleCmd());
+      manipulator.x().onTrue(
+        Commands.parallel(
+          algae.toIdleCmd(),
+          superstructure.forceIdle()
+        )
+      );
 
       /* 
        * programmer buttons
