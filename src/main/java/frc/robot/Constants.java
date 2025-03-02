@@ -49,6 +49,13 @@ public class Constants {
         public static final int kWristGearRatio = 40;   //TODO: check if still accurate
         public static final int kWristSensorToMechanismRatio = kWristGearRatio;
         public static final int kAngleTolerance = 3; //DUMMY VALUE
+
+        public static final double kWristMMVelo = 1;
+        public static final double kWristMMAccel = 25;
+        public static final double kWristMMJerk = 300;
+        public static final double kWristMMVeloSlow = 0.65;
+        public static final double kWristMMAccelSlow = 10;
+
         private static final CurrentLimitsConfigs kWristCurrentLimitConfigs = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(20)
             .withSupplyCurrentLimit(20)
@@ -56,9 +63,9 @@ public class Constants {
         private static final FeedbackConfigs kWristFeedbackConfigs = new FeedbackConfigs()
             .withSensorToMechanismRatio(kWristSensorToMechanismRatio);
         private static final MotionMagicConfigs kWristMagicConfigs = new MotionMagicConfigs()
-            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(1))
-            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(25))
-            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(300));
+            .withMotionMagicCruiseVelocity(RotationsPerSecond.of(kWristMMVelo))
+            .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(kWristMMAccel))
+            .withMotionMagicJerk(RotationsPerSecondPerSecond.per(Second).of(kWristMMJerk));
         private static final Slot0Configs kWristSlot0Configs = new Slot0Configs()
             .withKS(0.25)
             .withKV(4)
@@ -132,9 +139,10 @@ public class Constants {
             // finger things
         public static final int kFingerMotorCANID = 31;
 
-        public static final double kMaxAngleRotations = -0.4;
-        public static final double kMinAngleRotations = -0.75;
-        public static final double kParallelToGroundRotations = -0.6;
+        public static final double kMaxAngleRotations = 0;
+        public static final double kMinAngleRotations = 0.08;
+        public static final double kParallelToGroundRotations = 0.17;
+        public static final double kDefaultPos = 0.37;
 
         private static final MotorOutputConfigs kFingerMotorOutputConfig = new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)
@@ -153,16 +161,21 @@ public class Constants {
             .withKS(1.5)
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign);
         private static final ExternalFeedbackConfigs kFingerExternalFeedbackConfig = new ExternalFeedbackConfigs()
-            .withAbsoluteSensorDiscontinuityPoint(0)
-            .withExternalFeedbackSensorSource(ExternalFeedbackSensorSourceValue.PulseWidth)
+            .withExternalFeedbackSensorSource(ExternalFeedbackSensorSourceValue.Quadrature)
             .withQuadratureEdgesPerRotation(4096)
             .withRotorToSensorRatio(1)
             .withSensorPhase(SensorPhaseValue.Opposed)
             .withSensorToMechanismRatio(2);        
-        private static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchConfig = new SoftwareLimitSwitchConfigs()
+        public static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitEnable(true)
             .withForwardSoftLimitThreshold(kMaxAngleRotations)
             .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(kMinAngleRotations);
+
+        public static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchWithSoftLimitDisableConfig = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitEnable(false)
+            .withForwardSoftLimitThreshold(kMaxAngleRotations)
+            .withReverseSoftLimitEnable(false)
             .withReverseSoftLimitThreshold(kMinAngleRotations);
 
         private static final CommutationConfigs kFingerCommutationConfig = new CommutationConfigs()
@@ -176,12 +189,12 @@ public class Constants {
             .withClosedLoopGeneral(kFingerClosedLoopGeneralConfig)
             .withSlot0(kFingerSlot0Config)
             .withExternalFeedback(kFingerExternalFeedbackConfig)
-            .withSoftwareLimitSwitch(kFingerSoftwareLimitSwitchConfig)
+            .withSoftwareLimitSwitch(kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig)
             .withCommutation(kFingerCommutationConfig);
         }
     }
 
-    public class ElevatorK{
+    public class ElevatorK {
         public static final String kLogTab = "EleSubsys";
 
         public static final int kFrontCANID = 10;
