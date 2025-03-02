@@ -87,7 +87,8 @@ public class Robot extends TimedRobot {
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
     superstructure = new Superstructure(
-      coral, 
+      coral,
+      finger,
       elevator, 
       trg_intakeReq,
       trg_toL1,
