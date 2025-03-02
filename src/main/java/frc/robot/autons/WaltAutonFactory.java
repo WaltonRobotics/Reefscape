@@ -52,7 +52,7 @@ public class WaltAutonFactory {
         ArrayList<HPStation> hpStations
     ) {
         m_autoFactory = autoFactory;
-        m_routine = m_autoFactory.newRoutine("auton");
+        m_routine = m_autoFactory.newRoutine("auton"); 
         m_superstructure = superstructure;
 
         m_startLoc = startLoc;
@@ -168,9 +168,9 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    Commands.print("b4 checking if bottom beam breaks"),
-                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    Commands.print("Bottom beam break has broken"),
+                    Commands.print("b4 checking if top beam breaks"),
+                    Commands.waitUntil(m_superstructure.getTopBeamBreak()),
+                    Commands.print("top beam break has broken"),
                     trajCmd,
                     Commands.print("traj command sent")
                 ));
