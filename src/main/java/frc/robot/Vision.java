@@ -4,23 +4,15 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.TrajectoryUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import frc.robot.Constants.FieldK;
-import frc.robot.Constants.FieldK.Reef.ReefHeight;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -30,8 +22,6 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
-
-import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
 
@@ -75,74 +65,74 @@ public class Vision {
         }
     }
 
-    // /**
-    //  * @param currentPosition Current robot position
-    //  * @param rightReef Negative left reef, positive right reef
-    //  * @param swerveDriveKinematics This method generates a trajectory - generation requires kinematics
-    //  * @return Returns empty optional if a trajectory could not be generated for some reason, otherwise returns Trajectory
-    //  */
-    // public Optional<Trajectory> generateAlignmentTrajectory(Pose2d currentPosition, Vboolean rightReef, SwerveDriveKinematics swerveDriveKinematics) {
-    //     Optional<PhotonTrackedTarget> bestReefTagOptional = getBestReefTag();
-    //     if (bestReefTagOptional.isEmpty()) {
-    //         return Optional.empty();
-    //     }
-    //     PhotonTrackedTarget bestReefTag = bestReefTagOptional.get();
-    //     int tagId = bestReefTag.getFiducialId();
-    //     ReefLocs correctReefLocation;
-    //     // map nearest tag and left vs right to correct reef branch
-    //     if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().equals(Alliance.Blue)) {
-    //         // blue
-    //         switch (tagId) {
-    //             case 16:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-    //                 break;
-    //             case 17:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-    //                 break;
-    //             case 18:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-    //                 break;
-    //             case 19:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-    //                 break;
-    //             case 20:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-    //                 break;
-    //             case 21:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-    //                 break;
-    //             default:
-    //                 System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
-    //                 return Optional.empty();
-    //         }
-    //     } else {
-    //         // red
-    //         switch (tagId) {
-    //             case 5:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-    //                 break;
-    //             case 6:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-    //                 break;
-    //             case 7:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-    //                 break;
-    //             case 8:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-    //                 break;
-    //             case 9:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-    //                 break;
-    //             case 10:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-    //                 break;
-    //             default:
-    //                 System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
-    //                 return Optional.empty();
-    //         }
-    //     }
-    //     Pose2d destinationPose = FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation);
-    // }
+    /**
+     * @param rightReef Negative left reef, positive right reef
+     * @return Returns empty optional if an ideal robot pose could not be found, returns a Pose2d of where to go if it can be found
+     */
+    public Optional<Pose2d> getReefScorePose(boolean rightReef) {
+        Optional<PhotonTrackedTarget> bestReefTagOptional = getBestReefTag();
+        // if there is no good reef april tag available, we can't get a pose
+        if (bestReefTagOptional.isEmpty()) {
+            System.out.println("no reef tag available");
+            return Optional.empty();
+        }
+        PhotonTrackedTarget bestReefTag = bestReefTagOptional.get();
+        int tagId = bestReefTag.getFiducialId();
+        ReefLocs correctReefLocation;
+        // map nearest tag and left vs right to correct reef branch
+        if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().equals(Alliance.Blue)) {
+            // blue
+            switch (tagId) {
+                case 16:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+                    break;
+                case 17:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+                    break;
+                case 18:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+                    break;
+                case 19:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+                    break;
+                case 20:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+                    break;
+                case 21:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+                    break;
+                default:
+                    System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
+                    return Optional.empty();
+            }
+        } else {
+            // red
+            switch (tagId) {
+                case 5:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+                    break;
+                case 6:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+                    break;
+                case 7:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+                    break;
+                case 8:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+                    break;
+                case 9:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+                    break;
+                case 10:
+                    correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+                    break;
+                default:
+                    System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
+                    return Optional.empty();
+            }
+        }
+        return Optional.of(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation));
+    }
 
     /**
      * This code selects the best reef tag.
@@ -153,11 +143,13 @@ public class Vision {
     public Optional<PhotonTrackedTarget> getBestReefTag() {
         // if no latest result is available, then we can't find the best reef tag
         if (m_latestPhotonPipelineResultOptional.isEmpty()) {
+            System.out.println("no latest photon pipeline result available");
             return Optional.empty();
         }
         PhotonPipelineResult latestPhotonPipelineResult = m_latestPhotonPipelineResultOptional.get();
         // if there are no april tags available, then we can't find the best reef tag
         if (!latestPhotonPipelineResult.hasTargets()) {
+            System.out.println("no april tags present");
             return Optional.empty();
         }
 

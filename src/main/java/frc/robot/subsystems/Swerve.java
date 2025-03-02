@@ -2,16 +2,16 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -21,13 +21,20 @@ import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -36,6 +43,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
@@ -63,6 +71,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathXController = new PIDController(10, 0, 10);
     private final PIDController m_pathYController = new PIDController(10, 0, 10);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
+
+    // TODO: stolen from above people, also needs tuned
+    private final PIDController m_alignmentXController = new PIDController(10, 0, 10);
+    private final PIDController m_alignemntYController = new PIDController(10, 0, 10);
+    private final TrapezoidProfile.Constraints m_thetaPIDProfileConstraints = new TrapezoidProfile.Constraints(5, 5);
+    private final ProfiledPIDController m_alignmentThetaController = new ProfiledPIDController(7, 0, 7, m_thetaPIDProfileConstraints);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -265,7 +279,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return run(() -> this.setControl(requestSupplier.get()));
     }
 
-     public void followPath(SwerveSample sample) {
+    public void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
         var pose = getState().Pose;
@@ -287,6 +301,50 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
 
+    }
+
+    /**
+     * @param trajectoryOptionalSupplier Likely comes from {@link generateTrajectory}
+     * @return Note that it won't automatically stop itself afterwards, caller should handle that
+     */
+    public Command followTrajectory(Optional<Trajectory> trajOptional) {
+        if (trajOptional.isEmpty()) {
+            System.out.println("trajectory not available");
+            return Commands.none();
+        }
+        Trajectory traj = trajOptional.get();
+        SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds();
+        SwerveDriveKinematics kinematics = getKinematics();
+        Consumer<SwerveModuleState[]> swerveModuleStatesConsumer = swerveModuleStates -> {
+            applyRequest(() -> drive.withSpeeds(kinematics.toChassisSpeeds(swerveModuleStates)));
+        };
+
+        SwerveControllerCommand followTrajCmd = new SwerveControllerCommand(
+            traj,
+            () -> getState().Pose,
+            kinematics,
+            m_alignmentXController,
+            m_alignemntYController,
+            m_alignmentThetaController,
+            swerveModuleStatesConsumer,
+            this);
+
+        return followTrajCmd.andThen(Commands.print("commands printing"));
+    }
+
+    public Optional<Trajectory> generateTrajectory(Optional<Pose2d> destinationPoseOptional) {
+        if (destinationPoseOptional.isEmpty()) {
+            System.out.println("destination pose not available");
+            return Optional.empty();
+        }
+        Pose2d destinationPose = destinationPoseOptional.get();
+        TrajectoryConfig trajConfig = new TrajectoryConfig(5, 3);
+        SwerveDriveState curState = getState();
+        trajConfig.setKinematics(getKinematics());
+        trajConfig.setStartVelocity(Math.sqrt(Math.pow(curState.Speeds.vxMetersPerSecond, 2) + Math.pow(curState.Speeds.vyMetersPerSecond, 2)));
+        trajConfig.setEndVelocity(0);
+
+        return Optional.of(TrajectoryGenerator.generateTrajectory(curState.Pose, new ArrayList<Translation2d>(), destinationPose, trajConfig));
     }
 
     /**
