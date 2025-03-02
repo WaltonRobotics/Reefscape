@@ -155,7 +155,10 @@ public class Robot extends TimedRobot {
 
     driver.leftBumper().onTrue(new DeferredCommand(() -> drivetrain.followTrajectory(
         drivetrain.generateTrajectory(eleForwardsCam.getReefScorePose(false))
-    ), Set.of()));
+    ), Set.of(drivetrain)));
+    driver.rightBumper().onTrue(new DeferredCommand(() -> drivetrain.followTrajectory(
+        drivetrain.generateTrajectory(eleForwardsCam.getReefScorePose(true))
+    ), Set.of(drivetrain)));
 
       drivetrain.registerTelemetry(logger::telemeterize);
   }
@@ -169,7 +172,7 @@ public class Robot extends TimedRobot {
   private void manipRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			manipulator.getHID().setRumble(RumbleType.kBothRumble, intensity);
-		}
+		} 
 	}
 
   @Override
@@ -214,7 +217,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = null; // TODO: fill out
+    m_autonomousCommand = drivetrain.testAuton();
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
