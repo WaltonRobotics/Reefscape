@@ -130,8 +130,11 @@ public class Elevator extends SubsystemBase {
     /* 
      * use for scoring
      */
-    
-    public Command toHeight(Supplier<EleHeight> height) {
+    public Command toHeightCoral(Supplier<EleHeight> height) {
+        return toHeight(height.get().rotations);
+    }
+
+    public Command toHeightAlgae(Supplier<AlgaeHeight> height) {
         return toHeight(height.get().rotations);
     }
 
@@ -215,8 +218,8 @@ public class Elevator extends SubsystemBase {
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.1),
-        L1(4.419922),
-        L2(5.5),
+        L1(5.5),
+        L2(5.866455),
         L3(8.5),
         L4(12.8),
         CLIMB_UP(1.5), // this height will move the robot up for climb
@@ -231,13 +234,13 @@ public class Elevator extends SubsystemBase {
     }
 
     public enum AlgaeHeight {
-        L2(Units.inchesToMeters(34.782)),
-        L3(Units.inchesToMeters(49.235));
+        L2(Units.inchesToMeters(6.660645)),
+        L3(Units.inchesToMeters(9.438721));
 
-        public final double m_heightMeters;
+        public final double rotations;
 
-        private AlgaeHeight(double heightMeters){
-            m_heightMeters = heightMeters;
+        private AlgaeHeight(double rotations){
+            this.rotations = rotations;
         }
     }
 }
