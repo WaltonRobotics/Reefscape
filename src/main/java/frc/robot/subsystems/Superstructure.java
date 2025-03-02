@@ -58,6 +58,7 @@ public class Superstructure {
     private final Trigger trg_teleopScoreReq;
     /* teleopTrgs: overrides */
     private final Trigger transTrg_toIdleOverrideReq;
+    private final Trigger trg_inOverride;
     /* sim transitions */
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
     private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
@@ -127,6 +128,7 @@ public class Superstructure {
         Trigger L4Req,
         Trigger scoreReq,
         Trigger toIdleOverride,
+        Trigger inOverride,
         DoubleConsumer driverRumbler
     ) {
         m_coral = coral;
@@ -143,6 +145,7 @@ public class Superstructure {
         /* overrides */
         transTrg_toIdleOverrideReq = toIdleOverride;
         trg_hasCoral = m_coral.trg_botBeamBreak.or(m_coral.trg_topBeamBreak);
+        trg_inOverride = inOverride;
 
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
@@ -158,36 +161,36 @@ public class Superstructure {
     }
     
     private void configureStateTransitions() {
-        (stateTrg_idle.and(trg_teleopEleToHPReq).and(RobotModeTriggers.teleop()))
+        (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.04).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
-        (stateTrg_intaking.and(transTrg_topSensor))
+        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
-        (stateTrg_slowIntake.and(transTrg_botSensor))
+        (stateTrg_slowIntake.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
-        (trg_hasCoral.and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        (trg_hasCoral.and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        (trg_hasCoral.and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
-        (trg_hasCoral.and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
-        (stateTrg_eleToL1.debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL2.debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL2.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL3.debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL3.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL4.debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL4.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_scoreReady.and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
+        (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
-        (stateTrg_scoring.and(transTrg_botSensor.negate())) 
+        (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
-        (stateTrg_scored.debounce(0.02))
+        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.02))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
@@ -251,7 +254,7 @@ public class Superstructure {
 
         stateTrg_eleToHP
             .onTrue(
-                m_ele.toHeight(() -> HP)
+                m_ele.toHeightCoral(() -> HP)
             );
 
         stateTrg_intaking
@@ -282,16 +285,16 @@ public class Superstructure {
             .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
-            .onTrue(m_ele.toHeight(() -> L1));
+            .onTrue(m_ele.toHeightCoral(() -> L1));
 
         stateTrg_eleToL2
-            .onTrue(m_ele.toHeight(() -> L2));
+            .onTrue(m_ele.toHeightCoral(() -> L2));
 
         stateTrg_eleToL3
-            .onTrue(m_ele.toHeight(() -> L3));
+            .onTrue(m_ele.toHeightCoral(() -> L3));
 
         stateTrg_eleToL4
-            .onTrue(m_ele.toHeight(() -> L4));
+            .onTrue(m_ele.toHeightCoral(() -> L4));
 
         stateTrg_scoreReady
             .onTrue(
@@ -331,18 +334,64 @@ public class Superstructure {
         //     .onTrue(null);
     }
 
-    /* methods that Actually Do Things */
-
-    public Command stateToIdle() {
-        return changeStateCmd(State.IDLE);
+    /* state change methods */
+    private Command changeStateCmd(State newState) {
+        return Commands.runOnce(() -> {
+            System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
+            m_state = newState;
+            log_stateIdx.accept(m_state.idx);
+            log_stateName.accept(m_state.name);
+        });
     }
 
+    public Command forceIdle() {
+        return (changeStateCmd(State.IDLE));
+    }
+
+    public Command forcetoHP() {
+        return (changeStateCmd(State.ELE_TO_HP));
+    }
+    public Command forceStateToIntake() {
+        return (changeStateCmd(State.INTAKING));
+    }
+   public Command forceShoot() {
+        return m_coral.score();
+    }
+    public Command changeStateToScored() {
+        return (changeStateCmd(State.SCORED));
+    }
+    public Command forceL1() {
+        return (changeStateCmd(State.ELE_TO_L1));
+    }
+    public Command forceL2() {
+        return (changeStateCmd(State.ELE_TO_L2));
+    }
+    public Command forceL3() {
+        return (changeStateCmd(State.ELE_TO_L3));
+    }
+    public Command forceL4() {
+        return (changeStateCmd(State.ELE_TO_L4));
+    }
+
+    /* methods that Actually Do Things */
     public Command resetEverything() {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
             Commands.print("in reset everything"),
-            m_ele.toHeight(() -> HOME),
+            m_ele.toHeightCoral(() -> HOME),
             driverRumble(0, kRumbleTimeoutSecs)
+        );
+    }
+
+    public Command algaeRemoval() {
+        return Commands.startEnd(
+            () -> {
+                m_finger.fingerOut();
+                m_coral.runWheelsAlgaeRemoval();
+            }, () -> {
+                m_finger.fingerIn();
+                m_coral.stopCoralMotor();
+            }
         );
     }
 
@@ -386,21 +435,8 @@ public class Superstructure {
         }
     }
 
-    private Command changeStateCmd(State newState) {
-        return Commands.runOnce(() -> {
-            System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
-            m_state = newState;
-            log_stateIdx.accept(m_state.idx);
-            log_stateName.accept(m_state.name);
-        });
-    }
-
     public Command autonPreloadReq() {
         return (changeStateCmd(State.INTOOK));
-    }
-
-    public Command forceShoot() {
-        return (changeStateCmd(State.SCORING));
     }
 
     public Command autonScoreReq() {
