@@ -248,6 +248,9 @@ public class Algae extends SubsystemBase {
 
     private Command changeStateCmd(State newState) {
         return Commands.runOnce(() -> {
+            if (newState == m_state) {
+                return;
+            }
             System.out.println("[ALGAE] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
             m_state = newState;
             log_stateIdx.accept(m_state.idx);

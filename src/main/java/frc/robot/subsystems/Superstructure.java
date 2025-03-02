@@ -57,7 +57,6 @@ public class Superstructure {
     private final Trigger trg_teleopL4Req; 
     private final Trigger trg_teleopScoreReq;
     /* teleopTrgs: overrides */
-    private final Trigger transTrg_toIdleOverrideReq;
     private final Trigger trg_inOverride;
     /* sim transitions */
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
@@ -127,7 +126,6 @@ public class Superstructure {
         Trigger L3Req,
         Trigger L4Req,
         Trigger scoreReq,
-        Trigger toIdleOverride,
         Trigger inOverride,
         DoubleConsumer driverRumbler
     ) {
@@ -143,7 +141,6 @@ public class Superstructure {
         trg_teleopL4Req = L4Req;
         trg_teleopScoreReq = scoreReq;
         /* overrides */
-        transTrg_toIdleOverrideReq = toIdleOverride;
         trg_hasCoral = m_coral.trg_botBeamBreak.or(m_coral.trg_topBeamBreak);
         trg_inOverride = inOverride;
 
@@ -205,9 +202,6 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous())) 
             .onTrue(changeStateCmd(State.SCORING));
-
-        (transTrg_toIdleOverrideReq)
-            .onTrue(changeStateCmd(State.IDLE));
     }
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
@@ -337,6 +331,9 @@ public class Superstructure {
     /* state change methods */
     private Command changeStateCmd(State newState) {
         return Commands.runOnce(() -> {
+            if (newState == m_state) {
+                return;
+            }
             System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
             m_state = newState;
             log_stateIdx.accept(m_state.idx);
@@ -487,8 +484,6 @@ public class Superstructure {
         log_eleAtSetpt.accept(transTrg_eleNearSetpt);
         log_topSensor.accept(transTrg_topSensor);
         log_botSensor.accept(transTrg_botSensor);
-
-        log_toIdleOverride.accept(transTrg_toIdleOverrideReq);
 
         log_hasCoral.accept(trg_hasCoral);
     }
