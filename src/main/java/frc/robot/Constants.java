@@ -86,7 +86,7 @@ public class Constants {
             public static final double faceToZoneLineMeters = Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
             public static final Pose2d[] centerFaces = new Pose2d[6]; // starting face is the one parallel-ly facing the starting line and then moves counterclockwise
             public static final Map<ReefLocs, Map<ReefHeight, Pose3d>> branchPose3ds = new HashMap<>(); // Map reef locations to Pose3ds. uses branchPositions behind the scenes
-            private static final List<Map<ReefHeight, Pose3d>> branchPositions = new ArrayList<>();
+            public static final List<Map<ReefHeight, Pose3d>> branchPositions = new ArrayList<>();
             public static final Map<ReefLocs, Pose2d> reefLocationToIdealRobotPoseMap = new HashMap<ReefLocs, Pose2d>();
             
             static {

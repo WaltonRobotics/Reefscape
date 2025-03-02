@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
@@ -10,6 +11,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -27,6 +29,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -304,7 +307,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     /**
-     * @param trajectoryOptionalSupplier Likely comes from {@link generateTrajectory}
+     * @param trajectoryOptional Likely comes from {@link generateTrajectory}
      * @return Note that it won't automatically stop itself afterwards, caller should handle that
      */
     public Command followTrajectory(Optional<Trajectory> trajOptional) {
@@ -329,9 +332,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             swerveModuleStatesConsumer,
             this);
 
-        return followTrajCmd.andThen(Commands.print("commands printing"));
+        return Commands.print("begin followTrajCmd").andThen(followTrajCmd).andThen(Commands.print("commands printing"));
     }
 
+    /**
+     * Generates a trajectory from the robots current pose to the given pose
+     * @param destinationPoseOptional
+     * @return
+     */
     public Optional<Trajectory> generateTrajectory(Optional<Pose2d> destinationPoseOptional) {
         if (destinationPoseOptional.isEmpty()) {
             System.out.println("destination pose not available");
@@ -484,4 +492,37 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
+    public Command testAuton() {
+        TrajectoryConfig trajConfig = new TrajectoryConfig(5, 10);
+        trajConfig.setKinematics(getKinematics());
+
+        Trajectory traj = TrajectoryGenerator.generateTrajectory(
+            new Pose2d(),
+            List.of(),
+            new Pose2d(3, 0, Rotation2d.fromDegrees(180)),
+            trajConfig
+        );
+
+        ProfiledPIDController thetaController = new ProfiledPIDController(7, 0, 0, 
+            new TrapezoidProfile.Constraints(3, 2));
+        thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds()
+            .withDriveRequestType(DriveRequestType.Velocity);
+        
+        SwerveControllerCommand swerveControllerCmd = new SwerveControllerCommand(
+            traj,
+            () -> getState().Pose,
+            getKinematics(),
+            new PIDController(7, 0, 7),
+            new PIDController(7, 0, 7),
+            thetaController,
+            swerveModuleStates -> drive.withSpeeds(getKinematics().toChassisSpeeds(swerveModuleStates)),
+            this);
+
+        return Commands.sequence(
+            Commands.runOnce(() -> resetPose(traj.getInitialPose())),
+            swerveControllerCmd,
+            applyRequest(() -> drive.withSpeeds(new ChassisSpeeds(0, 0, 0)))
+        );
+    }
 }

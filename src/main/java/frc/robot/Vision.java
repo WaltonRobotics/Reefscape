@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Constants.FieldK;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.util.AllianceFlipUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -131,7 +132,8 @@ public class Vision {
                     return Optional.empty();
             }
         }
-        return Optional.of(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation));
+        return AllianceFlipUtil.shouldFlip() ? Optional.of(AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)))
+            : Optional.of(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation));
     }
 
     /**
