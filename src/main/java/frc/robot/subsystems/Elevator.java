@@ -144,7 +144,6 @@ public class Elevator extends SubsystemBase {
                 m_desiredHeight = rotations;
                 // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
                 m_MMVRequest = m_MMVRequest.withPosition(rotations);
-                System.out.println("going to " + m_MMVRequest.Position);
                 log_elevatorDesiredPosition.accept(rotations);
                 m_frontMotor.setControl(m_MMVRequest);
             }
@@ -234,8 +233,8 @@ public class Elevator extends SubsystemBase {
     }
 
     public enum AlgaeHeight {
-        L2(Units.inchesToMeters(6.660645)),
-        L3(Units.inchesToMeters(9.438721));
+        L2(6.660645),
+        L3(9.438721);
 
         public final double rotations;
 
