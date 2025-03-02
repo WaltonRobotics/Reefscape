@@ -19,10 +19,13 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -75,6 +78,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
     private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
+
+    StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("actualRobotPose", Pose2d.struct).publish();
+    StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -280,6 +288,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 .withWheelForceFeedforwardsX(sample.moduleForcesX())
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
+
+        log_choreoActualRobotPose.accept(pose);
+        log_choreoDesiredRobotPose.accept(sample.getPose());
     }
 
     /**
@@ -385,6 +396,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        log_choreoActualRobotPose.accept(getState().Pose);
     }
 
     private void startSimThread() {
