@@ -344,6 +344,10 @@ public class Superstructure {
         });
     }
 
+    public Command stateChangeToAlgaeRemovalTime() {
+        return (changeStateCmd(State.ALGAE_GO_BYE));
+    }
+
     public Command forceIdle() {
         return (changeStateCmd(State.IDLE));
     }
@@ -519,10 +523,12 @@ public class Superstructure {
         SCORING(7, "scoring"),
         SCORED(8, "scored"),
 
-        ELE_TO_CLIMB(9, "ele to climb"),
-        CLIMB_READY(10, "climb ready"),
-        CLIMBING(11, "climbing"),
-        CLIMBED(12, "climbed");
+        ALGAE_GO_BYE(9, "algae removal"),
+
+        ELE_TO_CLIMB(10, "ele to climb"),
+        CLIMB_READY(11, "climb ready"),
+        CLIMBING(12, "climbing"),
+        CLIMBED(13, "climbed");
 
         public final double idx;
         public final String name;
