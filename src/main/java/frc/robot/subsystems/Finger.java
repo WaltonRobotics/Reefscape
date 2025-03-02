@@ -25,8 +25,8 @@ public class Finger extends SubsystemBase {
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
 
 
-    private BooleanSupplier m_currentSpike = () -> m_motor.getStatorCurrent().getValueAsDouble() > 3.0; 
-    private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_motor.getVelocity().getValueAsDouble()) < 0.01;
+    private BooleanSupplier m_currentSpike = () -> m_motor.getStatorCurrent().getValueAsDouble() > 5.0; 
+    private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_motor.getVelocity().getValueAsDouble()) < 0.005;
 
     private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
@@ -34,10 +34,12 @@ public class Finger extends SubsystemBase {
     private boolean m_isHomed = false;
 
     public Finger() {
-        m_motor.getConfigurator().apply(kFingerMotorTalonFXSConfig);
+        m_motor.getConfigurator().apply(kTalonFXSConfig);
+
+        setDefaultCommand(currentSenseHoming());
     }
 
-    private void fingerOut() {
+    public void fingerOut() {
         m_motor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
     }
 
@@ -45,8 +47,8 @@ public class Finger extends SubsystemBase {
         return runOnce(this::fingerOut);
     }
 
-    private void fingerIn() {
-        m_motor.setControl(m_PosVoltReq.withPosition(kMaxAngleRotations));
+    public void fingerIn() {
+        m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
     }
 
     public Command fingerInCmd() {
@@ -66,20 +68,10 @@ public class Finger extends SubsystemBase {
         m_motor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    public Command algaeIntake() {
-        return startEnd(
-            () -> {
-                fingerOut();
-            }, () -> {
-                fingerIn();
-            }
-        );
-    }
-
     public Command currentSenseHoming() {
         Runnable init = () -> {
-            m_motor.getConfigurator().apply(kFingerSoftwareLimitSwitchWithSoftLimitDisableConfig);
-            m_motor.setControl(m_fingerZeroingVoltageCtrlReq.withOutput(-1));
+            m_motor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
+            m_motor.setControl(m_fingerZeroingVoltageCtrlReq.withOutput(7));
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
@@ -87,8 +79,9 @@ public class Finger extends SubsystemBase {
             m_motor.setControl(m_fingerZeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
-            m_motor.getConfigurator().apply(kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig);
+            m_motor.getConfigurator().apply(kSoftLimitEnabledConfig);
             System.out.println("Zeroed Finger!!!");
+            m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
         };
 
         BooleanSupplier isFinished = () ->
