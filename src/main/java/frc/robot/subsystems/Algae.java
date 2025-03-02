@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -21,6 +23,7 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.util.WaltLogger.IntLogger;
+import frc.util.WaltLogger.StringLogger;
 
 import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
@@ -43,10 +46,15 @@ public class Algae extends SubsystemBase {
     private double m_desiredWristRotations = 0;
     private final DoubleLogger log_desiredAngleDegs = WaltLogger.logDouble(kLogTab, "desiredAngleDegs");
 
-    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0).withEnableFOC(true);
+    private DynamicMotionMagicVoltage m_MMVRequest = new DynamicMotionMagicVoltage(
+        0, kWristMMVelo, kWristMMAccel, kWristMMJerk
+    ).withEnableFOC(true);
 
     private State m_state;
     public final EventLoop stateEventLoop = new EventLoop();
+
+    private final Debouncer hasAlgaeDebouncer = new Debouncer(0.5, DebounceType.kRising);
+    private final Debouncer nearSetptDebouncer = new Debouncer(0.5, DebounceType.kRising);
 
     private final Trigger trg_groundReq;
     private final Trigger trg_nearSetPt = new Trigger(() -> nearSetpoint());
@@ -55,10 +63,7 @@ public class Algae extends SubsystemBase {
     private final Trigger trg_shootReq;
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
-    public final Trigger stateTrg_toGround = new Trigger(stateEventLoop, () -> m_state == State.TO_GROUND);
-    // public final Trigger stateTrg_ground = new Trigger(stateEventLoop, () -> m_state == State.GROUND);
-    // public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
-    // public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
+    public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_home = new Trigger(stateEventLoop, () -> m_state == State.HOME);
     public final Trigger stateTrg_toProcessor = new Trigger(stateEventLoop, () -> m_state == State.TO_PROCESSOR);
     public final Trigger stateTrg_processor = new Trigger(stateEventLoop, () -> m_state == State.PROCESSOR);
@@ -72,9 +77,12 @@ public class Algae extends SubsystemBase {
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_wrist.getVelocity().getValueAsDouble()) < 0.01;
 
-    private IntLogger log_state = WaltLogger.logInt(kLogTab, "Algae State idx");
+    private IntLogger log_stateIdx = WaltLogger.logInt(kLogTab, "Algae State idx");
+    private StringLogger log_stateName = WaltLogger.logString(kLogTab, "Algae State name");
     private BooleanLogger log_nearSetPt = WaltLogger.logBoolean(kLogTab, "trgNearSetPt");
+    private BooleanLogger log_hasAlgae = WaltLogger.logBoolean(kLogTab, "trgHasAlgae");
     private BooleanLogger log_groundReq = WaltLogger.logBoolean(kLogTab, "toProcessor");
+    private DoubleLogger log_actualAngle = WaltLogger.logDouble(kLogTab, "Algae angle");
 
     public Algae(
         Trigger groundReq, 
@@ -117,47 +125,25 @@ public class Algae extends SubsystemBase {
 
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_groundReq))
-            .onTrue(Commands.runOnce(() -> m_state = State.TO_GROUND));
-        // (stateTrg_toGround.and(trg_nearSetPt.debounce(0.2)))
-        //     .onTrue(Commands.runOnce(() -> m_state = State.GROUND));
-        // (stateTrg_ground.and(trg_intakeReq))
-        //     .onTrue(Commands.runOnce(() -> m_state = State.INTAKING));
-        // (stateTrg_intaking.and(trg_hasAlgae))
-        //     .onTrue(Commands.runOnce(() -> m_state = State.INTOOK));
-        (trg_hasAlgae.and(trg_nearSetPt.debounce(0.2)))
-            .onTrue(Commands.runOnce(() -> m_state = State.HOME));
+            .onTrue(changeStateCmd(State.INTAKING));
+        (stateTrg_intaking.and(trg_hasAlgae))
+            .onTrue(changeStateCmd(State.HOME));
         (stateTrg_home.and(trg_processorReq))
-            .onTrue(
-                Commands.parallel(
-                    Commands.runOnce(() -> m_state = State.TO_PROCESSOR),
-                    Commands.runOnce(() -> System.out.println("to processor"))
-                )
-            );
-        (stateTrg_toProcessor.debounce(0.02).and(trg_nearSetPt))
-            .onTrue(Commands.runOnce(() -> m_state = State.PROCESSOR));
+            .onTrue(changeStateCmd(State.TO_PROCESSOR));
+        (stateTrg_toProcessor.and(trg_nearSetPt))
+            .onTrue(changeStateCmd(State.PROCESSOR));
         (stateTrg_processor.and(trg_shootReq))
-            .onTrue(
-                Commands.parallel(
-                    Commands.runOnce(() -> m_state = State.SHOOTING),
-                    Commands.runOnce(() -> System.out.println("shooting"))
-                )  
-            );
+            .onTrue(changeStateCmd(State.SHOOTING));
         (stateTrg_shooting.and(trg_hasAlgae.negate()))
-            .onTrue(
-                Commands.parallel(
-                    Commands.runOnce(() -> m_state = State.SHOT),
-                    Commands.runOnce(() -> System.out.println("shot"))
-                )  
-            );
-           
-        (stateTrg_shot)
-            .onTrue(Commands.runOnce(() -> m_state = State.IDLE));
+            .onTrue(changeStateCmd(State.SHOT));
+        (stateTrg_shot.debounce(0.05))
+            .onTrue(changeStateCmd(State.HOME));
     }
 
     private void configureStateActions() {
         (stateTrg_idle)
-            .onTrue(Commands.runOnce(() -> resetEverything()));
-        (stateTrg_toGround)
+            .onTrue(resetEverything());
+        (stateTrg_intaking)
             .onTrue(
                 Commands.parallel(
                     toAngle(WristPos.GROUND),
@@ -165,15 +151,16 @@ public class Algae extends SubsystemBase {
                 )
             );
         (stateTrg_home)
-            .onTrue(toAngle(WristPos.HOME)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
+            .onTrue(toAngle(WristPos.HOME, true)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
         (stateTrg_toProcessor)
             .onTrue(toAngle(WristPos.PROCESSOR));
         (stateTrg_processor)
-            .onTrue(manipRumble(kRumbleIntensity, kRumbleTimeoutSecs));
+            .onTrue(
+                // manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                Commands.print("rumble coming to u soon guys TRUST")
+                );
         (stateTrg_shooting)
             .onTrue(shoot());
-        (stateTrg_shot)
-            .onTrue(toAngle(WristPos.HOME)); 
     }
 
     private Command manipRumble(double intensity, double secs) {
@@ -195,15 +182,25 @@ public class Algae extends SubsystemBase {
     }
 
     public Command toAngle(WristPos wristPos) {
-        return toAngle(wristPos.angleDegs);
+        return toAngle(wristPos, false);
     }
 
-    public Command toAngle(double angleDegs) {
+    public Command toAngle(WristPos wristPos, boolean slowPls) {
+        return toAngle(wristPos.angleDegs, slowPls);
+    }
+
+    public Command toAngle(double angleDegs, boolean slowPls) {
         return runOnce(
             () -> {
                 m_desiredWristRotations = angleDegs;
-                m_MMEVRequest = m_MMEVRequest.withPosition(m_desiredWristRotations);
-                m_wrist.setControl(m_MMEVRequest);}
+                m_MMVRequest = m_MMVRequest.withPosition(m_desiredWristRotations);
+                var localRequest = m_MMVRequest;
+                if (slowPls) {
+                    localRequest = localRequest
+                        .withVelocity(kWristMMVeloSlow)
+                        .withAcceleration(kWristMMAccelSlow);
+                }
+                m_wrist.setControl(localRequest);}
         ).until(() -> nearSetpoint());
     }
 
@@ -222,7 +219,7 @@ public class Algae extends SubsystemBase {
     }
 
     public boolean nearSetpoint(double tolerancePulleyRotations) {
-        double diff = m_MMEVRequest.Position - m_wrist.getPosition().getValueAsDouble();
+        double diff = m_MMVRequest.Position - m_wrist.getPosition().getValueAsDouble();
         return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
@@ -273,7 +270,20 @@ public class Algae extends SubsystemBase {
     }
 
     public boolean isAlgaeThere() {
-        return m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent;
+        return hasAlgaeDebouncer.calculate(m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent);
+    }
+
+    private Command changeStateCmd(State newState) {
+        return Commands.runOnce(() -> {
+            System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
+            m_state = newState;
+            log_stateIdx.accept(m_state.idx);
+            log_stateName.accept(m_state.name);
+        });
+    }
+
+    public Command toIdleCmd() {
+        return changeStateCmd(State.IDLE);
     }
 
     @Override
@@ -282,24 +292,32 @@ public class Algae extends SubsystemBase {
     
         setWristCoast(nte_wristIsCoast.getBoolean(false));
 
-        log_state.accept(m_state.idx);
+        log_stateIdx.accept(m_state.idx);
+        log_stateName.accept(m_state.name);
+
         log_desiredAngleDegs.accept(m_desiredWristRotations);
-        log_nearSetPt.accept(trg_nearSetPt);
+        log_nearSetPt.accept(nearSetpoint());
         log_groundReq.accept(stateTrg_toProcessor);
+        log_hasAlgae.accept(trg_hasAlgae);
+
+        log_actualAngle.accept(m_wrist.getPosition().getValueAsDouble());
+        log_desiredAngleDegs.accept(m_desiredWristRotations);
     }
 
     public enum State {
-        IDLE(0),
-        TO_GROUND(1),
-        HOME(2),
-        TO_PROCESSOR(3),
-        PROCESSOR(4),
-        SHOOTING(5),
-        SHOT(6);
+        IDLE(0, "Idle"),
+        INTAKING(1, "Intaking"),
+        HOME(2, "Home"),
+        TO_PROCESSOR(3, "To processor"),
+        PROCESSOR(4, "Processor"),
+        SHOOTING(5, "Shooting"),
+        SHOT(6, "Shot");
 
         public int idx;
-        private State(int index) {
+        public String name;
+        private State(int index, String name) {
             idx = index;
+            this.name = name;
         }
     }
 
