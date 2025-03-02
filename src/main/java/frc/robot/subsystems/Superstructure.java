@@ -23,6 +23,7 @@ import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
     private final Coral m_coral;
+    private final Finger m_finger;
     private final Elevator m_ele;
 
     public final EventLoop stateEventLoop = new EventLoop();
@@ -117,6 +118,7 @@ public class Superstructure {
 
     public Superstructure(
         Coral coral,
+        Finger finger,
         Elevator ele,
         Trigger eleToHPReq,
         Trigger L1Req,
@@ -128,6 +130,7 @@ public class Superstructure {
         DoubleConsumer driverRumbler
     ) {
         m_coral = coral;
+        m_finger = finger;
         m_ele = ele;
 
         /* teleop trigs */
