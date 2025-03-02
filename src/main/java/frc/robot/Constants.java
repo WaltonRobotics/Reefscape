@@ -133,10 +133,10 @@ public class Constants {
 
         public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
             .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+    }
 
-
-        public class FingerK {
-            // finger things
+    public final class FingerK {
+        // finger things
         public static final int kFingerMotorCANID = 31;
 
         public static final double kMaxAngleRotations = 0;
@@ -191,10 +191,9 @@ public class Constants {
             .withExternalFeedback(kFingerExternalFeedbackConfig)
             .withSoftwareLimitSwitch(kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig)
             .withCommutation(kFingerCommutationConfig);
-        }
     }
 
-    public class ElevatorK {
+    public final class ElevatorK {
         public static final String kLogTab = "EleSubsys";
 
         public static final int kFrontCANID = 10;
