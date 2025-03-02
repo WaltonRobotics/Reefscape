@@ -172,7 +172,7 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-      manipulator.back().whileTrue(superstructure.algaeRemoval());
+      manipulator.start().whileTrue(superstructure.algaeRemoval());
 
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
@@ -182,8 +182,18 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
       trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
 
-      manipulator.x().and(trg_toL2).onTrue(elevator.toHeightAlgae(() -> AlgaeHeight.L2));
-      manipulator.x().and(trg_toL3).onTrue(elevator.toHeightAlgae(() -> AlgaeHeight.L3));
+      manipulator.leftTrigger().and(trg_toL2).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.stateChangeToAlgaeRemovalTime()
+        )
+      );
+      manipulator.leftTrigger().and(trg_toL3).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.stateChangeToAlgaeRemovalTime()
+        )
+      );
 
 
       drivetrain.registerTelemetry(logger::telemeterize);
