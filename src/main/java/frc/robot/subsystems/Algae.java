@@ -54,21 +54,14 @@ public class Algae extends SubsystemBase {
     public final EventLoop stateEventLoop = new EventLoop();
 
     private final Debouncer hasAlgaeDebouncer = new Debouncer(0.5, DebounceType.kRising);
-    private final Debouncer nearSetptDebouncer = new Debouncer(0.5, DebounceType.kRising);
 
     private final Trigger trg_groundReq;
-    private final Trigger trg_nearSetPt = new Trigger(() -> nearSetpoint());
     private final Trigger trg_hasAlgae = new Trigger(() -> isAlgaeThere());
     private final Trigger trg_processorReq;
-    private final Trigger trg_shootReq;
 
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_home = new Trigger(stateEventLoop, () -> m_state == State.HOME);
-    public final Trigger stateTrg_toProcessor = new Trigger(stateEventLoop, () -> m_state == State.TO_PROCESSOR);
-    public final Trigger stateTrg_processor = new Trigger(stateEventLoop, () -> m_state == State.PROCESSOR);
-    public final Trigger stateTrg_shooting = new Trigger(stateEventLoop, () -> m_state == State.SHOOTING);
-    public final Trigger stateTrg_shot = new Trigger(stateEventLoop, () -> m_state == State.SHOT);
 
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
@@ -79,9 +72,7 @@ public class Algae extends SubsystemBase {
 
     private IntLogger log_stateIdx = WaltLogger.logInt(kLogTab, "Algae State idx");
     private StringLogger log_stateName = WaltLogger.logString(kLogTab, "Algae State name");
-    private BooleanLogger log_nearSetPt = WaltLogger.logBoolean(kLogTab, "trgNearSetPt");
     private BooleanLogger log_hasAlgae = WaltLogger.logBoolean(kLogTab, "trgHasAlgae");
-    private BooleanLogger log_groundReq = WaltLogger.logBoolean(kLogTab, "toProcessor");
     private DoubleLogger log_actualAngle = WaltLogger.logDouble(kLogTab, "Algae angle");
 
     public Algae(
@@ -102,7 +93,6 @@ public class Algae extends SubsystemBase {
 
         trg_groundReq = groundReq;
         trg_processorReq = processorReq;
-        trg_shootReq = shootReq;
 
         m_manipRumbler = manipRumbler;
 
@@ -129,15 +119,7 @@ public class Algae extends SubsystemBase {
         (stateTrg_intaking.and(trg_hasAlgae))
             .onTrue(changeStateCmd(State.HOME));
         (stateTrg_home.and(trg_processorReq))
-            .onTrue(changeStateCmd(State.TO_PROCESSOR));
-        (stateTrg_toProcessor.and(trg_nearSetPt))
-            .onTrue(changeStateCmd(State.PROCESSOR));
-        (stateTrg_processor.and(trg_shootReq))
-            .onTrue(changeStateCmd(State.SHOOTING));
-        (stateTrg_shooting.and(trg_hasAlgae.negate()))
-            .onTrue(changeStateCmd(State.SHOT));
-        (stateTrg_shot.debounce(0.05))
-            .onTrue(changeStateCmd(State.HOME));
+            .onTrue(changeStateCmd(State.IDLE));
     }
 
     private void configureStateActions() {
@@ -152,15 +134,6 @@ public class Algae extends SubsystemBase {
             );
         (stateTrg_home)
             .onTrue(toAngle(WristPos.HOME, true)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
-        (stateTrg_toProcessor)
-            .onTrue(toAngle(WristPos.PROCESSOR));
-        (stateTrg_processor)
-            .onTrue(
-                // manipRumble(kRumbleIntensity, kRumbleTimeoutSecs)
-                Commands.print("rumble coming to u soon guys TRUST")
-                );
-        (stateTrg_shooting)
-            .onTrue(shoot());
     }
 
     private Command manipRumble(double intensity, double secs) {
@@ -296,8 +269,6 @@ public class Algae extends SubsystemBase {
         log_stateName.accept(m_state.name);
 
         log_desiredAngleDegs.accept(m_desiredWristRotations);
-        log_nearSetPt.accept(nearSetpoint());
-        log_groundReq.accept(stateTrg_toProcessor);
         log_hasAlgae.accept(trg_hasAlgae);
 
         log_actualAngle.accept(m_wrist.getPosition().getValueAsDouble());
@@ -307,11 +278,7 @@ public class Algae extends SubsystemBase {
     public enum State {
         IDLE(0, "Idle"),
         INTAKING(1, "Intaking"),
-        HOME(2, "Home"),
-        TO_PROCESSOR(3, "To processor"),
-        PROCESSOR(4, "Processor"),
-        SHOOTING(5, "Shooting"),
-        SHOT(6, "Shot");
+        HOME(2, "Home");
 
         public int idx;
         public String name;
@@ -323,8 +290,8 @@ public class Algae extends SubsystemBase {
 
     public enum WristPos {
         HOME(0),
-        GROUND(0.28),
-        PROCESSOR(0.14);
+        GROUND(0.28);
+        // PROCESSOR(0.14);
 
         public double angleDegs;
         private WristPos(double angle) {
