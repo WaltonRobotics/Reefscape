@@ -140,57 +140,55 @@ public class Constants {
         public static final int kFingerMotorCANID = 31;
 
         public static final double kMaxAngleRotations = 0;
-        public static final double kMinAngleRotations = 0.08;
-        public static final double kParallelToGroundRotations = 0.17;
-        public static final double kDefaultPos = 0.37;
+        public static final double kMinAngleRotations = -1;
+        public static final double kParallelToGroundRotations = -0.64;
+        public static final double kDefaultPos = -0.075;
 
-        private static final MotorOutputConfigs kFingerMotorOutputConfig = new MotorOutputConfigs()
+        private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)
             .withNeutralMode(NeutralModeValue.Brake);
 
-        private static final CurrentLimitsConfigs kFingerCurrentLimitConfig = new CurrentLimitsConfigs()
+        private static final CurrentLimitsConfigs kCurrentLimitConfig = new CurrentLimitsConfigs()
             .withStatorCurrentLimit(5)
             .withStatorCurrentLimitEnable(true)
             .withSupplyCurrentLimit(3)
             .withSupplyCurrentLimitEnable(true);        
-        private static final ClosedLoopGeneralConfigs kFingerClosedLoopGeneralConfig = new ClosedLoopGeneralConfigs()
+        private static final ClosedLoopGeneralConfigs kClosedLoopGeneralConfig = new ClosedLoopGeneralConfigs()
             .withContinuousWrap(false);
 
-        private static final Slot0Configs kFingerSlot0Config = new Slot0Configs()
+        private static final Slot0Configs kSlot0Config = new Slot0Configs()
             .withKP(100)
-            .withKS(1.5)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseVelocitySign);
-        private static final ExternalFeedbackConfigs kFingerExternalFeedbackConfig = new ExternalFeedbackConfigs()
+            .withKS(1)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+        private static final ExternalFeedbackConfigs kExternalFeedbackConfig = new ExternalFeedbackConfigs()
             .withExternalFeedbackSensorSource(ExternalFeedbackSensorSourceValue.Quadrature)
             .withQuadratureEdgesPerRotation(4096)
             .withRotorToSensorRatio(1)
             .withSensorPhase(SensorPhaseValue.Opposed)
             .withSensorToMechanismRatio(2);        
-        public static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig = new SoftwareLimitSwitchConfigs()
+        public static final SoftwareLimitSwitchConfigs kSoftLimitEnabledConfig = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitEnable(true)
             .withForwardSoftLimitThreshold(kMaxAngleRotations)
             .withReverseSoftLimitEnable(true)
             .withReverseSoftLimitThreshold(kMinAngleRotations);
 
-        public static final SoftwareLimitSwitchConfigs kFingerSoftwareLimitSwitchWithSoftLimitDisableConfig = new SoftwareLimitSwitchConfigs()
+        public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitEnable(false)
-            .withForwardSoftLimitThreshold(kMaxAngleRotations)
-            .withReverseSoftLimitEnable(false)
-            .withReverseSoftLimitThreshold(kMinAngleRotations);
+            .withReverseSoftLimitEnable(false);
 
-        private static final CommutationConfigs kFingerCommutationConfig = new CommutationConfigs()
+        private static final CommutationConfigs kCommutationConfig = new CommutationConfigs()
             .withMotorArrangement(MotorArrangementValue.Brushed_DC)
             .withBrushedMotorWiring(BrushedMotorWiringValue.Leads_A_and_B);
         
 
-        public static final TalonFXSConfiguration kFingerMotorTalonFXSConfig = new TalonFXSConfiguration()
-            .withMotorOutput(kFingerMotorOutputConfig)
-            .withCurrentLimits(kFingerCurrentLimitConfig)
-            .withClosedLoopGeneral(kFingerClosedLoopGeneralConfig)
-            .withSlot0(kFingerSlot0Config)
-            .withExternalFeedback(kFingerExternalFeedbackConfig)
-            .withSoftwareLimitSwitch(kFingerSoftwareLimitSwitchWithSoftLimitEnabledConfig)
-            .withCommutation(kFingerCommutationConfig);
+        public static final TalonFXSConfiguration kTalonFXSConfig = new TalonFXSConfiguration()
+            .withMotorOutput(kMotorOutputConfig)
+            .withCurrentLimits(kCurrentLimitConfig)
+            .withClosedLoopGeneral(kClosedLoopGeneralConfig)
+            .withSlot0(kSlot0Config)
+            .withExternalFeedback(kExternalFeedbackConfig)
+            .withSoftwareLimitSwitch(kSoftLimitEnabledConfig)
+            .withCommutation(kCommutationConfig);
     }
 
     public final class ElevatorK {
