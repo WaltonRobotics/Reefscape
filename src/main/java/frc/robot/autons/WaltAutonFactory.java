@@ -151,33 +151,40 @@ public class WaltAutonFactory {
                     scoreCmd(m_heights.get(heightCounter)),
                     Commands.parallel(
                         Commands.runOnce(() -> heightCounter++),
-                        allTheTrajs.get(0).cmd()
+                        allTheTrajs.get(0).cmd() //takes you to the HP
                     )
                 )
             );
         
         int allTrajIdx = 0;
-        while(allTrajIdx < allTheTrajs.size()) {
+        while (allTrajIdx < allTheTrajs.size()) {
+            System.out.println("in the while loop");
             
             Command trajCmd = Commands.none();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
+                System.out.println("to reef cycle called");
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
             allTheTrajs.get(allTrajIdx).done()
-            .onTrue(Commands.sequence(
-               Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-               trajCmd
-            ));
+                .onTrue(Commands.sequence(
+                    Commands.print("b4 checking if bottom beam breaks"),
+                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    Commands.print("Bottom beam break has broken"),
+                    trajCmd,
+                    Commands.print("traj command sent")
+                ));
 
-            
             allTrajIdx++;
+            
             if (allTrajIdx > allTheTrajs.size() - 1) {
+                System.out.println("sad times");
                 break;
             }
 
             Command nextTrajCmd = Commands.none();
-            if (allTrajIdx + 1 <allTheTrajs.size() - 1) {
+            if (allTrajIdx + 1 < allTheTrajs.size()) {
+                System.out.println("to hp called");
                 nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
@@ -186,7 +193,8 @@ public class WaltAutonFactory {
                     scoreCmd(m_heights.get(heightCounter)),
                     Commands.parallel(
                         Commands.runOnce(() -> heightCounter++),
-                        nextTrajCmd
+                        nextTrajCmd,
+                        Commands.print("next traj command sent")
                     )
                 )
             );
