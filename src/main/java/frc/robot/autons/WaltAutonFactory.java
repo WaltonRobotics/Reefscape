@@ -150,8 +150,9 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     scoreCmd(m_heights.get(heightCounter)),
                     Commands.parallel(
-                        Commands.runOnce(() -> heightCounter++),
-                        allTheTrajs.get(0).cmd() //takes you to the HP
+                        Commands.runOnce(() -> heightCounter++)
+                        // benton said to forget the hp station
+                        // allTheTrajs.get(0).cmd() //takes you to the HP
                     )
                 )
             );
