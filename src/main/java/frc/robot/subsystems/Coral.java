@@ -22,7 +22,7 @@ public class Coral extends SubsystemBase {
     private NeutralOut m_neutralOut = new NeutralOut();
 
     private final double m_slowIntakeSpeed = 12 * .25;
-    private final double m_scoreSpeed = 5;
+    private final double m_scoreSpeed = 4.5;
 
     // true when beam break broken
     public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
