@@ -209,7 +209,7 @@ public class Constants {
 
         public static final Mass kCarriageMassKg = Pounds.of(5);
         public static final Distance kMinimumHeight = Feet.of(0);
-        public static final Distance kMaximumHeight = Meters.of(8);
+        public static final Distance kMaximumHeight = Meters.of(15);
         public static final Distance kStartingHeightMeters = Feet.of(0);
         public static final double kTolerancePulleyRotations = 0.1;
         //SensorToMechanismRatio = kGearRatio

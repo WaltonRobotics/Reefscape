@@ -83,6 +83,11 @@ public class Robot extends TimedRobot {
   private final Trigger trg_algaeIntake = manipulator.a();
   private final Trigger trg_processorReq = manipulator.y();
   private final Trigger trg_shootReq = manipulator.rightTrigger();
+  private final Trigger trg_deAlgae = manipulator.start();
+
+  // simulation
+  private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
+  private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
  
   // override button
   private final Trigger trg_driverDanger = driver.b();
@@ -91,7 +96,8 @@ public class Robot extends TimedRobot {
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
-    superstructure = new Superstructure(
+    if (Robot.isReal()) {
+      superstructure = new Superstructure(
       coral,
       finger,
       elevator, 
@@ -101,8 +107,28 @@ public class Robot extends TimedRobot {
       trg_toL3,
       trg_toL4,
       trg_teleopScoreReq,
+      trg_deAlgae,
       trg_inOverride,
+      new Trigger(() -> false),
+      new Trigger(() -> false),
       this::driverRumble);
+    } else {
+      superstructure = new Superstructure(
+      coral,
+      finger,
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_deAlgae,
+      trg_inOverride,
+      trg_simTopBeamBreak,
+      trg_simBotBeamBreak,
+      this::driverRumble);
+    }
       
       algae = new Algae(
         trg_algaeIntake, 
@@ -178,7 +204,6 @@ public class Robot extends TimedRobot {
       //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-      manipulator.start().whileTrue(superstructure.algaeRemoval());
 
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
