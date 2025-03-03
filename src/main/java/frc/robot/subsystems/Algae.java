@@ -108,7 +108,7 @@ public class Algae extends SubsystemBase {
     // i deffo feel like this isnt all that i need to reset but i cant think of anything else rn
     private Command resetEverything() {
         return Commands.parallel(
-            toAngle(WristPos.HOME),
+            toAngle(WristPos.IDLE),
             Commands.runOnce(() -> setWheelAction(0))
         );
     }
@@ -133,7 +133,7 @@ public class Algae extends SubsystemBase {
                 )
             );
         (stateTrg_home)
-            .onTrue(toAngle(WristPos.HOME, true)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
+            .onTrue(toAngle(WristPos.STORE, true)); // TODO: make this automatic w/ wristSpring. then, i just need to unset wristSpringMode.
     }
 
     private Command manipRumble(double intensity, double secs) {
@@ -292,7 +292,8 @@ public class Algae extends SubsystemBase {
     }
 
     public enum WristPos {
-        HOME(0),
+        IDLE(0),
+        STORE(0.08),
         GROUND(0.28);
         // PROCESSOR(0.14);
 
