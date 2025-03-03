@@ -83,7 +83,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_algaeIntake = manipulator.a();
   private final Trigger trg_processorReq = manipulator.y();
   private final Trigger trg_shootReq = manipulator.rightTrigger();
-  private final Trigger trg_deAlgae = manipulator.start();
+  private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
   // simulation
   private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
