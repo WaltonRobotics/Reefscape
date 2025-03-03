@@ -5,13 +5,14 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveModule.ClosedLoopOutputType;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -52,6 +53,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.robot.VisionSim;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -98,6 +100,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
     private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
+
+    private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
+    private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
+    private final DoubleLogger log_destinationTheta = WaltLogger.logDouble("Swerve", "destination theta");
+    private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "auto align x error");
+    private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "auto align y error");
+    private final DoubleLogger log_errorTheta = WaltLogger.logDouble("Swerve", "auto align theta error");
+    private final DoubleLogger log_autoAlignDesiredXSpeed = WaltLogger.logDouble("Swerve", "auto align desired x speed");
+    private final DoubleLogger log_autoAlignDesiredYSpeed = WaltLogger.logDouble("Swerve", "auto align desired y speed");
+    private final DoubleLogger log_autoAlignDesiredThetaSpeed = WaltLogger.logDouble("Swerve", "auto align desired theta speed");
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -284,7 +296,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     public void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
-
         var pose = getState().Pose;
 
         var targetSpeeds = sample.getChassisSpeeds();
@@ -307,32 +318,69 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     /**
-     * @param trajectoryOptional Likely comes from {@link generateTrajectory}
-     * @return Note that it won't automatically stop itself afterwards, caller should handle that
+     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
+     * <p><b><i>Note!</i></b> May leak resources if you don't allow it to finish naturally. Don't unnaturally interrupt this regularly.
+     * @param destinationPoseOptional Give it a destination to go to
+     * @return Returns a command that loops until it gets near
      */
-    public Command followTrajectory(Optional<Trajectory> trajOptional) {
-        if (trajOptional.isEmpty()) {
-            System.out.println("trajectory not available");
+    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
+        if (destinationPoseOptional.isEmpty()) {
             return Commands.none();
         }
-        Trajectory traj = trajOptional.get();
-        SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds();
-        SwerveDriveKinematics kinematics = getKinematics();
-        Consumer<SwerveModuleState[]> swerveModuleStatesConsumer = swerveModuleStates -> {
-            applyRequest(() -> drive.withSpeeds(kinematics.toChassisSpeeds(swerveModuleStates)));
-        };
+        Pose2d destinationPose = destinationPoseOptional.get();
 
-        SwerveControllerCommand followTrajCmd = new SwerveControllerCommand(
-            traj,
-            () -> getState().Pose,
-            kinematics,
-            m_alignmentXController,
-            m_alignemntYController,
-            m_alignmentThetaController,
-            swerveModuleStatesConsumer,
-            this);
+        log_destinationX.accept(destinationPose.getX());
+        log_destinationY.accept(destinationPose.getY());
+        log_destinationTheta.accept(destinationPose.getRotation().getDegrees());
 
-        return Commands.print("begin followTrajCmd").andThen(followTrajCmd).andThen(Commands.print("commands printing"));
+        visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
+
+        PIDController xPidController = new PIDController(5, 0, 0);
+        PIDController yPidController = new PIDController(5, 0, 0);
+        PIDController thetaPidController = new PIDController(7, 0, 0);
+        thetaPidController.enableContinuousInput(-Math.PI, Math.PI);
+
+        SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
+
+        return Commands.sequence(
+            Commands.run(
+                () -> {
+                    Pose2d curPose = getState().Pose;
+                    Transform2d error = destinationPose.minus(curPose);
+                    double xSpeed = xPidController.calculate(error.getX());
+                    double ySpeed = yPidController.calculate(error.getY());
+                    double thetaSpeed = thetaPidController.calculate(error.getRotation().getDegrees());
+
+                    setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+
+                    log_errorX.accept(error.getX());
+                    log_errorY.accept(error.getY());
+                    log_errorTheta.accept(error.getRotation().getDegrees());
+
+                    log_autoAlignDesiredXSpeed.accept(xSpeed);
+                    log_autoAlignDesiredYSpeed.accept(ySpeed);
+                    log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
+                }
+            ).until(
+                () -> {
+                    // TODO: move these to constants
+                    double xTolerance = 0.1;
+                    double yTolerance = 0.3;
+                    double rotTolerance = 1; // DEGREES
+                    
+                    Pose2d curPose = getState().Pose;
+                    Transform2d error = destinationPose.minus(curPose);
+                    System.out.println("auto align near setpoint: " + (MathUtil.isNear(0, error.getX(), xTolerance) && MathUtil.isNear(0, error.getY(), yTolerance) &&
+                        MathUtil.isNear(0, error.getRotation().getDegrees(), rotTolerance)));
+                    return MathUtil.isNear(0, error.getX(), xTolerance) && MathUtil.isNear(0, error.getY(), yTolerance) &&
+                        MathUtil.isNear(0, error.getRotation().getDegrees(), rotTolerance);
+                }
+            ),
+            Commands.runOnce(() -> {
+                xPidController.close();
+                yPidController.close();
+                thetaPidController.close();
+        }));
     }
 
     /**
@@ -503,7 +551,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             trajConfig
         );
 
-        ProfiledPIDController thetaController = new ProfiledPIDController(7, 0, 0, 
+        ProfiledPIDController thetaController = new ProfiledPIDController(7, 0, 7, 
             new TrapezoidProfile.Constraints(3, 2));
         thetaController.enableContinuousInput(-Math.PI, Math.PI);
         SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds()
@@ -516,7 +564,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             new PIDController(7, 0, 7),
             new PIDController(7, 0, 7),
             thetaController,
-            swerveModuleStates -> drive.withSpeeds(getKinematics().toChassisSpeeds(swerveModuleStates)),
+            swerveModuleStates -> setControl(drive.withSpeeds(getKinematics().toChassisSpeeds(swerveModuleStates))),
             this);
 
         return Commands.sequence(

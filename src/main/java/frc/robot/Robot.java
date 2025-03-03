@@ -9,6 +9,7 @@ import static frc.robot.Constants.Coralk.kCoralSpeed;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 
@@ -153,14 +154,16 @@ public class Robot extends TimedRobot {
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-    driver.leftBumper().onTrue(new DeferredCommand(() -> drivetrain.followTrajectory(
-        drivetrain.generateTrajectory(eleForwardsCam.getReefScorePose(false))
-    ), Set.of(drivetrain)));
-    driver.rightBumper().onTrue(new DeferredCommand(() -> drivetrain.followTrajectory(
-        drivetrain.generateTrajectory(eleForwardsCam.getReefScorePose(true))
-    ), Set.of(drivetrain)));
+    driver.leftBumper().onTrue(new DeferredCommand(
+      () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim),
+      Set.of(drivetrain)));
+    
+    Optional<Pose2d> randomPose = Optional.of(new Pose2d(5, 5, Rotation2d.fromDegrees(30)));
+    driver.rightBumper().onTrue(new DeferredCommand(
+      () -> drivetrain.moveToPose(randomPose, visionSim),
+      Set.of(drivetrain)));
 
-      drivetrain.registerTelemetry(logger::telemeterize);
+    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   private void driverRumble(double intensity) {
