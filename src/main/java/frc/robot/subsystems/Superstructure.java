@@ -385,15 +385,19 @@ public class Superstructure {
     }
 
     public Command algaeRemoval() {
-        return Commands.startEnd(
-            () -> {
-                m_finger.fingerOut();
-                m_coral.runWheelsAlgaeRemoval();
-            }, () -> {
-                m_finger.fingerIn();
-                m_coral.stopCoralMotor();
-            }
-        );
+        if(!trg_hasCoral.getAsBoolean()) {
+            return Commands.startEnd(
+                () -> {
+                    m_finger.fingerOut();
+                    m_coral.runWheelsAlgaeRemoval();
+                }, () -> {
+                    m_finger.fingerIn();
+                    m_coral.stopCoralMotor();
+                }
+            );
+        } else {
+            return Commands.none();
+        }
     }
 
     public Trigger getBottomBeamBreak() {
