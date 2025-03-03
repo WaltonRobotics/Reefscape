@@ -154,9 +154,9 @@ public class Robot extends TimedRobot {
       // driver.y().whileTrue(drivetrain.applyRequest(() ->
       //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
       // ));
-      driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+      driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      manipulator.x().onTrue(
+      driver.rightBumper().onTrue(
         Commands.parallel(
           algae.toIdleCmd(),
           superstructure.forceIdle()
@@ -184,6 +184,8 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
       trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
       trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+
+      manipulator.leftBumper().onTrue(superstructure.forceIdle());
 
       manipulator.leftTrigger().and(trg_toL2).onTrue(
         Commands.parallel(
