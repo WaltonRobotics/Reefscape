@@ -169,29 +169,29 @@ public class Constants {
                 // TODO: get a real distance from the reef for this
                 double distanceFromReef = Units.inchesToMeters(20);
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, 0, Rotation2d.fromDegrees(180));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
                     .transformBy(transformToRobotPosition));
             }
 
