@@ -137,12 +137,14 @@ public class Constants {
 
     public final class FingerK {
         // finger things
+        public static final String kLogTab = "FingerSubsys";
+
         public static final int kFingerMotorCANID = 31;
 
         public static final double kMaxAngleRotations = 0;
         public static final double kMinAngleRotations = -1;
         public static final double kParallelToGroundRotations = -0.64;
-        public static final double kDefaultPos = -0.075;
+        public static final double kDefaultPos = -0.0025;   
 
         private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
             .withInverted(InvertedValue.Clockwise_Positive)

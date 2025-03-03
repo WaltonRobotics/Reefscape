@@ -178,9 +178,9 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.INTOOK));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
+        ((trg_hasCoral.or(trg_teleopDeAlgae)).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
+        ((trg_hasCoral.or(trg_teleopDeAlgae)).and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
@@ -199,10 +199,8 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.and(trg_inOverride.negate()).and(trg_teleopDeAlgae.negate()).debounce(0.02))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_scored.and(trg_teleopDeAlgae))
+        (stateTrg_scored.and(trg_inOverride.negate()).and(trg_teleopDeAlgae))
             .onTrue(changeStateCmd(State.ALGAE_GO_BYE));
-        (stateTrg_algaeRemoval.and(trg_teleopDeAlgae.negate()))
-            .onTrue(changeStateCmd(State.ELE_TO_HP));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
@@ -500,7 +498,7 @@ public class Superstructure {
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
 
-        log_algaeRemovalButton.accept(trg_autonScoreReq);
+        log_algaeRemovalButton.accept(trg_teleopDeAlgae);
     }
 
     public void logStateChangeReqs() {

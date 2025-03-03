@@ -5,6 +5,8 @@ import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.BooleanLogger;
 
 import static frc.robot.Constants.FingerK.*;
 
@@ -30,6 +32,8 @@ public class Finger extends SubsystemBase {
 
     private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
+
+    private BooleanLogger log_fingerOut = WaltLogger.logBoolean(kLogTab, "finger out");
     
     private boolean m_isHomed = false;
 
@@ -40,6 +44,7 @@ public class Finger extends SubsystemBase {
     }
 
     public void fingerOut() {
+        log_fingerOut.accept(true);
         m_motor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
     }
 
@@ -48,6 +53,7 @@ public class Finger extends SubsystemBase {
     }
 
     public void fingerIn() {
+        log_fingerOut.accept(false);
         m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
     }
 
