@@ -62,20 +62,20 @@ public class Constants {
 
         public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
         private static final List<AprilTag> kRedReefTags = List.of(
-            kTagLayout.getTags().get(5),
-            kTagLayout.getTags().get(6), 
+            kTagLayout.getTags().get(6),
             kTagLayout.getTags().get(7), 
             kTagLayout.getTags().get(8), 
             kTagLayout.getTags().get(9), 
-            kTagLayout.getTags().get(10)
+            kTagLayout.getTags().get(10), 
+            kTagLayout.getTags().get(11)
         );
         private static final List<AprilTag> kBlueReefTags = List.of(
-            kTagLayout.getTags().get(16),
             kTagLayout.getTags().get(17),
             kTagLayout.getTags().get(18), 
             kTagLayout.getTags().get(19), 
             kTagLayout.getTags().get(20), 
-            kTagLayout.getTags().get(21)
+            kTagLayout.getTags().get(21),
+            kTagLayout.getTags().get(22)
         );
         public static final AprilTagFieldLayout kRedSpeakerTagLayout = new AprilTagFieldLayout(kRedReefTags, kTagLayout.getFieldLength(), kTagLayout.getFieldWidth());
         public static final AprilTagFieldLayout kBlueSpeakerTagLayout = new AprilTagFieldLayout(kBlueReefTags, kTagLayout.getFieldLength(), kTagLayout.getFieldWidth());
@@ -169,29 +169,29 @@ public class Constants {
                 // TODO: get a real distance from the reef for this
                 double distanceFromReef = Units.inchesToMeters(20);
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, 0, Rotation2d.fromDegrees(180));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d().rotateBy(Rotation2d.k180deg)
+                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
             }
 
