@@ -77,12 +77,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 10);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
 
-    // TODO: stolen from above people, also needs tuned
-    private final PIDController m_alignmentXController = new PIDController(10, 0, 10);
-    private final PIDController m_alignemntYController = new PIDController(10, 0, 10);
-    private final TrapezoidProfile.Constraints m_thetaPIDProfileConstraints = new TrapezoidProfile.Constraints(5, 5);
-    private final ProfiledPIDController m_alignmentThetaController = new ProfiledPIDController(7, 0, 7, m_thetaPIDProfileConstraints);
-
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
