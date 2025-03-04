@@ -77,6 +77,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 10);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
 
+    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignThetaController = new PIDController(7, 0, 0);
+
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
@@ -329,27 +333,27 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
 
-        PIDController xPidController = new PIDController(5, 0, 0);
-        PIDController yPidController = new PIDController(5, 0, 0);
-        PIDController thetaPidController = new PIDController(7, 0, 0);
-        thetaPidController.enableContinuousInput(-Math.PI, Math.PI);
+        m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
         SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
 
-        return Commands.sequence(
-            Commands.run(
+        return Commands.run(
                 () -> {
                     Pose2d curPose = getState().Pose;
-                    Transform2d error = destinationPose.minus(curPose);
-                    double xSpeed = xPidController.calculate(error.getX());
-                    double ySpeed = yPidController.calculate(error.getY());
-                    double thetaSpeed = thetaPidController.calculate(error.getRotation().getDegrees());
+
+                    double xDiff = destinationPose.getX()-curPose.getX();
+                    double yDiff = destinationPose.getY()-curPose.getY();
+                    double rotDiff = destinationPose.getRotation().getDegrees()-destinationPose.getRotation().getDegrees();
+
+                    double xSpeed = m_autoAlignXController.calculate(xDiff);
+                    double ySpeed = m_autoAlignYController.calculate(yDiff);
+                    double thetaSpeed = m_autoAlignThetaController.calculate(rotDiff);
 
                     setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
-                    log_errorX.accept(error.getX());
-                    log_errorY.accept(error.getY());
-                    log_errorTheta.accept(error.getRotation().getDegrees());
+                    log_errorX.accept(xDiff);
+                    log_errorY.accept(yDiff);
+                    log_errorTheta.accept(rotDiff);
 
                     log_autoAlignDesiredXSpeed.accept(xSpeed);
                     log_autoAlignDesiredYSpeed.accept(ySpeed);
@@ -369,12 +373,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                     return MathUtil.isNear(0, error.getX(), xTolerance) && MathUtil.isNear(0, error.getY(), yTolerance) &&
                         MathUtil.isNear(0, error.getRotation().getDegrees(), rotTolerance);
                 }
-            ),
-            Commands.runOnce(() -> {
-                xPidController.close();
-                yPidController.close();
-                thetaPidController.close();
-        }));
+            );
     }
 
     /**
