@@ -84,22 +84,22 @@ public class Vision {
         if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().equals(Alliance.Blue)) {
             // blue
             switch (tagId) {
-                case 16:
+                case 18:
                     correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
                     break;
                 case 17:
                     correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
                     break;
-                case 18:
+                case 22:
                     correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
                     break;
-                case 19:
+                case 21:
                     correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
                     break;
                 case 20:
                     correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
                     break;
-                case 21:
+                case 19:
                     correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                     break;
                 default:
@@ -109,22 +109,22 @@ public class Vision {
         } else {
             // red
             switch (tagId) {
-                case 5:
+                case 7:
                     correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
                     break;
-                case 6:
+                case 8:
                     correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
                     break;
-                case 7:
+                case 9:
                     correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
                     break;
-                case 8:
+                case 10:
                     correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
                     break;
-                case 9:
+                case 11:
                     correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
                     break;
-                case 10:
+                case 6:
                     correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                     break;
                 default:
@@ -221,9 +221,9 @@ public class Vision {
             }
             
             // this sets our function to use correct bounds to determine if a given tag is on the correct reef
-            return givenId >= 16 && givenId <= 21;
+            return givenId >= 17 && givenId <= 22;
         } else {
-            return givenId >= 5 && givenId <= 10;
+            return givenId >= 6 && givenId <= 11;
         }
     } 
 
