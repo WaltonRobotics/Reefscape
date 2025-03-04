@@ -87,6 +87,8 @@ public class Robot extends TimedRobot {
   private final Trigger trg_manipDanger;
   private final Trigger trg_driverDanger;
 
+  private final Field2d simDebugField = visionSim.getSimDebugField();
+
   public Robot() {
     // pov is the same thing as dpad right?
     trg_teleopEleHeightReq = manipulator.povDown() //L1
@@ -180,7 +182,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    Field2d simDebugField = visionSim.getSimDebugField();
     simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
     simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
     simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
@@ -267,7 +268,7 @@ public class Robot extends TimedRobot {
 
     // below is debug for swerve simulation. the farthest down one displays the module poses, but it's definitely bugged
     // Field2d debugField = visionSim.getSimDebugField();
-    // debugField.getObject("EstimatedRobot").setPose(robotPose);
-    // debugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
+    // simDebugField.getObject("EstimatedRobot").setPose(robotPose);
+    // simDebugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
   }
 }
