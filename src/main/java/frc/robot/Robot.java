@@ -167,7 +167,7 @@ public class Robot extends TimedRobot {
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
 
-    driver.start().onTrue(drivetrain.wheelRadiusCharacterization(-1));
+    driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
   private void configureBindings() {
@@ -284,7 +284,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    // addPeriodic(() -> superstructure.periodic(), 0.01);
+    addPeriodic(() -> superstructure.periodic(), 0.01);
     // mapAutonCommands();
     // configAutonChooser();
   }
