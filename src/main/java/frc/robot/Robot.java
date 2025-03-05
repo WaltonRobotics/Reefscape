@@ -218,19 +218,31 @@ public class Robot extends TimedRobot {
 
       manipulator.leftBumper().onTrue(superstructure.forceIdle());
 
-      manipulator.leftTrigger().and(trg_toL2).onTrue(
+      trg_deAlgae.and(trg_toL2).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-          superstructure.stateChangeToAlgaeRemovalTime()
+          superstructure.algaeRemoval()
         )
       );
-      manipulator.leftTrigger().and(trg_toL3).onTrue(
+      trg_deAlgae.and(trg_toL3).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-          superstructure.stateChangeToAlgaeRemovalTime()
+          superstructure.algaeRemoval()
         )
       );
 
+      trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
+      trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
