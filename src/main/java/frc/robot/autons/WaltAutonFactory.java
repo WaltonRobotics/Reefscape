@@ -177,9 +177,9 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    // Commands.print("b4 checking if bottom beam breaks"),
-                    // Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    // Commands.print("Bottom beam break has broken"),
+                    Commands.print("b4 checking if bottom beam breaks"),
+                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    Commands.print("Bottom beam break has broken"),
                     trajCmd,
                     Commands.print("to reef sent")
                 ));

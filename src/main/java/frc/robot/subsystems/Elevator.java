@@ -215,13 +215,13 @@ public class Elevator extends SubsystemBase {
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.1),
-        L1(5.5),
-        L2(5.866455),
-        L3(8.5),
-        L4(12.8),
-        CLIMB_UP(1.5), // this height will move the robot up for climb
-        CLIMB_DOWN(5), //this height will ove robot down for climb
-        HP(2.094971); //human player station intake height
+        L1(5.590325),
+        L2(5.653564),
+        L3(8.451660),
+        L4(12.890325),
+        CLIMB_UP(1.590325), // this height will move the robot up for climb
+        CLIMB_DOWN(5.090325), //this height will ove robot down for climb
+        HP(2.095703); //human player station intake height
 
         public final double rotations;
 
@@ -231,8 +231,8 @@ public class Elevator extends SubsystemBase {
     }
 
     public enum AlgaeHeight {
-        L2(6.660645),
-        L3(9.438721);
+        L2(6.75097),
+        L3(9.529046);
 
         public final double rotations;
 
