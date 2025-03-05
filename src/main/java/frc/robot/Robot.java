@@ -67,9 +67,9 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory;
 
-  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_G)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_F, REEF_E)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
