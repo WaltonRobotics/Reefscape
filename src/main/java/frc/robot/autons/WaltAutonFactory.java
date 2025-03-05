@@ -29,6 +29,7 @@ public class WaltAutonFactory {
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
 
     int heightCounter = 0;
+    private boolean m_alrScored = false;
     
     private Elastic.Notification leaveStartZoneOnlySadness = 
         new Elastic.Notification(
@@ -72,7 +73,7 @@ public class WaltAutonFactory {
     private boolean notOtherwiseBrokeyChecker() {
         if(m_scoreLocs.size() != m_heights.size()) {
             return false;
-        } else if (m_hpStations.size() != m_scoreLocs.size() && m_hpStations.size() != m_scoreLocs.size() + 1) {
+        } else if (m_hpStations.size() != m_scoreLocs.size() && m_hpStations.size() != m_scoreLocs.size() - 1) {
             return false;
         } else {
             return true;
@@ -105,7 +106,7 @@ public class WaltAutonFactory {
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
-        return Commands.waitSeconds(5);
+        return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
         // return Commands.sequence(
         //     m_superstructure.autonEleToScoringPosReq(eleHeight),
         //     m_superstructure.autonScoreReq(),
@@ -113,14 +114,18 @@ public class WaltAutonFactory {
         // );
     }
 
-    private AutoRoutine leaveOnly() {
+    public AutoRoutine leaveOnly() {
         AutoRoutine leaveAuto = m_autoFactory.newRoutine("leave only");
         //TODO: [before we vision] have sophomores make an unjanky version of this
-        AutoTrajectory leave = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID, REEF_H)));
+        AutoTrajectory leave = m_routine.trajectory("One_Meter");
         leaveAuto.active().onTrue(
             Commands.sequence(
-                leave.resetOdometry(),
-                leave.cmd()
+                Commands.parallel(
+                    leave.resetOdometry(),
+                    Commands.print("whats up gang we're moving one meter rahhhhhh")
+                ),
+                leave.cmd(),
+                Commands.print("yo we're actually moving now RAHHHH MF")
             )
         );
 
@@ -155,8 +160,8 @@ public class WaltAutonFactory {
                     scoreCmd(m_heights.get(heightCounter)),
                     Commands.parallel(
                         Commands.runOnce(() -> heightCounter++),
-                        // benton said to forget the hp station
-                        allTheTrajs.get(0).cmd() //takes you to the HP
+                        allTheTrajs.get(0).cmd(),
+                        Commands.print("to hp sent") //takes you to the HP
                     )
                 )
             );
@@ -167,7 +172,6 @@ public class WaltAutonFactory {
             
             Command trajCmd = Commands.none();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
-                System.out.println("to reef cycle called");
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
@@ -177,7 +181,7 @@ public class WaltAutonFactory {
                     // Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                     // Commands.print("Bottom beam break has broken"),
                     trajCmd,
-                    Commands.print("traj command sent")
+                    Commands.print("to reef sent")
                 ));
 
             allTrajIdx++;
@@ -189,20 +193,20 @@ public class WaltAutonFactory {
 
             Command nextTrajCmd = Commands.none();
             if (allTrajIdx + 1 < allTheTrajs.size()) {
-                System.out.println("to hp called");
                 nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
-            allTheTrajs.get(allTrajIdx).done().onTrue(
-                Commands.sequence(
-                    scoreCmd(m_heights.get(heightCounter)),
-                    Commands.parallel(
-                        Commands.runOnce(() -> heightCounter++),
-                        nextTrajCmd,
-                        Commands.print("next traj command sent")
+            allTheTrajs.get(allTrajIdx).done()
+                .onTrue(
+                    Commands.sequence(
+                        scoreCmd(m_heights.get(heightCounter)),
+                        Commands.parallel(
+                            Commands.runOnce(() -> heightCounter++),
+                            nextTrajCmd,
+                            Commands.print("to hp sent")
+                        )   
                     )
-                )
-            );
+                );
         }
 
         return m_routine;
