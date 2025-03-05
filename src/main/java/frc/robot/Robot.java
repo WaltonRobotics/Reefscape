@@ -59,19 +59,19 @@ public class Robot extends TimedRobot {
   private final CommandXboxController manipulator = new CommandXboxController(1);
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
-  // private final Coral coral = new Coral();
-  // private final Finger finger = new Finger();
-  // private final Elevator elevator = new Elevator();
-  // private final Algae algae;
-  // private final Superstructure superstructure;
+  private final Coral coral = new Coral();
+  private final Finger finger = new Finger();
+  private final Elevator elevator = new Elevator();
+  private final Algae algae;
+  private final Superstructure superstructure;
 
   private Command m_autonomousCommand;
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory;
 
-  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_E)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L3));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L3));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -98,50 +98,50 @@ public class Robot extends TimedRobot {
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
-    // if (Robot.isReal()) {
-    //   superstructure = new Superstructure(
-    //   coral,
-    //   finger,
-    //   elevator, 
-    //   trg_intakeReq,
-    //   trg_toL1,
-    //   trg_toL2,
-    //   trg_toL3,
-    //   trg_toL4,
-    //   trg_teleopScoreReq,
-    //   trg_deAlgae,
-    //   trg_inOverride,
-    //   new Trigger(() -> false),
-    //   new Trigger(() -> false),
-    //   this::driverRumble);
-    // } else {
-    //   superstructure = new Superstructure(
-    //   coral,
-    //   finger,
-    //   elevator, 
-    //   trg_intakeReq,
-    //   trg_toL1,
-    //   trg_toL2,
-    //   trg_toL3,
-    //   trg_toL4,
-    //   trg_teleopScoreReq,
-    //   trg_deAlgae,
-    //   trg_inOverride,
-    //   trg_simTopBeamBreak,
-    //   trg_simBotBeamBreak,
-    //   this::driverRumble);
-    // }
+    if (Robot.isReal()) {
+      superstructure = new Superstructure(
+      coral,
+      finger,
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_deAlgae,
+      trg_inOverride,
+      new Trigger(() -> false),
+      new Trigger(() -> false),
+      this::driverRumble);
+    } else {
+      superstructure = new Superstructure(
+      coral,
+      finger,
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_deAlgae,
+      trg_inOverride,
+      trg_simTopBeamBreak,
+      trg_simBotBeamBreak,
+      this::driverRumble);
+    }
       
-    //   algae = new Algae(
-    //     trg_algaeIntake, 
-    //     trg_processorReq, 
-    //     trg_shootReq, 
-    //     this::manipRumble
-    //   );
+      algae = new Algae(
+        trg_algaeIntake, 
+        trg_processorReq, 
+        trg_shootReq, 
+        this::manipRumble
+      );
 
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
-      // superstructure, 
+      superstructure, 
       StartingLocs.RIGHT, 
       reefLocs, 
       heights, 
@@ -188,12 +188,12 @@ public class Robot extends TimedRobot {
       // ));
       driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      // driver.rightBumper().onTrue(
-      //   Commands.parallel(
-      //     algae.toIdleCmd(),
-      //     superstructure.forceIdle()
-      //   )
-      // );
+      driver.rightBumper().onTrue(
+        Commands.parallel(
+          algae.toIdleCmd(),
+          superstructure.forceIdle()
+        )
+      );
 
       /* 
        * programmer buttons
@@ -208,28 +208,28 @@ public class Robot extends TimedRobot {
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-      // trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
+      trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
-      // trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
-      // trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
-      // trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
-      // trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
-      // trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+      trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
+      trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
+      trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
+      trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
+      trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
 
-      // manipulator.leftBumper().onTrue(superstructure.forceIdle());
+      manipulator.leftBumper().onTrue(superstructure.forceIdle());
 
-      // manipulator.leftTrigger().and(trg_toL2).onTrue(
-      //   Commands.parallel(
-      //     elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-      //     superstructure.stateChangeToAlgaeRemovalTime()
-      //   )
-      // );
-      // manipulator.leftTrigger().and(trg_toL3).onTrue(
-      //   Commands.parallel(
-      //     elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-      //     superstructure.stateChangeToAlgaeRemovalTime()
-      //   )
-      // );
+      manipulator.leftTrigger().and(trg_toL2).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.stateChangeToAlgaeRemovalTime()
+        )
+      );
+      manipulator.leftTrigger().and(trg_toL3).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.stateChangeToAlgaeRemovalTime()
+        )
+      );
 
 
       drivetrain.registerTelemetry(logger::telemeterize);
@@ -306,10 +306,10 @@ public class Robot extends TimedRobot {
 
   private Command autonCmdBuilder(Command chooserCommand) {
     return Commands.parallel(
-          // superstructure.autonPreloadReq(),
-          // algae.currentSenseHoming(),
+          superstructure.autonPreloadReq(),
+          algae.currentSenseHoming(),
           Commands.sequence(
-            // elevator.externalWaitUntilHomed(),
+            elevator.externalWaitUntilHomed(),
             chooserCommand
           )
       );
@@ -333,19 +333,19 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    // superstructure.forceIdle().schedule();
-    // algae.toIdleCmd().schedule();
-    // finger.fingerInCmd().schedule();
+    superstructure.forceIdle().schedule();
+    algae.toIdleCmd().schedule();
+    finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
 
     // if(!elevator.getIsHomed()) {
-      // elevator.currentSenseHoming().schedule();
+    //   elevator.currentSenseHoming().schedule();
     // }
 
     // if(!algae.getIsHomed()) {
-      // algae.currentSenseHoming().schedule();
+    //   algae.currentSenseHoming().schedule();
     // }
   }
 

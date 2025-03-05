@@ -20,7 +20,7 @@ import frc.util.Elastic;
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
     private AutoRoutine m_routine;
-    // private final Superstructure m_superstructure;
+    private final Superstructure m_superstructure;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -46,7 +46,7 @@ public class WaltAutonFactory {
 
     public WaltAutonFactory(
         AutoFactory autoFactory, 
-        // Superstructure superstructure,
+        Superstructure superstructure,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
@@ -54,7 +54,7 @@ public class WaltAutonFactory {
     ) {
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton");
-        // m_superstructure = superstructure;
+        m_superstructure = superstructure;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
@@ -106,12 +106,12 @@ public class WaltAutonFactory {
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
-        return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
-        // return Commands.sequence(
-        //     m_superstructure.autonEleToScoringPosReq(eleHeight),
-        //     m_superstructure.autonScoreReq(),
-        //     Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
-        // );
+        // return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
+        return Commands.sequence(
+            m_superstructure.autonEleToScoringPosReq(eleHeight),
+            m_superstructure.autonScoreReq(),
+            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
+        );
     }
 
     public AutoRoutine leaveOnly() {
