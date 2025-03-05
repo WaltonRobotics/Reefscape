@@ -20,7 +20,7 @@ import frc.util.Elastic;
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
     private AutoRoutine m_routine;
-    private final Superstructure m_superstructure;
+    // private final Superstructure m_superstructure;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -45,7 +45,7 @@ public class WaltAutonFactory {
 
     public WaltAutonFactory(
         AutoFactory autoFactory, 
-        Superstructure superstructure,
+        // Superstructure superstructure,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
@@ -53,7 +53,7 @@ public class WaltAutonFactory {
     ) {
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton");
-        m_superstructure = superstructure;
+        // m_superstructure = superstructure;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
@@ -87,6 +87,7 @@ public class WaltAutonFactory {
             if (i < m_scoreLocs.size() - 1) {
                 String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
                 trajsList.add(m_routine.trajectory(hToR));
+                System.out.println(rToH);
             }
         }
 
@@ -104,11 +105,12 @@ public class WaltAutonFactory {
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
-        return Commands.sequence(
-            m_superstructure.autonEleToScoringPosReq(eleHeight),
-            m_superstructure.autonScoreReq(),
-            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
-        );
+        return Commands.waitSeconds(5);
+        // return Commands.sequence(
+        //     m_superstructure.autonEleToScoringPosReq(eleHeight),
+        //     m_superstructure.autonScoreReq(),
+        //     Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
+        // );
     }
 
     private AutoRoutine leaveOnly() {
@@ -135,7 +137,9 @@ public class WaltAutonFactory {
             System.out.println("!!!!!!! BROKE !!!!!!!");
         }
 
-        AutoTrajectory firstScoreTraj = m_routine.trajectory(StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0))));
+        var theTraj = StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0)));
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
+        System.out.println("Running Path: " + theTraj);
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
         m_routine.active().onTrue(
@@ -150,9 +154,9 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     scoreCmd(m_heights.get(heightCounter)),
                     Commands.parallel(
-                        Commands.runOnce(() -> heightCounter++)
+                        Commands.runOnce(() -> heightCounter++),
                         // benton said to forget the hp station
-                        // allTheTrajs.get(0).cmd() //takes you to the HP
+                        allTheTrajs.get(0).cmd() //takes you to the HP
                     )
                 )
             );
@@ -169,9 +173,9 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    Commands.print("b4 checking if bottom beam breaks"),
-                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    Commands.print("Bottom beam break has broken"),
+                    // Commands.print("b4 checking if bottom beam breaks"),
+                    // Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    // Commands.print("Bottom beam break has broken"),
                     trajCmd,
                     Commands.print("traj command sent")
                 ));
