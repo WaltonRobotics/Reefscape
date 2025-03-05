@@ -59,7 +59,7 @@ public class Superstructure {
     private final Trigger trg_teleopL3Req; 
     private final Trigger trg_teleopL4Req; 
     private final Trigger trg_teleopScoreReq;
-    private final Trigger trg_teleopDeAlgae;
+
     /* teleopTrgs: overrides */
     private final Trigger trg_inOverride;
     /* sim transitions */
@@ -83,7 +83,6 @@ public class Superstructure {
     public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_state == State.SCORE_READY);
     public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
-    public final Trigger stateTrg_algaeRemoval = new Trigger(stateEventLoop, () -> m_state == State.ALGAE_GO_BYE);
 
     public final Trigger stateTrg_eleToClimb = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_CLIMB);
     public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
@@ -132,7 +131,6 @@ public class Superstructure {
         Trigger L3Req,
         Trigger L4Req,
         Trigger scoreReq,
-        Trigger deAlgae,
         Trigger inOverride,
         Trigger simTopBeamBreak,
         Trigger simBotBeamBreak,
@@ -154,7 +152,6 @@ public class Superstructure {
         trg_teleopL3Req = L3Req;
         trg_teleopL4Req = L4Req;
         trg_teleopScoreReq = scoreReq;
-        trg_teleopDeAlgae = deAlgae;
         /* overrides */
         trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor);
         trg_inOverride = inOverride;
@@ -178,9 +175,9 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.INTOOK));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        ((trg_hasCoral.or(trg_teleopDeAlgae)).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
+        ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        ((trg_hasCoral.or(trg_teleopDeAlgae)).and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
+        ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
@@ -197,9 +194,9 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
-        (stateTrg_scored.and(trg_inOverride.negate()).and(trg_teleopDeAlgae.negate()).debounce(0.02))
+        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.02))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_scored.and(trg_inOverride.negate()).and(trg_teleopDeAlgae))
+        (stateTrg_scored.and(trg_inOverride.negate()))
             .onTrue(changeStateCmd(State.ALGAE_GO_BYE));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
@@ -327,11 +324,6 @@ public class Superstructure {
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
-        stateTrg_algaeRemoval
-            .whileTrue(
-                algaeRemoval()
-            );
-
         // stateTrg_eleToClimb
         //     .onTrue();
 
@@ -403,18 +395,22 @@ public class Superstructure {
 
     public Command algaeRemoval() {
         if(!trg_hasCoral.getAsBoolean()) {
-            return Commands.startEnd(
-                () -> {
-                    m_finger.fingerOut();
-                    m_coral.runWheelsAlgaeRemoval();
-                }, () -> {
-                    m_finger.fingerIn();
-                    m_coral.stopCoralMotor();
-                }
-            );
+            return baseAlgaeRemoval();
         } else {
             return Commands.none();
         }
+    }
+
+    public Command baseAlgaeRemoval() {
+        return Commands.startEnd(
+            () -> {
+                m_finger.fingerOut();
+                m_coral.runWheelsAlgaeRemoval();
+            }, () -> {
+                m_finger.fingerIn();
+                m_coral.stopCoralMotor();
+            }
+        );
     }
 
     public Trigger getBottomBeamBreak() {
@@ -497,8 +493,6 @@ public class Superstructure {
 
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
-
-        log_algaeRemovalButton.accept(trg_teleopDeAlgae);
     }
 
     public void logStateChangeReqs() {
