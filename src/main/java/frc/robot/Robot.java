@@ -160,7 +160,7 @@ public class Robot extends TimedRobot {
       () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim),
       Set.of(drivetrain)));
     
-    Optional<Pose2d> randomPose = Optional.of(new Pose2d(5, 5, Rotation2d.fromDegrees(30)));
+    Optional<Pose2d> randomPose = Optional.of(new Pose2d(2, 1, Rotation2d.fromDegrees(70)));
     driver.rightBumper().onTrue(new DeferredCommand(
       () -> drivetrain.moveToPose(randomPose, visionSim),
       Set.of(drivetrain)));
