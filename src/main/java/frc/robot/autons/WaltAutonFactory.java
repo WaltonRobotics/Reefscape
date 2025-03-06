@@ -111,8 +111,8 @@ public class WaltAutonFactory {
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
-            Commands.print("YAHOO in the score cmd with height " + eleHeight),
-            Commands.waitSeconds(5)
+            Commands.print("YAHOO in the score cmd with height " + eleHeight)
+            // Commands.waitSeconds(5)
         );
     }
 
