@@ -70,7 +70,7 @@ public class Robot extends TimedRobot {
   private final WaltAutonFactory waltAutonFactory;
 
   private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L3));
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L1));
   private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();

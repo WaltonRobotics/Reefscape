@@ -110,7 +110,9 @@ public class WaltAutonFactory {
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
-            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
+            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
+            Commands.print("YAHOO in the score cmd"),
+            Commands.waitSeconds(5)
         );
     }
 
@@ -179,6 +181,7 @@ public class WaltAutonFactory {
                 .onTrue(Commands.sequence(
                     Commands.print("b4 checking if bottom beam breaks"),
                     Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    Commands.waitSeconds(3),
                     Commands.print("Bottom beam break has broken"),
                     trajCmd,
                     Commands.print("to reef sent")
@@ -207,6 +210,8 @@ public class WaltAutonFactory {
                         )   
                     )
                 );
+            
+            allTrajIdx++;
         }
 
         return m_routine;
