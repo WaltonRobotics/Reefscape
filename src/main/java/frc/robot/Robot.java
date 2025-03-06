@@ -23,6 +23,7 @@ import frc.robot.autons.AutonChooser;
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_C;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_D;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_E;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_F;
@@ -69,9 +70,9 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory;
 
-  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L1));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
