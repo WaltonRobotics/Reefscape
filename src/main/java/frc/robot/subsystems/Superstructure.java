@@ -414,12 +414,12 @@ public class Superstructure {
         if(!trg_hasCoral.getAsBoolean()) {
             return baseAlgaeRemoval();
         } else {
-            return Commands.none();
+            return Commands.print("algae removal failure due to coral present");
         }
     }
 
     public Command baseAlgaeRemoval() {
-        return Commands.startEnd(
+        return Commands.runEnd(
             () -> {
                 m_finger.fingerOut();
                 m_coral.runWheelsAlgaeRemoval();
