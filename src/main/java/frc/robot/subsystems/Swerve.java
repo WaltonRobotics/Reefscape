@@ -77,9 +77,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 10);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
 
-    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
-    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
-    private final PIDController m_autoAlignThetaController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignXController = new PIDController(2, 0, 0);
+    private final PIDController m_autoAlignYController = new PIDController(2, 0, 0);
+    private final PIDController m_autoAlignThetaController = new PIDController(2, 0, 0);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -329,51 +329,55 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         log_destinationX.accept(destinationPose.getX());
         log_destinationY.accept(destinationPose.getY());
-        log_destinationTheta.accept(destinationPose.getRotation().getDegrees());
+        log_destinationTheta.accept(destinationPose.getRotation().getRadians());
 
         visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
 
-        m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+        m_autoAlignThetaController.enableContinuousInput(-180, 180);
 
         SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
 
         return Commands.run(
-                () -> {
-                    Pose2d curPose = getState().Pose;
+            () -> {
+                Pose2d curPose = getState().Pose;
 
-                    double xDiff = destinationPose.getX()-curPose.getX();
-                    double yDiff = destinationPose.getY()-curPose.getY();
-                    double rotDiff = destinationPose.getRotation().getDegrees()-destinationPose.getRotation().getDegrees();
+                double xDiff = destinationPose.getX() - curPose.getX();
+                double yDiff = destinationPose.getY() - curPose.getY();
+                double rotDiff = -MathUtil.inputModulus(destinationPose.getRotation().getDegrees(), -180, 180) +
+                    MathUtil.inputModulus(curPose.getRotation().getDegrees(), -180, 180);
 
-                    double xSpeed = m_autoAlignXController.calculate(xDiff);
-                    double ySpeed = m_autoAlignYController.calculate(yDiff);
-                    double thetaSpeed = m_autoAlignThetaController.calculate(rotDiff);
+                double xSpeed = m_autoAlignXController.calculate(xDiff);
+                double ySpeed = m_autoAlignYController.calculate(yDiff);
+                double thetaSpeed = m_autoAlignThetaController.calculate(rotDiff);
 
-                    setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
 
-                    log_errorX.accept(xDiff);
-                    log_errorY.accept(yDiff);
-                    log_errorTheta.accept(rotDiff);
+                log_errorX.accept(xDiff);
+                log_errorY.accept(yDiff);
+                log_errorTheta.accept(rotDiff);
 
-                    log_autoAlignDesiredXSpeed.accept(xSpeed);
-                    log_autoAlignDesiredYSpeed.accept(ySpeed);
-                    log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
-                }
-            ).until(
-                () -> {
-                    // TODO: move these to constants
-                    double xTolerance = 0.1;
-                    double yTolerance = 0.3;
-                    double rotTolerance = 1; // DEGREES
-                    
-                    Pose2d curPose = getState().Pose;
-                    Transform2d error = destinationPose.minus(curPose);
-                    System.out.println("auto align near setpoint: " + (MathUtil.isNear(0, error.getX(), xTolerance) && MathUtil.isNear(0, error.getY(), yTolerance) &&
-                        MathUtil.isNear(0, error.getRotation().getDegrees(), rotTolerance)));
-                    return MathUtil.isNear(0, error.getX(), xTolerance) && MathUtil.isNear(0, error.getY(), yTolerance) &&
-                        MathUtil.isNear(0, error.getRotation().getDegrees(), rotTolerance);
-                }
-            );
+                log_autoAlignDesiredXSpeed.accept(xSpeed);
+                log_autoAlignDesiredYSpeed.accept(ySpeed);
+                log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
+            }
+        ).until(
+            () -> {
+                // TODO: move these to constants
+                double xTolerance = 0.02;
+                double yTolerance = 0.02;
+                double rotTolerance = 2; // DEGREES
+                
+                Pose2d curPose = getState().Pose;
+
+                double xDiff = destinationPose.getX()-curPose.getX();
+                double yDiff = destinationPose.getY()-curPose.getY();
+                double rotDiff = MathUtil.inputModulus(destinationPose.getRotation().getDegrees(), -180, 180) -
+                    MathUtil.inputModulus(curPose.getRotation().getDegrees(), -180, 180);
+                
+                return MathUtil.isNear(0, xDiff, xTolerance) && MathUtil.isNear(0, yDiff, yTolerance) &&
+                    MathUtil.isNear(0, rotDiff, rotTolerance);
+            }
+        ).andThen(Commands.print("Ball harder"));
     }
 
     /**
