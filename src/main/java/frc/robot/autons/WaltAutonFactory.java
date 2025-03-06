@@ -111,8 +111,8 @@ public class WaltAutonFactory {
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
-            Commands.print("YAHOO in the score cmd")
-            // Commands.waitSeconds(5)
+            Commands.print("YAHOO in the score cmd with height " + eleHeight),
+            Commands.waitSeconds(5)
         );
     }
 
@@ -132,6 +132,23 @@ public class WaltAutonFactory {
         );
 
         return leaveAuto;
+    }
+
+    public AutoRoutine scoreOneSlowly() {
+        AutoRoutine scoreOneSlowly = m_autoFactory.newRoutine("score one");
+        AutoTrajectory scoreOneSadnessTime = m_routine.trajectory("Start_Mid_G");
+        scoreOneSlowly.active().onTrue(
+            Commands.sequence(
+                scoreOneSadnessTime.resetOdometry(),
+                scoreOneSadnessTime.cmd()
+            )
+        );
+
+        scoreOneSadnessTime.done().onTrue(
+            scoreCmd(EleHeight.L4)
+        );
+
+        return scoreOneSlowly;
     }
 
     public AutoRoutine generateAuton() {
@@ -163,7 +180,7 @@ public class WaltAutonFactory {
                     Commands.parallel(
                         Commands.runOnce(() -> heightCounter++),
                         allTheTrajs.get(0).cmd(),
-                        Commands.print("to hp sent") //takes you to the HP
+                        Commands.print("Running Path: " + allTheTrajs.get(0).cmd()) //takes you to the HP
                     )
                 )
             );
@@ -184,7 +201,7 @@ public class WaltAutonFactory {
                     // Commands.waitSeconds(3),
                     Commands.print("Bottom beam break has broken"),
                     trajCmd,
-                    Commands.print("to reef sent")
+                    Commands.print("Running Path: " + trajCmd)
                 ));
 
             allTrajIdx++;
@@ -206,7 +223,7 @@ public class WaltAutonFactory {
                         Commands.parallel(
                             Commands.runOnce(() -> heightCounter++),
                             nextTrajCmd,
-                            Commands.print("to hp sent")
+                            Commands.print("Running Path: " + nextTrajCmd)
                         )   
                     )
                 );
