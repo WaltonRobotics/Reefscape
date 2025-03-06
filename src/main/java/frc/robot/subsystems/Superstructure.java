@@ -196,8 +196,6 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.02))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_scored.and(trg_inOverride.negate()))
-            .onTrue(changeStateCmd(State.ALGAE_GO_BYE));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
@@ -257,7 +255,10 @@ public class Superstructure {
 
         stateTrg_eleToHP
             .onTrue(
-                m_ele.toHeightCoral(() -> HP)
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> HP),
+                    Commands.runOnce(() -> m_autonEleToHPReq = false)   
+                )
             );
 
         stateTrg_intaking
@@ -288,16 +289,36 @@ public class Superstructure {
             .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
-            .onTrue(m_ele.toHeightCoral(() -> L1));
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> L1),
+                    Commands.runOnce(() -> m_autonEleToL1Req = false)
+                )
+            );
 
         stateTrg_eleToL2
-            .onTrue(m_ele.toHeightCoral(() -> L2));
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> L2), 
+                    Commands.runOnce(() -> m_autonEleToL2Req = false)
+                )
+            );
 
         stateTrg_eleToL3
-            .onTrue(m_ele.toHeightCoral(() -> L3));
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> L3),
+                    Commands.runOnce(() -> m_autonEleToL3Req = false)
+                )
+            );
 
         stateTrg_eleToL4
-            .onTrue(m_ele.toHeightCoral(() -> L4));
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> L4),
+                    Commands.runOnce(() -> m_autonEleToL4Req = false)
+                )
+            );
 
         stateTrg_scoreReady
             .onTrue(
@@ -348,10 +369,6 @@ public class Superstructure {
             log_stateIdx.accept(m_state.idx);
             log_stateName.accept(m_state.name);
         });
-    }
-
-    public Command stateChangeToAlgaeRemovalTime() {
-        return (changeStateCmd(State.ALGAE_GO_BYE));
     }
 
     public Command forceIdle() {
@@ -534,8 +551,6 @@ public class Superstructure {
         SCORE_READY(6, "score ready"),
         SCORING(7, "scoring"),
         SCORED(8, "scored"),
-
-        ALGAE_GO_BYE(9, "algae removal"),
 
         ELE_TO_CLIMB(10, "ele to climb"),
         CLIMB_READY(11, "climb ready"),
