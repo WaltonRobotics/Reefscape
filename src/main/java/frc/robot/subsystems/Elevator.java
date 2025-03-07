@@ -176,7 +176,7 @@ public class Elevator extends SubsystemBase {
             m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
-        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this).withTimeout(1.5);
     }
 
     public Command externalWaitUntilHomed() {
