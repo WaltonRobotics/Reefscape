@@ -8,9 +8,11 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -20,6 +22,10 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.TrajsAndLocs.HPStation;
+import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.StartingLocs;
+
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
@@ -96,6 +102,8 @@ public class Robot extends TimedRobot {
   private final Trigger trg_driverDanger = driver.b();
   private final Trigger trg_manipDanger = manipulator.b();
   private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
+
+  private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -180,6 +188,14 @@ public class Robot extends TimedRobot {
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
+
+      // driver.leftBumper().whileTrue(
+      //   Commands.parallel(
+      //     drivetrain.applyRequest(() -> straightWheelsReq),
+      //     Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+      //   ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+      // );
+          
 
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
       // driver.y().whileTrue(drivetrain.applyRequest(() ->
