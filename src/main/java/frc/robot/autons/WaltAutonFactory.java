@@ -139,8 +139,11 @@ public class WaltAutonFactory {
         AutoTrajectory scoreOneSadnessTime = m_routine.trajectory("Start_Mid_G");
         scoreOneSlowly.active().onTrue(
             Commands.sequence(
+                Commands.print("starting score-one"),
                 scoreOneSadnessTime.resetOdometry(),
-                scoreOneSadnessTime.cmd()
+                Commands.print("done resetting odometry, running path"),
+                scoreOneSadnessTime.cmd(),
+                Commands.print("done running path, scoring")
             )
         );
 

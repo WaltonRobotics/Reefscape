@@ -76,7 +76,7 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory;
 
-  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
+  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_G, REEF_D, REEF_C)); // dummies
   private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
   private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
@@ -149,15 +149,15 @@ public class Robot extends TimedRobot {
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
       superstructure, 
-      StartingLocs.RIGHT, 
-      reefLocs, 
+      StartingLocs.MID, 
+      scoreLocs, 
       heights, 
       hpStations);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
-    configureTestBindings();
+    // configureTestBindings();
   }
 
   private void configureTestBindings() {

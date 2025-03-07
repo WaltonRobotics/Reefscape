@@ -21,7 +21,7 @@ public class AutonChooser {
         autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
         autoChooser.addRoutine("leave-only", () -> autonFactory.leaveOnly());
         autoChooser.addRoutine("score-one", () -> autonFactory.scoreOneSlowly());
-        autoChooser.select("score-one");
+        autoChooser.select("auton");
 
         SmartDashboard.putData("AutonChooser", autoChooser);
 }
