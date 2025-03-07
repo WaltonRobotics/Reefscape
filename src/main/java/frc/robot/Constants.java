@@ -255,7 +255,7 @@ public class Constants {
             .withInverted(InvertedValue.CounterClockwise_Positive);
         public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
             .withForwardSoftLimitEnable(true)
-            .withForwardSoftLimitThreshold(12.845)  // true hard 12.9849854
+            .withForwardSoftLimitThreshold(12.895)  // true hard 12.9849854
             .withReverseSoftLimitEnable(true)
             .withReverseSoftLimitThreshold(0);
         public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();

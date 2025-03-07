@@ -176,7 +176,7 @@ public class Elevator extends SubsystemBase {
             m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
-        return new FunctionalCommand(init, execute, onEnd, isFinished, this).withTimeout(1.5);
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this).withTimeout(5);
     }
 
     public Command externalWaitUntilHomed() {
@@ -220,7 +220,7 @@ public class Elevator extends SubsystemBase {
         L1(5.590325),
         L2(5.653564),
         L3(8.451660),
-        L4(12.890325),
+        L4(12.89),
         CLIMB_UP(1.590325), // this height will move the robot up for climb
         CLIMB_DOWN(5.090325), //this height will ove robot down for climb
         HP(2.095703); //human player station intake height
