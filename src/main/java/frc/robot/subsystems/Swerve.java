@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.generated.TunerConstants;
 /**
@@ -77,7 +78,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_lastGyro = WaltLogger.logDouble("Swerve", "lastGyro");
     private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
-    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
+    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currentEffectiveWheelRad");
+    private final DoubleArrayLogger log_wheelRotations = WaltLogger.logDoubleArray("Swerve", "wheelRotations");
 
     StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic("actualRobotPose", Pose2d.struct).publish();
@@ -397,7 +399,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             });
         }
 
-        log_choreoActualRobotPose.accept(getState().Pose);
+        // cache the state for logging
+        var swerveState = getState();
+
+        log_choreoActualRobotPose.accept(swerveState.Pose);
+
+        double[] wheelMeters = {};
+        for (int i = 0; i < 4; i++) {
+            var pos =  swerveState.ModulePositions[i];
+            wheelMeters[i] = pos.distanceMeters;
+        }
+        log_wheelRotations.accept(wheelMeters);
     }
 
     private void startSimThread() {
