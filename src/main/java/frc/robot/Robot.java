@@ -28,13 +28,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_C;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_D;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_E;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_F;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 import static frc.robot.subsystems.Elevator.EleHeight.L4;
 
 import frc.robot.autons.WaltAutonFactory;
