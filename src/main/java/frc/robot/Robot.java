@@ -5,39 +5,51 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.Coralk.kCoralSpeed;
-
+import java.util.ArrayList;
+import java.util.List;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
-import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+
+// import frc.robot.autons.AutonChooser.NumCycles;
+import static frc.robot.autons.TrajsAndLocs.*;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_C;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_D;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_E;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_F;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
+import static frc.robot.subsystems.Elevator.EleHeight.L4;
+
 import frc.robot.autons.WaltAutonFactory;
+// import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Finger;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
 
   private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -55,63 +67,114 @@ public class Robot extends TimedRobot {
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
+  private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
   private final Algae algae;
   private final Superstructure superstructure;
 
+  private Command m_autonomousCommand;
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+  private final WaltAutonFactory waltAutonFactory;
 
-  private final Trigger trg_teleopEleHeightReq;
-  // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
-  private final Trigger trg_eleOverride;
+  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+
+  private final Trigger trg_intakeReq = manipulator.rightBumper();
+  
+  private final Trigger trg_toL1 = manipulator.povDown();
+  private final Trigger trg_toL2 = manipulator.povRight();
+  private final Trigger trg_toL3 = manipulator.povLeft();
+  private final Trigger trg_toL4 = manipulator.povUp();
+
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger(); 
+
+  private final Trigger trg_algaeIntake = manipulator.a();
+  private final Trigger trg_processorReq = manipulator.y();
+  private final Trigger trg_shootReq = manipulator.rightTrigger();
+  private final Trigger trg_deAlgae = manipulator.leftTrigger();
+
+  // simulation
+  private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
+  private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
+ 
   // override button
-  private final Trigger trg_manipDanger;
-  private final Trigger trg_driverDanger;
+  private final Trigger trg_driverDanger = driver.b();
+  private final Trigger trg_manipDanger = manipulator.b();
+  private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
+
+  private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
 
   public Robot() {
-    // pov is the same thing as dpad right?
-    trg_teleopEleHeightReq = manipulator.povDown() //L1
-      .or(manipulator.povRight()) // L2
-      .or(manipulator.povLeft()) // L3
-      .or(manipulator.povUp()); // L4
-
-    trg_eleOverride = 
-      manipulator.rightBumper().negate()
-      .and(manipulator.leftTrigger().negate())
-      .and(trg_teleopEleHeightReq.negate());
-    
-    trg_manipDanger = manipulator.b();
-    trg_driverDanger = driver.b();
-
-    superstructure = new Superstructure(
-      coral, 
+    DriverStation.silenceJoystickConnectionWarning(true);
+    if (Robot.isReal()) {
+      superstructure = new Superstructure(
+      coral,
+      finger,
       elevator, 
-      manipulator.rightBumper(), 
-      trg_teleopEleHeightReq,
-      driver.rightTrigger(), 
-      trg_manipDanger.and(manipulator.rightBumper()),
-      trg_manipDanger.and(manipulator.leftTrigger()), 
-      trg_manipDanger.and(trg_teleopEleHeightReq),
-      trg_driverDanger.and(driver.rightTrigger()), 
-      manipulator.leftBumper(),
-      manipulator.a().and(manipulator.povUp()),
-      manipulator.a().and(manipulator.povDown()),
-      trg_manipDanger.and(trg_eleOverride),
-      () -> manipulator.getLeftY(),
-      (intensity) -> driverRumble(intensity), 
-      (intensity) -> manipRumble(intensity));
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_inOverride,
+      new Trigger(() -> false),
+      new Trigger(() -> false),
+      this::driverRumble);
+    } else {
+      superstructure = new Superstructure(
+      coral,
+      finger,
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_inOverride,
+      trg_simTopBeamBreak,
+      trg_simBotBeamBreak,
+      this::driverRumble);
+    }
+      
+      algae = new Algae(
+        trg_algaeIntake, 
+        trg_processorReq, 
+        trg_shootReq, 
+        this::manipRumble
+      );
 
-    algae = new Algae(
-      manipulator.a(), 
-      manipulator.leftTrigger(), 
-      manipulator.y(), 
-      manipulator.rightTrigger(), 
-      manipulator.back(), 
-      (intensity) -> manipRumble(intensity), 
-      () -> manipulator.getRightY());
+    waltAutonFactory = new WaltAutonFactory(
+      autoFactory, 
+      superstructure, 
+      StartingLocs.RIGHT, 
+      reefLocs, 
+      heights, 
+      hpStations);
+
+    AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
+    configureTestBindings();
+  }
+
+  private void configureTestBindings() {
+    // driver.a().onTrue(
+    //   Commands.sequence(
+    //     algae.toAngle(WristPos.GROUND),
+    //     algae.intake()
+    //   )
+    // ).onFalse(algae.toAngle(WristPos.HOME));
+  
+    // driver.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
+    // driver.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
+
+    // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
+    // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
+
+    driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
   private void configureBindings() {
@@ -126,11 +189,26 @@ public class Robot extends TimedRobot {
           )
       );
 
+      // driver.leftBumper().whileTrue(
+      //   Commands.parallel(
+      //     drivetrain.applyRequest(() -> straightWheelsReq),
+      //     Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+      //   ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+      // );
+          
+
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-      driver.y().whileTrue(drivetrain.applyRequest(() ->
-          point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-      ));
-      driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+      // driver.y().whileTrue(drivetrain.applyRequest(() ->
+      //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+      // ));
+      driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+
+      driver.rightBumper().onTrue(
+        Commands.parallel(
+          algae.toIdleCmd(),
+          superstructure.forceIdle()
+        )
+      );
 
       /* 
        * programmer buttons
@@ -145,9 +223,79 @@ public class Robot extends TimedRobot {
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
+      trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
+     
+      trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
+      trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
+      trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
+      trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
+      trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+
+      manipulator.leftBumper().onTrue(superstructure.forceIdle());
+
+      trg_deAlgae.and(trg_toL2).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.algaeRemoval()
+        )
+      );
+      trg_deAlgae.and(trg_toL3).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.algaeRemoval()
+        )
+      );
+
+      trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
+      trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
+
       drivetrain.registerTelemetry(logger::telemeterize);
 
   }
+
+  // private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
+  //   AutonChooser.m_cycles = numCycles;
+  //   numCycleChange = true;
+  // };
+  // private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+  //   AutonChooser.startingPosition = startingPosition;
+  //   startingPositionChange = true;
+  // }  ;
+  // private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
+  //   AutonChooser.startingHeight = startingHeight;
+  //   numCycleChange = true;
+  // }  ;
+  // private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+  //   AutonChooser.scoringPosition = scoringPosition;
+  //   firstScoringPositionChange = true;
+  // }  ;
+  // private final Consumer<HPStation> initalHPStationConsumer = hpStation -> {
+  //   AutonChooser.hpStation = hpStation;
+  //   initialHPStationChange = true;
+  // };
+  
+  // private void mapAutonCommands() {
+  //   AutonChooser.configureFirstCycle();
+  // }
+
+  // /* needed to continue choosing schtuffs */
+  // private void configAutonChooser() {
+  //   AutonChooser.cyclesChooser.onChange(cyclesConsumer);
+  //   AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
+  //   AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
+  //   AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
+  //   AutonChooser.firstToHPStationChooser.onChange(initalHPStationConsumer);
+  // }
 
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
@@ -163,11 +311,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
+    addPeriodic(() -> superstructure.periodic(), 0.01);
+    // mapAutonCommands();
+    // configAutonChooser();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
   }
 
   @Override
@@ -179,18 +331,24 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {}
 
+  private Command autonCmdBuilder(Command chooserCommand) {
+    return Commands.parallel(
+          superstructure.autonPreloadReq(),
+          algae.currentSenseHoming(),
+          Commands.sequence(
+            elevator.externalWaitUntilHomed(),
+            chooserCommand
+          )
+      );
+  }
+
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = null; // TODO: fill out
+    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
+    m_autonomousCommand = autonCmdBuilder(chosen);
 
-    if (m_autonomousCommand != null) {
-      Commands.parallel(
-      algae.currentSenseHoming(),
-      Commands.sequence(
-        elevator.currentSenseHoming(),
-        m_autonomousCommand
-      )
-    ).schedule();
+    if(m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
     }
   }
 
@@ -202,17 +360,20 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    superstructure.forceIdle().schedule();
+    algae.toIdleCmd().schedule();
+    finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
 
-    if(!elevator.getIsHomed()) {
-      elevator.currentSenseHoming().schedule();
-    }
+    // if(!elevator.getIsHomed()) {
+    //   elevator.currentSenseHoming().schedule();
+    // }
 
-    if(!algae.getIsHomed()) {
-      algae.currentSenseHoming();
-    }
+    // if(!algae.getIsHomed()) {
+    //   algae.currentSenseHoming().schedule();
+    // }
   }
 
   @Override
