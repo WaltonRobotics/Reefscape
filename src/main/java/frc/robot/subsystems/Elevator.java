@@ -53,7 +53,7 @@ public class Elevator extends SubsystemBase {
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
-    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 25.0; 
+    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
@@ -224,7 +224,7 @@ public class Elevator extends SubsystemBase {
         L4(12.89),
         CLIMB_UP(1.590325), // this height will move the robot up for climb
         CLIMB_DOWN(5.090325), //this height will ove robot down for climb
-        HP(2.095703); //human player station intake height
+        HP(2.08); //human player station intake height
 
         public final double rotations;
 
