@@ -231,7 +231,13 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
       trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
 
-      trg_manipDanger.and(manipulator.leftBumper()).onTrue(elevator.currentSenseHoming().andThen(superstructure.forceIdle()));
+      trg_manipDanger.and(manipulator.leftBumper()).onTrue(
+        Commands.parallel(
+          elevator.currentSenseHoming(),
+          finger.currentSenseHoming(),
+          algae.currentSenseHoming()
+        ).andThen(superstructure.forceIdle())
+      );
 
       manipulator.leftBumper().onTrue(superstructure.forceIdle());
 

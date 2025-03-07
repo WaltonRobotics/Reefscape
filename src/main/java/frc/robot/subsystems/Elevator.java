@@ -159,6 +159,7 @@ public class Elevator extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
+            m_frontMotor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
         };
         Runnable execute = () -> {};
@@ -167,6 +168,7 @@ public class Elevator extends SubsystemBase {
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
+            m_frontMotor.getConfigurator().apply(kSoftwareLimitConfigs);
             System.out.println("Zeroed Elevator!!!");
         };
 
