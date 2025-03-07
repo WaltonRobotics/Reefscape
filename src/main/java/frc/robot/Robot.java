@@ -183,12 +183,12 @@ public class Robot extends TimedRobot {
           )
       );
 
-      // driver.leftBumper().whileTrue(
-      //   Commands.parallel(
-      //     drivetrain.applyRequest(() -> straightWheelsReq),
-      //     Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
-      //   ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
-      // );
+      trg_driverDanger.and(driver.leftBumper()).whileTrue(
+        Commands.parallel(
+          drivetrain.applyRequest(() -> straightWheelsReq),
+          Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+        ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+      );
           
 
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
