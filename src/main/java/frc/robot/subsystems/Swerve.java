@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -19,10 +20,13 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -34,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.generated.TunerConstants;
 /**
@@ -74,7 +79,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_lastGyro = WaltLogger.logDouble("Swerve", "lastGyro");
     private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
-    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
+    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currentEffectiveWheelRad");
+    private final DoubleArrayLogger log_wheelRotations = WaltLogger.logDoubleArray("Swerve", "wheelRotations");
+
+    StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("actualRobotPose", Pose2d.struct).publish();
+    StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -249,6 +260,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+    public void setNeutralMode(NeutralModeValue mode) {
+        this.configNeutralMode(mode);
+    }
+
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
      *
@@ -280,6 +295,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 .withWheelForceFeedforwardsX(sample.moduleForcesX())
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
+
+        log_choreoActualRobotPose.accept(pose);
+        log_choreoDesiredRobotPose.accept(sample.getPose());
     }
 
     /**
@@ -385,6 +403,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        // cache the state for logging
+        var swerveState = getState();
+
+        log_choreoActualRobotPose.accept(swerveState.Pose);
+
+        double[] wheelMeters = new double[swerveState.ModulePositions.length];
+        for (int i = 0; i < swerveState.ModulePositions.length; i++) {
+            var pos =  swerveState.ModulePositions[i];
+            wheelMeters[i] = pos.distanceMeters;
+        }
+        log_wheelRotations.accept(wheelMeters);
     }
 
     private void startSimThread() {
