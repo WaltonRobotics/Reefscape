@@ -159,6 +159,7 @@ public class Elevator extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
+            System.out.println("Elevator Zero INIT");
             m_frontMotor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
         };
