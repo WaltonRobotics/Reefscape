@@ -232,7 +232,7 @@ public class Elevator extends SubsystemBase {
 
     public enum AlgaeHeight {
         L2(6.75097),
-        L3(9.529046);
+        L3(9.529046 - 0.17);
 
         public final double rotations;
 
