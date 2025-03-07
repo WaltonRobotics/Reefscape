@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -259,6 +260,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+    public void setNeutralMode(NeutralModeValue mode) {
+        this.configNeutralMode(mode);
+    }
+
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
      *
@@ -404,8 +409,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         log_choreoActualRobotPose.accept(swerveState.Pose);
 
-        double[] wheelMeters = {};
-        for (int i = 0; i < 4; i++) {
+        double[] wheelMeters = new double[swerveState.ModulePositions.length];
+        for (int i = 0; i < swerveState.ModulePositions.length; i++) {
             var pos =  swerveState.ModulePositions[i];
             wheelMeters[i] = pos.distanceMeters;
         }
