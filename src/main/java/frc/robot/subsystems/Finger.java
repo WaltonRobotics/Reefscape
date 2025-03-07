@@ -24,7 +24,7 @@ public class Finger extends SubsystemBase {
 
     private VoltageOut m_fingerZeroingVoltageCtrlReq = new VoltageOut(0);
     private VoltageOut m_voltOutReq = new VoltageOut(0);
-    private PositionVoltage m_PosVoltReq = new PositionVoltage(0);
+    private PositionVoltage m_PosVoltReq = new PositionVoltage(0).withEnableFOC(false);
 
 
     private BooleanSupplier m_currentSpike = () -> m_motor.getStatorCurrent().getValueAsDouble() > 5.0; 
@@ -45,6 +45,7 @@ public class Finger extends SubsystemBase {
 
     public void fingerOut() {
         log_fingerOut.accept(true);
+        System.out.println("Finger Requested out");
         m_motor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
     }
 
@@ -54,6 +55,7 @@ public class Finger extends SubsystemBase {
 
     public void fingerIn() {
         log_fingerOut.accept(false);
+        System.out.println("Finger Requested In");
         m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
     }
 
