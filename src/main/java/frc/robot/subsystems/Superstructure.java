@@ -419,7 +419,7 @@ public class Superstructure {
     }
 
     public Command baseAlgaeRemoval() {
-        return Commands.runEnd(
+        return Commands.startEnd(
             () -> {
                 m_finger.fingerOut();
                 m_coral.runWheelsAlgaeRemoval();
