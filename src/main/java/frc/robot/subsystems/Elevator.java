@@ -165,6 +165,10 @@ public class Elevator extends SubsystemBase {
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            if (interrupted) {
+                System.out.println("Elevator homing INTERRUPTED!");
+                return;
+            }
             m_frontMotor.setPosition(0);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
