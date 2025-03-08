@@ -220,7 +220,7 @@ public class Elevator extends SubsystemBase {
         HOME(0.1),
         L1(5.590325),
         L2(5.653564 + 0.169),
-        L3(8.451660),
+        L3(8.451660 + (0.169 / 2)),
         L4(12.89),
         CLIMB_UP(1.590325), // this height will move the robot up for climb
         CLIMB_DOWN(5.090325), //this height will ove robot down for climb
