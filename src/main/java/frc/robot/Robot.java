@@ -7,6 +7,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -22,9 +24,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.WaltAutonBuilder.NumCycles;
 
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
@@ -68,7 +72,7 @@ public class Robot extends TimedRobot {
 
   private Command m_autonomousCommand;
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory;
+  private WaltAutonFactory waltAutonFactory = null;
 
   private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
   private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4));
@@ -98,6 +102,44 @@ public class Robot extends TimedRobot {
   private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
 
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
+
+  /* WaltAutonBuilder vars */
+  private boolean numCycleChange = false;
+  private boolean startingPositionChange = false;
+  private boolean firstScoringPositionChange = false;
+  private boolean startingHeightChange = false;
+  private boolean initialHPStationChange = false;
+
+  private boolean beforeAuton = true;
+  private boolean autonNotMade = true;
+  private boolean readyToMakeAuton = false;
+
+  /* WaltAutonBuilder trigs */
+  // When the user selects a different option, this thing runs
+  private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
+    WaltAutonBuilder.m_cycles = numCycles;
+    numCycleChange = true;
+  };
+
+  private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+    WaltAutonBuilder.startingPosition = startingPosition;
+    startingPositionChange = true;
+  };
+
+  private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
+    WaltAutonBuilder.startingHeight = startingHeight;
+    startingHeightChange = true;
+  };
+
+  private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+    WaltAutonBuilder.scoringPosition = scoringPosition;
+    firstScoringPositionChange = true;
+  };
+
+  private final Consumer<HPStation> initialHPStationConsumer = hpStation -> {
+    WaltAutonBuilder.hpStation = hpStation;
+    initialHPStationChange = true;
+  };
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -265,39 +307,14 @@ public class Robot extends TimedRobot {
 
   }
 
-  // private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
-  //   AutonChooser.m_cycles = numCycles;
-  //   numCycleChange = true;
-  // };
-  // private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
-  //   AutonChooser.startingPosition = startingPosition;
-  //   startingPositionChange = true;
-  // }  ;
-  // private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
-  //   AutonChooser.startingHeight = startingHeight;
-  //   numCycleChange = true;
-  // }  ;
-  // private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
-  //   AutonChooser.scoringPosition = scoringPosition;
-  //   firstScoringPositionChange = true;
-  // }  ;
-  // private final Consumer<HPStation> initalHPStationConsumer = hpStation -> {
-  //   AutonChooser.hpStation = hpStation;
-  //   initialHPStationChange = true;
-  // };
-  
-  // private void mapAutonCommands() {
-  //   AutonChooser.configureFirstCycle();
-  // }
-
-  // /* needed to continue choosing schtuffs */
-  // private void configAutonChooser() {
-  //   AutonChooser.cyclesChooser.onChange(cyclesConsumer);
-  //   AutonChooser.startingPositionChooser.onChange(startingPositionConsumer);
-  //   AutonChooser.startingHeightChooser.onChange(startingHeightConsumer);
-  //   AutonChooser.firstScoringChooser.onChange(initialScoringPositionConsumer);
-  //   AutonChooser.firstToHPStationChooser.onChange(initalHPStationConsumer);
-  // }
+  /* WaltAutonBuilder thingies */
+  private void configWaltAutonBuilder() {
+    WaltAutonBuilder.cyclesChooser.onChange(cyclesConsumer);
+    WaltAutonBuilder.startingPositionChooser.onChange(startingPositionConsumer);
+    WaltAutonBuilder.startingHeightChooser.onChange(startingHeightConsumer);
+    WaltAutonBuilder.firstScoringChooser.onChange(initialScoringPositionConsumer);
+    WaltAutonBuilder.firstToHPStationChooser.onChange(initialHPStationConsumer);
+  }
 
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
@@ -313,15 +330,68 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
+    WaltAutonBuilder.configureFirstCycle();
+    configWaltAutonBuilder();
     addPeriodic(() -> superstructure.periodic(), 0.01);
-    // mapAutonCommands();
-    // configAutonChooser();
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
 
+    if (autonNotMade) {
+      readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
+    }
+
+    if (readyToMakeAuton && autonNotMade) {
+      waltAutonFactory = new WaltAutonFactory(
+        autoFactory, 
+        superstructure, 
+        WaltAutonBuilder.startingPosition, 
+        WaltAutonBuilder.getCycleScoringLocs(), 
+        WaltAutonBuilder.getCycleEleHeights(), 
+        WaltAutonBuilder.getCycleHPStations()
+      );
+
+      // dummy one
+      // waltAutonFactory = new WaltAutonFactory(
+      //   autoFactory, 
+      //   superstructure, 
+      //   StartingLocs.MID, 
+      //   reefLocs, 
+      //   heights, 
+      //   hpStations
+      // );
+
+      AutonChooser.addPathsAndCmds(waltAutonFactory);
+      autonNotMade = false;
+    }
+
+    if (beforeAuton) {
+      if (numCycleChange) {
+        WaltAutonBuilder.updateNumCycles();
+        WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+        numCycleChange = false;
+      }
+      if (startingPositionChange) {
+        WaltAutonBuilder.updateStartingPosition();
+        WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+        startingPositionChange = false;
+      }
+      if (initialHPStationChange) {
+        WaltAutonBuilder.updateInitalHPStation();
+        initialHPStationChange = false;
+      }
+      if (firstScoringPositionChange) {
+        WaltAutonBuilder.updateInitialScoringPosition();
+        firstScoringPositionChange = false;
+      }
+      if (startingHeightChange) {
+        WaltAutonBuilder.updateStartingHeight();
+        startingHeightChange = false;
+      }
+    }
+    
   }
 
   @Override
