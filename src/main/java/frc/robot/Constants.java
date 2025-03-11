@@ -253,8 +253,12 @@ public class Constants {
         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
             .withInverted(InvertedValue.CounterClockwise_Positive);
-        private static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
-            .withForwardSoftLimitThreshold(12.845); // true hard 12.9849854
+        public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(12.895)  // true hard 12.9849854
+            .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(0);
+        public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
         private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
             .withMotionMagicCruiseVelocity(12)
             .withMotionMagicAcceleration(50)

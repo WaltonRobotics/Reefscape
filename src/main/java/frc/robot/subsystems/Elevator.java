@@ -53,7 +53,7 @@ public class Elevator extends SubsystemBase {
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
-    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 25.0; 
+    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
 
@@ -159,14 +159,21 @@ public class Elevator extends SubsystemBase {
 
     public Command currentSenseHoming() {
         Runnable init = () -> {
+            System.out.println("Elevator Zero INIT");
+            m_frontMotor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            if (interrupted) {
+                System.out.println("Elevator homing INTERRUPTED!");
+                return;
+            }
             m_frontMotor.setPosition(0);
             m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
+            m_frontMotor.getConfigurator().apply(kSoftwareLimitConfigs);
             System.out.println("Zeroed Elevator!!!");
         };
 
@@ -216,12 +223,12 @@ public class Elevator extends SubsystemBase {
     public enum EleHeight {
         HOME(0.1),
         L1(5.590325),
-        L2(5.653564),
-        L3(8.451660),
-        L4(12.890325),
+        L2(5.653564 + 0.169),
+        L3(8.451660 + (0.169 / 2)),
+        L4(12.89),
         CLIMB_UP(1.590325), // this height will move the robot up for climb
         CLIMB_DOWN(5.090325), //this height will ove robot down for climb
-        HP(2.095703); //human player station intake height
+        HP(2.08); //human player station intake height
 
         public final double rotations;
 
@@ -232,7 +239,7 @@ public class Elevator extends SubsystemBase {
 
     public enum AlgaeHeight {
         L2(6.75097),
-        L3(9.529046);
+        L3(9.529046 - 0.17);
 
         public final double rotations;
 

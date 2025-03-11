@@ -81,6 +81,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
     private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currentEffectiveWheelRad");
     private final DoubleArrayLogger log_wheelRotations = WaltLogger.logDoubleArray("Swerve", "wheelRotations");
+    private final DoubleArrayLogger log_wheelDistance = WaltLogger.logDoubleArray("Swerve", "wheelDistance (in)");
 
     StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic("actualRobotPose", Pose2d.struct).publish();
@@ -409,12 +410,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         log_choreoActualRobotPose.accept(swerveState.Pose);
 
-        double[] wheelMeters = new double[swerveState.ModulePositions.length];
+        double[] wheelDistance = new double[swerveState.ModulePositions.length];
+        double[] wheelRotations = new double[swerveState.ModulePositions.length];
         for (int i = 0; i < swerveState.ModulePositions.length; i++) {
-            var pos =  swerveState.ModulePositions[i];
-            wheelMeters[i] = pos.distanceMeters;
+            var state = swerveState.ModulePositions[i];
+            var inches = Units.metersToInches(state.distanceMeters); 
+            var rots =  state.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            wheelRotations[i] = rots;
+            wheelDistance[i] = inches;
         }
-        log_wheelRotations.accept(wheelMeters);
+        log_wheelDistance.accept(wheelDistance);
+        log_wheelRotations.accept(wheelRotations);
     }
 
     private void startSimThread() {

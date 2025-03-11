@@ -28,13 +28,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 
 // import frc.robot.autons.AutonChooser.NumCycles;
 import static frc.robot.autons.TrajsAndLocs.*;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_A;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_C;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_D;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_E;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_F;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 import static frc.robot.subsystems.Elevator.EleHeight.L4;
 
 import frc.robot.autons.WaltAutonFactory;
@@ -76,9 +70,9 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory;
 
-  private ArrayList<ReefLocs> reefLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -150,14 +144,14 @@ public class Robot extends TimedRobot {
       autoFactory, 
       superstructure, 
       StartingLocs.RIGHT, 
-      reefLocs, 
+      scoreLocs, 
       heights, 
       hpStations);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
-    configureTestBindings();
+    // configureTestBindings();
   }
 
   private void configureTestBindings() {
@@ -189,12 +183,12 @@ public class Robot extends TimedRobot {
           )
       );
 
-      // driver.leftBumper().whileTrue(
-      //   Commands.parallel(
-      //     drivetrain.applyRequest(() -> straightWheelsReq),
-      //     Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
-      //   ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
-      // );
+      trg_driverDanger.and(driver.leftBumper()).whileTrue(
+        Commands.parallel(
+          drivetrain.applyRequest(() -> straightWheelsReq),
+          Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+        ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+      );
           
 
       driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
@@ -230,6 +224,14 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
       trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
       trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+
+      trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
+        Commands.parallel(
+          elevator.currentSenseHoming(),
+          finger.currentSenseHoming(),
+          algae.currentSenseHoming()
+        ).andThen(superstructure.forceIdle())
+      );
 
       manipulator.leftBumper().onTrue(superstructure.forceIdle());
 
@@ -333,6 +335,7 @@ public class Robot extends TimedRobot {
 
   private Command autonCmdBuilder(Command chooserCommand) {
     return Commands.parallel(
+          Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
           Commands.sequence(

@@ -21,7 +21,7 @@ public class Coral extends SubsystemBase {
     private VoltageOut m_voltOutReq = new VoltageOut(0);
     private NeutralOut m_neutralOut = new NeutralOut();
 
-    private final double m_slowIntakeSpeed = 12 * .25;
+    private final double m_slowIntakeSpeed = 3;
     private final double m_scoreSpeed = 4.5;
 
     // true when beam break broken
@@ -79,7 +79,7 @@ public class Coral extends SubsystemBase {
     }
 
     public Command slowIntakeReversal(){
-        return setCoralMotorActionCmd(-m_slowIntakeSpeed);
+        return setCoralMotorActionCmd(-m_scoreSpeed);
     }
 
     public Command score() {
