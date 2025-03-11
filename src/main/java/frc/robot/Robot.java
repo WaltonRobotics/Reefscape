@@ -9,11 +9,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import org.photonvision.EstimatedRobotPose;
+
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import choreo.Choreo;
+import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -21,8 +31,14 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.FieldK;
+import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -71,6 +87,14 @@ public class Robot extends TimedRobot {
   private final Superstructure superstructure;
 
   private Command m_autonomousCommand;
+  // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
+  private final VisionSim visionSim = new VisionSim();
+  private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
+    VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
+
+  // this should be updated with all of our cameras
+  private final Vision[] cameras = {eleForwardsCam};
+
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
 
@@ -140,6 +164,8 @@ public class Robot extends TimedRobot {
     WaltAutonBuilder.hpStation = hpStation;
     initialHPStationChange = true;
   };
+
+  private final Field2d simDebugField = visionSim.getSimDebugField();
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -219,8 +245,8 @@ public class Robot extends TimedRobot {
       drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with negative Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with negative X (left)
+              drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+                  .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with X (left)
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
@@ -305,6 +331,7 @@ public class Robot extends TimedRobot {
 
       drivetrain.registerTelemetry(logger::telemeterize);
 
+    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   /* WaltAutonBuilder thingies */
@@ -325,14 +352,27 @@ public class Robot extends TimedRobot {
   private void manipRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			manipulator.getHID().setRumble(RumbleType.kBothRumble, intensity);
-		}
+		} 
 	}
 
   @Override
   public void robotInit(){
     WaltAutonBuilder.configureFirstCycle();
     configWaltAutonBuilder();
+    
     addPeriodic(() -> superstructure.periodic(), 0.01);
+    simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
+    simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
+    simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
+    simDebugField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
+    simDebugField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
+    simDebugField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
+    simDebugField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
+    simDebugField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
+    simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
+    simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
+    simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
   }
 
   @Override
@@ -392,6 +432,15 @@ public class Robot extends TimedRobot {
       }
     }
     
+    // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
+    for (Vision camera : cameras) {
+      Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
+      if (estimatedPoseOptional.isPresent()) {
+        EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
+        Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+        drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds, camera.getEstimationStdDevs());
+      }
+    }
   }
 
   @Override
@@ -467,5 +516,15 @@ public class Robot extends TimedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SwerveDriveState robotState = drivetrain.getState();
+    Pose2d robotPose = robotState.Pose;
+    visionSim.simulationPeriodic(robotPose);
+    drivetrain.simulationPeriodic();
+
+    // below is debug for swerve simulation. the farthest down one displays the module poses, but it's definitely bugged
+    // Field2d debugField = visionSim.getSimDebugField();
+    // simDebugField.getObject("EstimatedRobot").setPose(robotPose);
+    // simDebugField.getObject("EstimatedRobotModules").setPoses(drivetrain.extractModulePoses(robotState));
+  }
 }
