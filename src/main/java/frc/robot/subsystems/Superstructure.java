@@ -432,6 +432,10 @@ public class Superstructure {
         return m_coral.trg_botBeamBreak;
     }
 
+    public Trigger getTopBeamBreak() {
+        return m_coral.trg_topBeamBreak;
+    }
+
     /* to be used in auton */
     public Command autonEleToHPReq() {
         return Commands.runOnce(() -> m_autonEleToHPReq = true);

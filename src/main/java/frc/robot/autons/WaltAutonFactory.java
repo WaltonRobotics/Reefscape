@@ -53,7 +53,7 @@ public class WaltAutonFactory {
         ArrayList<HPStation> hpStations
     ) {
         m_autoFactory = autoFactory;
-        m_routine = m_autoFactory.newRoutine("auton");
+        m_routine = m_autoFactory.newRoutine("auton"); 
         m_superstructure = superstructure;
 
         m_startLoc = startLoc;
