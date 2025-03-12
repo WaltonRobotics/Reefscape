@@ -77,9 +77,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 10);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
 
-    private final PIDController m_autoAlignXController = new PIDController(5, 0, 0);
-    private final PIDController m_autoAlignYController = new PIDController(5, 0, 0);
-    private final PIDController m_autoAlignThetaController = new PIDController(5, 0, 0);
+    private final PIDController m_autoAlignXController = new PIDController(4, 0, 0);
+    private final PIDController m_autoAlignYController = new PIDController(4, 0, 0);
+    private final PIDController m_autoAlignThetaController = new PIDController(7, 0, 0);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
