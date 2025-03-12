@@ -81,7 +81,7 @@ public class Vision {
         int tagId = bestReefTag.getFiducialId();
         ReefLocs correctReefLocation;
         // map nearest tag and left vs right to correct reef branch
-        if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().equals(Alliance.Blue)) {
+        if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().get().equals(Alliance.Blue)) {
             // blue
             switch (tagId) {
                 case 18:
@@ -162,6 +162,10 @@ public class Vision {
         
         // PhotonPipelineResult::getTargets() should return the targets in sort order as set in photonvision UI
         List<PhotonTrackedTarget> trackedTargets = latestPhotonPipelineResult.getTargets();
+        int[] trackedTargetIds = new int[trackedTargets.size()];
+        for (int i = 0; i < trackedTargetIds.length; i++) {
+            trackedTargetIds[i] = trackedTargets.get(i).fiducialId;
+        }
         for (int i = 0; i < trackedTargets.size(); i++) {
             if (isTagIdOnAllianceReef(trackedTargets.get(i).getFiducialId())) {
                 return Optional.of(trackedTargets.get(i));
@@ -215,7 +219,7 @@ public class Vision {
     }
 
     private boolean isTagIdOnAllianceReef(int givenId) {
-        if ((DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Blue)) || DriverStation.getAlliance().isEmpty()) {
+        if (DriverStation.getAlliance().isEmpty() || (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Blue))) {
             if (DriverStation.getAlliance().isEmpty()) {
                 System.out.println("VISION[165] WARN: DriverStation not providing alliance color, default to blue");
             }
