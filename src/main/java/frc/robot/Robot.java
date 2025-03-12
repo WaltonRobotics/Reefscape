@@ -23,6 +23,7 @@ import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -43,6 +44,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import frc.util.AllianceFlipUtil;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
@@ -194,7 +196,19 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit(){
     simDebugField.getObject("testObject").setPose(new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
+    Pose2d flippedPose = AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
+    System.out.println(DriverStation.getAlliance().isPresent());
+    if (DriverStation.getAlliance().isPresent()) {
+      System.out.println(DriverStation.getAlliance().get());
+    }
+    System.out.println(flippedPose.getX());
+    System.out.println(flippedPose.getY());
+    System.out.println(flippedPose.getRotation().getDegrees());
+    simDebugField.getObject("testObjectFLipped").setPose(AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30))));
     simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    simDebugField.getObject("OML REED REEF A").setPose(AllianceFlipUtil.flip(
+      FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A)
+    ));
     simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
     simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
     simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));

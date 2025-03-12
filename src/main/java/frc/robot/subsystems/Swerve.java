@@ -350,6 +350,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = -m_autoAlignYController.calculate(yDiff);
                 double thetaSpeed = m_autoAlignThetaController.calculate(rotDiff);
 
+                // TODO: i have no idea why this works but it does
+                if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red)) {
+                    xSpeed = -xSpeed;
+                    ySpeed = -ySpeed;
+                    thetaSpeed = thetaSpeed;
+                }
+
                 setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
 
                 log_errorX.accept(xDiff);
