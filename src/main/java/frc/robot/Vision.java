@@ -6,6 +6,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Constants.FieldK;
@@ -44,6 +47,9 @@ public class Vision {
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(1.5, 1.5, 6.24);
     public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 6.24);
 
+    private final StructPublisher<Pose2d> log_camPose;
+    private final DoubleArrayPublisher log_stdDevs;
+
     public Vision(String cameraName, String simVisualName, Transform3d roboToCam, VisionSim visionSim, SimCameraProperties simCameraProperties) {
         m_cameraName = cameraName;
         m_camera = new PhotonCamera(m_cameraName);
@@ -54,6 +60,11 @@ public class Vision {
         photonEstimator =
                 new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, roboToCam);
         photonEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+
+        log_camPose = NetworkTableInstance.getDefault()
+            .getStructTopic("Vision/" + cameraName + "/estRobotPose", Pose2d.struct).publish();
+        log_stdDevs = NetworkTableInstance.getDefault()
+            .getDoubleArrayTopic("Vision/" + cameraName + "/stdDevs").publish(); 
 
         // Simulation
         if (Robot.isSimulation()) {
@@ -199,6 +210,7 @@ public class Vision {
         for (var change : unreadCameraResults) {
             visionEst = photonEstimator.update(change);
             updateEstimationStdDevs(visionEst, change.getTargets());
+            log_stdDevs.accept(curStdDevs.getData());
 
             if (Robot.isSimulation()) {
                 visionEst.ifPresentOrElse(
@@ -211,6 +223,11 @@ public class Vision {
                         });
             }
         }
+
+        if (visionEst.isPresent()) {
+            log_camPose.accept(visionEst.get().estimatedPose.toPose2d());
+        }
+
         return visionEst;
     }
 

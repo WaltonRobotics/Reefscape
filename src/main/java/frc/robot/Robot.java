@@ -14,9 +14,12 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.Timestamp;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
@@ -25,6 +28,8 @@ import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -83,7 +88,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
-  private final Algae algae;
+  // private final Algae algae;
   private final Superstructure superstructure;
 
   private Command m_autonomousCommand;
@@ -127,6 +132,9 @@ public class Robot extends TimedRobot {
 
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
 
+  private final StructPublisher<Pose2d> log_robotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("Robot/Pose", Pose2d.struct).publish();
+
   /* WaltAutonBuilder vars */
   private boolean numCycleChange = false;
   private boolean startingPositionChange = false;
@@ -165,7 +173,7 @@ public class Robot extends TimedRobot {
     initialHPStationChange = true;
   };
 
-  private final Field2d simDebugField = visionSim.getSimDebugField();
+  private final Field2d robotField = visionSim.getSimDebugField();
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -201,12 +209,12 @@ public class Robot extends TimedRobot {
       this::driverRumble);
     }
       
-      algae = new Algae(
-        trg_algaeIntake, 
-        trg_processorReq, 
-        trg_shootReq, 
-        this::manipRumble
-      );
+      // algae = new Algae(
+      //   trg_algaeIntake, 
+      //   trg_processorReq, 
+      //   trg_shootReq, 
+      //   this::manipRumble
+      // );
 
     waltAutonFactory = new WaltAutonFactory(
       autoFactory, 
@@ -245,8 +253,8 @@ public class Robot extends TimedRobot {
       drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with X (left)
+              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
@@ -267,7 +275,7 @@ public class Robot extends TimedRobot {
 
       driver.rightBumper().onTrue(
         Commands.parallel(
-          algae.toIdleCmd(),
+          // algae.toIdleCmd(),
           superstructure.forceIdle()
         )
       );
@@ -296,8 +304,8 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
         Commands.parallel(
           elevator.currentSenseHoming(),
-          finger.currentSenseHoming(),
-          algae.currentSenseHoming()
+          finger.currentSenseHoming() // TODO: add back in a comma
+          // algae.currentSenseHoming()
         ).andThen(superstructure.forceIdle())
       );
 
@@ -361,18 +369,18 @@ public class Robot extends TimedRobot {
     configWaltAutonBuilder();
     
     addPeriodic(() -> superstructure.periodic(), 0.01);
-    simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    simDebugField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    simDebugField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    simDebugField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    simDebugField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    simDebugField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+    robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    robotField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
+    robotField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
+    robotField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
+    robotField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
+    robotField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
+    robotField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
+    robotField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
+    robotField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
+    robotField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
+    robotField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
+    robotField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
   }
 
   @Override
@@ -438,9 +446,13 @@ public class Robot extends TimedRobot {
       if (estimatedPoseOptional.isPresent()) {
         EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
         Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
-        drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds, camera.getEstimationStdDevs());
+        var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
+        drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
       }
     }
+
+    robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
+    log_robotPose.accept(drivetrain.getState().Pose);
   }
 
   @Override
@@ -456,7 +468,7 @@ public class Robot extends TimedRobot {
     return Commands.parallel(
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
-          algae.currentSenseHoming(),
+          // algae.currentSenseHoming(),
           Commands.sequence(
             elevator.externalWaitUntilHomed(),
             chooserCommand
@@ -483,7 +495,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     superstructure.forceIdle().schedule();
-    algae.toIdleCmd().schedule();
+    // algae.toIdleCmd().schedule();
     finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
