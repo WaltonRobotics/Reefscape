@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -131,8 +132,8 @@ public class Robot extends TimedRobot {
       drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(driver.getLeftX() * MaxSpeed) // Drive left with X (left)
+              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
                   .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
@@ -156,14 +157,24 @@ public class Robot extends TimedRobot {
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-    driver.leftBumper().onTrue(new DeferredCommand(
-      () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim),
-      Set.of(drivetrain)));
-    
-    Optional<Pose2d> randomPose = Optional.of(new Pose2d(2, 1, Rotation2d.fromDegrees(70)));
-    driver.rightBumper().onTrue(new DeferredCommand(
-      () -> drivetrain.moveToPose(randomPose, visionSim),
-      Set.of(drivetrain)));
+    driver.leftBumper().onTrue(
+      Commands.sequence(
+        Commands.race(
+          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
+          Commands.waitSeconds(0.2)
+        ),
+        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain))
+      )
+    );
+    driver.rightBumper().onTrue(
+      Commands.sequence(
+        Commands.race(
+          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
+          Commands.waitSeconds(0.2)
+        ),
+        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))
+      )
+    );
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
@@ -182,6 +193,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
+    simDebugField.getObject("testObject").setPose(new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
     simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
     simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
     simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
@@ -221,7 +233,18 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = drivetrain.testAuton();
+    // m_autonomousCommand = drivetrain.testAuton();
+
+    m_autonomousCommand = Commands.sequence(
+      Commands.runOnce(() -> drivetrain.resetPose(new Pose2d(4, 2, Rotation2d.fromDegrees(90)))),
+      Commands.waitSeconds(1),
+      Commands.race(
+        Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
+        Commands.waitSeconds(0.2)
+      ),
+      new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain)),
+      Commands.print("auton finished")
+    );
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
