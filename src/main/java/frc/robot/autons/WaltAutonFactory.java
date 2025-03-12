@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.Elastic;
@@ -21,6 +22,7 @@ public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
     private AutoRoutine m_routine;
     private final Superstructure m_superstructure;
+    private final Elevator m_ele;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -45,6 +47,7 @@ public class WaltAutonFactory {
         );
 
     public WaltAutonFactory(
+        Elevator ele,
         AutoFactory autoFactory, 
         Superstructure superstructure,
         StartingLocs startLoc,
@@ -55,6 +58,7 @@ public class WaltAutonFactory {
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton"); 
         m_superstructure = superstructure;
+        m_ele = ele;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
@@ -200,9 +204,9 @@ public class WaltAutonFactory {
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
                     Commands.print("b4 checking if bottom beam breaks"),
-                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    Commands.waitUntil(m_superstructure.getTopBeamBreak()),
                     // Commands.waitSeconds(3),
-                    Commands.print("Bottom beam break has broken"),
+                    Commands.print("top beam break has broken"),
                     trajCmd,
                     Commands.print("Running Path: " + trajCmd)
                 ));
