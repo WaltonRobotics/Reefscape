@@ -103,9 +103,9 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
 
-  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C, REEF_B, REEF_A)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
