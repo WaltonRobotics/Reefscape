@@ -77,9 +77,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /* TODO: gotta tune */
     private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
-    private final PIDController m_pathXController = new PIDController(10, 0, 10);
-    private final PIDController m_pathYController = new PIDController(10, 0, 10);
-    private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
+    private final PIDController m_pathXController = new PIDController(10, 0, 0);
+    private final PIDController m_pathYController = new PIDController(10, 0, 0);
+    private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
     private final PIDController m_autoAlignXController = new PIDController(2, 0, 0);
     private final PIDController m_autoAlignYController = new PIDController(2, 0, 0);
@@ -119,6 +119,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_autoAlignDesiredXSpeed = WaltLogger.logDouble("Swerve", "auto align desired x speed");
     private final DoubleLogger log_autoAlignDesiredYSpeed = WaltLogger.logDouble("Swerve", "auto align desired y speed");
     private final DoubleLogger log_autoAlignDesiredThetaSpeed = WaltLogger.logDouble("Swerve", "auto align desired theta speed");
+
+    private final StructPublisher<ChassisSpeeds> desiredChassisSpeeds = NetworkTableInstance.getDefault()
+        .getStructTopic("Swerve/DesiredSpeeds", ChassisSpeeds.struct).publish();
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -596,7 +599,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             new PIDController(7, 0, 7),
             new PIDController(7, 0, 7),
             thetaController,
-            swerveModuleStates -> setControl(drive.withSpeeds(getKinematics().toChassisSpeeds(swerveModuleStates))),
+            swerveModuleStates -> {
+                var chassisSpeeds = getKinematics().toChassisSpeeds(swerveModuleStates);
+                desiredChassisSpeeds.accept(chassisSpeeds);
+                setControl(drive.withSpeeds(chassisSpeeds));
+            },
             this);
 
         return Commands.sequence(
