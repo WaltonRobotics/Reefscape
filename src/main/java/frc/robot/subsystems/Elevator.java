@@ -2,16 +2,21 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -21,8 +26,15 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import static frc.robot.Constants.ElevatorK.*;
+
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
@@ -32,12 +44,25 @@ import frc.util.WaltLogger.DoubleLogger;
 
 //numbers are dummies
 public class Elevator extends SubsystemBase {
-    private final TalonFX m_right = new TalonFX(kRightCANID, TunerConstants.kCANBus);
-    private final TalonFX m_left = new TalonFX(kLeftCANID, TunerConstants.kCANBus);
-    private final Follower m_follower = new Follower(m_right.getDeviceID(),true);
-    private MotionMagicExpoVoltage m_MMEVRequest = new MotionMagicExpoVoltage(0);
+    private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
+    private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
+    private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
+    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
 
-    private double m_desiredHeight = 0;
+    private double m_desiredHeight = 0; // needs to be logged
+    private boolean m_isHomed = false;
+    private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
+    private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
+    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
+    private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
+    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
+
+    private boolean m_isCoast = false;
+    private GenericEntry nte_coast = Shuffleboard.getTab(kLogTab)
+        .add("Coast", false)
+        .withWidget(BuiltInWidgets.kToggleSwitch)
+        .getEntry();
+
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
             DCMotor.getKrakenX60(2), 
@@ -60,14 +85,27 @@ public class Elevator extends SubsystemBase {
 
     private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition");
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
-
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
+    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
 
     public Elevator() {
-        m_left.setControl(m_follower);
-        m_left.getConfigurator().apply(kLeftTalonFXConfiguration);
-        m_right.getConfigurator().apply(kRightTalonFXConfiguration);
+        m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
+
+        m_rearMotor.getConfigurator().apply(kRearTalonFXConfig);
+        m_rearMotor.setControl(m_followerReq);
+
         SmartDashboard.putData("Elevator Sim", m_mech2d);
+
+        setDefaultCommand(currentSenseHoming());
+
+    }
+
+    private void setCoast(boolean coast) {
+        if (m_isCoast != coast) {
+            m_isCoast = coast;
+            m_frontMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+            m_rearMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+        }
     }
 
     public boolean nearSetpoint() {
@@ -75,60 +113,98 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean nearSetpoint(double tolerancePulleyRotations) {
-        double diff = m_MMEVRequest.Position - getPulleyRotations();
+        double diff = m_MMVRequest.Position - getPulleyRotations();
         return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
     private double getPulleyRotations() {
-        return m_right.getPosition().getValueAsDouble();
+        return m_frontMotor.getPosition().getValueAsDouble();
     }
 
     private Distance getPositionMeters() {
-        return ElevatorK.rotationsToMeters(m_right.getPosition().getValue());
+        return ElevatorK.rotationsToMeters(m_frontMotor.getPosition().getValue());
     }
 
     /* 
      * use for scoring
      */
-    public Command toHeight(EleHeight heightMeters) {
-        return toHeight(heightMeters.meters);
+    public Command toHeightCoral(Supplier<EleHeight> height) {
+        return toHeight(height.get().rotations);
     }
 
-    private Command toHeight(double heightMeters) {
-        m_desiredHeight = heightMeters;
-        double heightRots = ElevatorK.metersToRotation(Meters.of(heightMeters)).in(Rotations);
+    public Command toHeightAlgae(Supplier<AlgaeHeight> height) {
+        return toHeight(height.get().rotations);
+    }
+
+    public Command toHeight(double rotations) {
         return runOnce(
             () -> {
-                m_MMEVRequest = m_MMEVRequest.withPosition(heightRots);
-                log_elevatorDesiredPosition.accept(Meters.of(heightMeters).magnitude());
-                m_right.setControl(m_MMEVRequest);
+                m_desiredHeight = rotations;
+                // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
+                m_MMVRequest = m_MMVRequest.withPosition(rotations);
+                log_elevatorDesiredPosition.accept(rotations);
+                m_frontMotor.setControl(m_MMVRequest);
             }
         ).until(() -> nearSetpoint());
     }
 
-    public Command overrideToHeight(double input) {
-        if(input > 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredHeight += Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's increaseAngle() method in Aim
-                toHeight(m_desiredHeight)
-            );
-        } else if(input < 0) {
-            return Commands.sequence(
-                Commands.runOnce(() -> m_desiredHeight -= Meters.of(Units.inchesToMeters(2)).magnitude()), // logic taken from Shosty's decreaseAngle() method in Aim
-                toHeight(m_desiredHeight)
-            );
-        } else { return Commands.none();}
+    public Command testVoltageControl(DoubleSupplier stick) {
+        return runEnd(() -> {
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
+        }, () -> {
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
+        }
+        );
+    }
+
+    public Command currentSenseHoming() {
+        Runnable init = () -> {
+            System.out.println("Elevator Zero INIT");
+            m_frontMotor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
+        };
+        Runnable execute = () -> {};
+        Consumer<Boolean> onEnd = (Boolean interrupted) -> {
+            if (interrupted) {
+                System.out.println("Elevator homing INTERRUPTED!");
+                return;
+            }
+            m_frontMotor.setPosition(0);
+            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            removeDefaultCommand();
+            m_isHomed = true;
+            m_frontMotor.getConfigurator().apply(kSoftwareLimitConfigs);
+            System.out.println("Zeroed Elevator!!!");
+        };
+
+        BooleanSupplier isFinished = () ->
+            m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
+            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
+
+        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+
+    public Command externalWaitUntilHomed() {
+        return Commands.run(() -> {}).until(() -> m_isHomed);
+    }
+    
+    public boolean getIsHomed() {
+        return m_isHomed;
     }
 
     @Override
     public void periodic() {
+
+        setCoast(nte_coast.getBoolean(false));
+
         log_eleAtHeight.accept(nearSetpoint());
+        log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
     }
 
     @Override
     public void simulationPeriodic() {
-        TalonFXSimState rightSim = m_right.getSimState();
-        m_elevatorSim.setInput(rightSim.getMotorVoltage());
+        TalonFXSimState frontSim = m_frontMotor.getSimState();
+        m_elevatorSim.setInput(frontSim.getMotorVoltage());
 
         m_elevatorSim.update(0.020);
 
@@ -136,8 +212,8 @@ public class Elevator extends SubsystemBase {
         var elevatorVelocity = 
             metersToRotationVel(m_elevatorSim.getVelocityMetersPerSecond()* kGearRatio);
 
-        rightSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
-        rightSim.setRotorVelocity(elevatorVelocity);
+        frontSim.setRawRotorPosition(m_elevatorSim.getPositionMeters() * kGearRatio);
+        frontSim.setRotorVelocity(elevatorVelocity);
 
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
     }
@@ -145,30 +221,30 @@ public class Elevator extends SubsystemBase {
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
-        HOME(Units.inchesToMeters(14.542)),
-        L1(Units.inchesToMeters(37)),
-        L2(Units.inchesToMeters(48.041)),
-        L3(Units.inchesToMeters(64)),
-        L4(Units.inchesToMeters(86)),
-        CLIMB_UP(1.5), // this height will move the robot up for climb
-        CLIMB_DOWN(5), //this height will ove robot down for climb
-        HP(Units.inchesToMeters(36)); //human player station intake height
+        HOME(0.1),
+        L1(5.590325),
+        L2(5.653564 + 0.169),
+        L3(8.451660 + (0.169 / 2)),
+        L4(12.89),
+        CLIMB_UP(1.590325), // this height will move the robot up for climb
+        CLIMB_DOWN(5.090325), //this height will ove robot down for climb
+        HP(2.08); //human player station intake height
 
-        public final double meters;
+        public final double rotations;
 
-       private EleHeight(double heightMeters){
-            this.meters = heightMeters;
+        private EleHeight(double rotations){
+            this.rotations = rotations;
         }
     }
 
     public enum AlgaeHeight {
-        L2(Units.inchesToMeters(34.782)),
-        L3(Units.inchesToMeters(49.235));
+        L2(6.75097),
+        L3(9.529046 - 0.17);
 
-        public final double m_heightMeters;
+        public final double rotations;
 
-        private AlgaeHeight(double heightMeters){
-            m_heightMeters = heightMeters;
+        private AlgaeHeight(double rotations){
+            this.rotations = rotations;
         }
     }
 }

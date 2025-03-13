@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -40,6 +41,8 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -52,6 +55,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.VisionSim;
 import frc.robot.generated.TunerConstants;
@@ -73,9 +77,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /* TODO: gotta tune */
     private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
-    private final PIDController m_pathXController = new PIDController(10, 0, 10);
-    private final PIDController m_pathYController = new PIDController(10, 0, 10);
-    private final PIDController m_pathThetaController = new PIDController(7, 0, 7);
+    private final PIDController m_pathXController = new PIDController(10, 0, 0);
+    private final PIDController m_pathYController = new PIDController(10, 0, 0);
+    private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
     private final PIDController m_autoAlignXController = new PIDController(4, 0, 0);
     private final PIDController m_autoAlignYController = new PIDController(4, 0, 0);
@@ -97,7 +101,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_lastGyro = WaltLogger.logDouble("Swerve", "lastGyro");
     private final DoubleLogger log_avgWheelPos = WaltLogger.logDouble("Swerve", "avgWheelPos");
     private final DoubleLogger log_accumGyro = WaltLogger.logDouble("Swerve", "accumGyro");
-    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currengEffectiveWheelRad");
+    private final DoubleLogger log_currentEffectiveWheelRad = WaltLogger.logDouble("Swerve", "currentEffectiveWheelRad");
+    private final DoubleArrayLogger log_wheelRotations = WaltLogger.logDoubleArray("Swerve", "wheelRotations");
+    private final DoubleArrayLogger log_wheelDistance = WaltLogger.logDoubleArray("Swerve", "wheelDistance (in)");
+
+    StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("actualRobotPose", Pose2d.struct).publish();
+    StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
 
     private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
     private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
@@ -108,6 +119,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_autoAlignDesiredXSpeed = WaltLogger.logDouble("Swerve", "auto align desired x speed");
     private final DoubleLogger log_autoAlignDesiredYSpeed = WaltLogger.logDouble("Swerve", "auto align desired y speed");
     private final DoubleLogger log_autoAlignDesiredThetaSpeed = WaltLogger.logDouble("Swerve", "auto align desired theta speed");
+
+    private final StructPublisher<ChassisSpeeds> desiredChassisSpeeds = NetworkTableInstance.getDefault()
+        .getStructTopic("Swerve/DesiredSpeeds", ChassisSpeeds.struct).publish();
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -282,6 +296,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+    public void setNeutralMode(NeutralModeValue mode) {
+        this.configNeutralMode(mode);
+    }
+
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
      *
@@ -313,7 +331,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
 
+        log_choreoActualRobotPose.accept(pose);
+        log_choreoDesiredRobotPose.accept(sample.getPose());
     }
+
 
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
@@ -527,6 +548,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+        // cache the state for logging
+        var swerveState = getState();
+
+        log_choreoActualRobotPose.accept(swerveState.Pose);
+
+        double[] wheelDistance = new double[swerveState.ModulePositions.length];
+        double[] wheelRotations = new double[swerveState.ModulePositions.length];
+        for (int i = 0; i < swerveState.ModulePositions.length; i++) {
+            var state = swerveState.ModulePositions[i];
+            var inches = Units.metersToInches(state.distanceMeters); 
+            var rots =  state.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            wheelRotations[i] = rots;
+            wheelDistance[i] = inches;
+        }
+        log_wheelDistance.accept(wheelDistance);
+        log_wheelRotations.accept(wheelRotations);
     }
 
     private void startSimThread() {
@@ -561,15 +599,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     //     SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds()
     //         .withDriveRequestType(DriveRequestType.Velocity);
         
-    //     SwerveControllerCommand swerveControllerCmd = new SwerveControllerCommand(
-    //         traj,
-    //         () -> getState().Pose,
-    //         getKinematics(),
-    //         new PIDController(7, 0, 7),
-    //         new PIDController(7, 0, 7),
-    //         thetaController,
-    //         swerveModuleStates -> setControl(drive.withSpeeds(getKinematics().toChassisSpeeds(swerveModuleStates))),
-    //         this);
+        SwerveControllerCommand swerveControllerCmd = new SwerveControllerCommand(
+            traj,
+            () -> getState().Pose,
+            getKinematics(),
+            new PIDController(7, 0, 7),
+            new PIDController(7, 0, 7),
+            thetaController,
+            swerveModuleStates -> {
+                var chassisSpeeds = getKinematics().toChassisSpeeds(swerveModuleStates);
+                desiredChassisSpeeds.accept(chassisSpeeds);
+                setControl(drive.withSpeeds(chassisSpeeds));
+            },
+            this);
 
     //     return Commands.sequence(
     //         Commands.runOnce(() -> resetPose(traj.getInitialPose())),

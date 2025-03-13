@@ -5,16 +5,22 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.Coralk.kCoralSpeed;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.Timestamp;
+import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import choreo.Choreo;
@@ -22,10 +28,15 @@ import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -38,21 +49,31 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
-import frc.robot.autons.TrajsAndLocs;
+import frc.robot.autons.WaltAutonBuilder;
+import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.WaltAutonBuilder.NumCycles;
+
+// import frc.robot.autons.AutonChooser.NumCycles;
+import static frc.robot.autons.TrajsAndLocs.*;
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
+import static frc.robot.subsystems.Elevator.EleHeight.L4;
+
 import frc.robot.autons.WaltAutonFactory;
+// import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.util.AllianceFlipUtil;
+import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Finger;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
 
   private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
@@ -70,18 +91,22 @@ public class Robot extends TimedRobot {
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
   private final Coral coral = new Coral();
+  private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
+  // private final Algae algae;
+  private final Superstructure superstructure;
+
+  private Command m_autonomousCommand;
   // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  private final Superstructure superstructure;
 
   // this should be updated with all of our cameras
   private final Vision[] cameras = {eleForwardsCam};
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
+  private WaltAutonFactory waltAutonFactory = null;
 
   private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -89,46 +114,149 @@ public class Robot extends TimedRobot {
   private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
   private final Trigger trg_eleOverride;
-  // override button
-  private final Trigger trg_manipDanger;
-  private final Trigger trg_driverDanger;
+  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C, REEF_B, REEF_A)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
-  private final Field2d simDebugField = visionSim.getSimDebugField();
+  private final Trigger trg_intakeReq = manipulator.rightBumper();
+  
+  private final Trigger trg_toL1 = manipulator.povDown();
+  private final Trigger trg_toL2 = manipulator.povRight();
+  private final Trigger trg_toL3 = manipulator.povLeft();
+  private final Trigger trg_toL4 = manipulator.povUp();
+
+  private final Trigger trg_teleopScoreReq = driver.rightTrigger(); 
+
+  private final Trigger trg_algaeIntake = manipulator.a();
+  private final Trigger trg_processorReq = manipulator.y();
+  private final Trigger trg_shootReq = manipulator.rightTrigger();
+  private final Trigger trg_deAlgae = manipulator.leftTrigger();
+
+  // simulation
+  private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
+  private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
+ 
+  // override button
+  private final Trigger trg_driverDanger = driver.b();
+  private final Trigger trg_manipDanger = manipulator.b();
+  private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
+
+  private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
+
+  private final StructPublisher<Pose2d> log_robotPose = NetworkTableInstance.getDefault()
+        .getStructTopic("Robot/Pose", Pose2d.struct).publish();
+
+  /* WaltAutonBuilder vars */
+  private boolean numCycleChange = false;
+  private boolean startingPositionChange = false;
+  private boolean firstScoringPositionChange = false;
+  private boolean startingHeightChange = false;
+  private boolean initialHPStationChange = false;
+
+  private boolean beforeAuton = true;
+  private boolean autonNotMade = true;
+  private boolean readyToMakeAuton = false;
+
+  /* WaltAutonBuilder trigs */
+  // When the user selects a different option, this thing runs
+  private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
+    WaltAutonBuilder.m_cycles = numCycles;
+    numCycleChange = true;
+  };
+
+  private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+    WaltAutonBuilder.startingPosition = startingPosition;
+    startingPositionChange = true;
+  };
+
+  private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
+    WaltAutonBuilder.startingHeight = startingHeight;
+    startingHeightChange = true;
+  };
+
+  private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+    WaltAutonBuilder.scoringPosition = scoringPosition;
+    firstScoringPositionChange = true;
+  };
+
+  private final Consumer<HPStation> initialHPStationConsumer = hpStation -> {
+    WaltAutonBuilder.hpStation = hpStation;
+    initialHPStationChange = true;
+  };
+
+  private final Field2d robotField = visionSim.getSimDebugField();
 
   public Robot() {
-    // pov is the same thing as dpad right?
-    trg_teleopEleHeightReq = manipulator.povDown() //L1
-      .or(manipulator.povRight()) // L2
-      .or(manipulator.povLeft()) // L3
-      .or(manipulator.povUp()); // L4
-
-    trg_eleOverride = 
-      manipulator.rightBumper().negate()
-      .and(manipulator.leftTrigger().negate())
-      .and(trg_teleopEleHeightReq.negate());
-    
-    trg_manipDanger = manipulator.b();
-    trg_driverDanger = driver.b();
-
-    superstructure = new Superstructure(
-      coral, 
+    DriverStation.silenceJoystickConnectionWarning(true);
+    if (Robot.isReal()) {
+      superstructure = new Superstructure(
+      coral,
+      finger,
       elevator, 
-      manipulator.rightBumper(), 
-      trg_teleopEleHeightReq,
-      driver.rightTrigger(), 
-      trg_manipDanger.and(manipulator.rightBumper()),
-      trg_manipDanger.and(manipulator.leftTrigger()), 
-      trg_manipDanger.and(trg_teleopEleHeightReq),
-      trg_driverDanger.and(driver.rightTrigger()), 
-      manipulator.leftBumper(),
-      manipulator.a().and(manipulator.povUp()),
-      manipulator.a().and(manipulator.povDown()),
-      trg_manipDanger.and(trg_eleOverride),
-      () -> manipulator.getLeftY(),
-      (intensity) -> driverRumble(intensity), 
-      (intensity) -> manipRumble(intensity));
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_inOverride,
+      new Trigger(() -> false),
+      new Trigger(() -> false),
+      this::driverRumble);
+    } else {
+      superstructure = new Superstructure(
+      coral,
+      finger,
+      elevator, 
+      trg_intakeReq,
+      trg_toL1,
+      trg_toL2,
+      trg_toL3,
+      trg_toL4,
+      trg_teleopScoreReq,
+      trg_inOverride,
+      trg_simTopBeamBreak,
+      trg_simBotBeamBreak,
+      this::driverRumble);
+    }
+      
+      // algae = new Algae(
+      //   trg_algaeIntake, 
+      //   trg_processorReq, 
+      //   trg_shootReq, 
+      //   this::manipRumble
+      // );
+
+    waltAutonFactory = new WaltAutonFactory(
+      elevator,
+      autoFactory, 
+      superstructure, 
+      StartingLocs.RIGHT, 
+      scoreLocs, 
+      heights, 
+      hpStations);
+
+    AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
+    // configureTestBindings();
+  }
+
+  private void configureTestBindings() {
+    // driver.a().onTrue(
+    //   Commands.sequence(
+    //     algae.toAngle(WristPos.GROUND),
+    //     algae.intake()
+    //   )
+    // ).onFalse(algae.toAngle(WristPos.HOME));
+  
+    // driver.y().whileTrue(elevator.testVoltageControl(() -> manipulator.getLeftY()));
+    // driver.x().whileTrue(coral.testFingerVoltageControl(() -> manipulator.getLeftY()));
+
+    // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
+    // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
+
+    driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
   private void configureBindings() {
@@ -143,9 +271,26 @@ public class Robot extends TimedRobot {
           )
       );
 
-      driver.y().whileTrue(drivetrain.applyRequest(() ->
-          point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-      ));
+      trg_driverDanger.and(driver.leftBumper()).whileTrue(
+        Commands.parallel(
+          drivetrain.applyRequest(() -> straightWheelsReq),
+          Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+        ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+      );
+          
+
+      // driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+      // driver.y().whileTrue(drivetrain.applyRequest(() ->
+      //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+      // ));
+      driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+
+      driver.rightBumper().onTrue(
+        Commands.parallel(
+          // algae.toIdleCmd(),
+          superstructure.forceIdle()
+        )
+      );
 
       /* 
        * programmer buttons
@@ -178,8 +323,62 @@ public class Robot extends TimedRobot {
         new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))
       ).until(() -> !trg_rightTeleopAutoAlign.getAsBoolean())
     );
+      trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
+     
+      trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
+      trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
+      trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
+      trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
+      trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+
+      trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
+        Commands.parallel(
+          elevator.currentSenseHoming(),
+          finger.currentSenseHoming() // TODO: add back in a comma
+          // algae.currentSenseHoming()
+        ).andThen(superstructure.forceIdle())
+      );
+
+      manipulator.leftBumper().onTrue(superstructure.forceIdle());
+
+      trg_deAlgae.and(trg_toL2).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.algaeRemoval()
+        )
+      );
+      trg_deAlgae.and(trg_toL3).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.algaeRemoval()
+        )
+      );
+
+      trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
+      trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
+        Commands.parallel(
+          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+          superstructure.baseAlgaeRemoval()
+        )
+      );
+
+      drivetrain.registerTelemetry(logger::telemeterize);
 
     drivetrain.registerTelemetry(logger::telemeterize);
+  }
+
+  /* WaltAutonBuilder thingies */
+  private void configWaltAutonBuilder() {
+    WaltAutonBuilder.cyclesChooser.onChange(cyclesConsumer);
+    WaltAutonBuilder.startingPositionChooser.onChange(startingPositionConsumer);
+    WaltAutonBuilder.startingHeightChooser.onChange(startingHeightConsumer);
+    WaltAutonBuilder.firstScoringChooser.onChange(initialScoringPositionConsumer);
+    WaltAutonBuilder.firstToHPStationChooser.onChange(initialHPStationConsumer);
   }
 
   private void driverRumble(double intensity) {
@@ -221,20 +420,95 @@ public class Robot extends TimedRobot {
     simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
     simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
     simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+    WaltAutonBuilder.configureFirstCycle();
+    configWaltAutonBuilder();
+    
+    addPeriodic(() -> superstructure.periodic(), 0.01);
+    robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    robotField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
+    robotField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
+    robotField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
+    robotField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
+    robotField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
+    robotField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
+    robotField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
+    robotField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
+    robotField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
+    robotField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
+    robotField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
+    if (autonNotMade) {
+      readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
+    }
+
+    if (readyToMakeAuton && autonNotMade) {
+      waltAutonFactory = new WaltAutonFactory(
+        elevator,
+        autoFactory, 
+        superstructure, 
+        WaltAutonBuilder.startingPosition, 
+        WaltAutonBuilder.getCycleScoringLocs(), 
+        WaltAutonBuilder.getCycleEleHeights(), 
+        WaltAutonBuilder.getCycleHPStations()
+      );
+
+      // dummy one
+      // waltAutonFactory = new WaltAutonFactory(
+      //   autoFactory, 
+      //   superstructure, 
+      //   StartingLocs.MID, 
+      //   reefLocs, 
+      //   heights, 
+      //   hpStations
+      // );
+
+      AutonChooser.addPathsAndCmds(waltAutonFactory);
+      autonNotMade = false;
+    }
+
+    if (beforeAuton) {
+      if (numCycleChange) {
+        WaltAutonBuilder.updateNumCycles();
+        WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+        numCycleChange = false;
+      }
+      if (startingPositionChange) {
+        WaltAutonBuilder.updateStartingPosition();
+        WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+        startingPositionChange = false;
+      }
+      if (initialHPStationChange) {
+        WaltAutonBuilder.updateInitalHPStation();
+        initialHPStationChange = false;
+      }
+      if (firstScoringPositionChange) {
+        WaltAutonBuilder.updateInitialScoringPosition();
+        firstScoringPositionChange = false;
+      }
+      if (startingHeightChange) {
+        WaltAutonBuilder.updateStartingHeight();
+        startingHeightChange = false;
+      }
+    }
+    
     // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
     for (Vision camera : cameras) {
       Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
       if (estimatedPoseOptional.isPresent()) {
         EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
         Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
-        drivetrain.addVisionMeasurement(estimatedRobotPose2d, estimatedRobotPose.timestampSeconds, camera.getEstimationStdDevs());
+        var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
+        drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
       }
     }
+
+    robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
+    log_robotPose.accept(drivetrain.getState().Pose);
   }
 
   @Override
@@ -246,22 +520,21 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {}
 
+  private Command autonCmdBuilder(Command chooserCommand) {
+    return Commands.parallel(
+          Commands.print("running autonCmdBuilder"),
+          superstructure.autonPreloadReq(),
+          // algae.currentSenseHoming(),
+          chooserCommand
+      );
+  }
+
   @Override
   public void autonomousInit() {
-    // m_autonomousCommand = drivetrain.testAuton();
+    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
+    m_autonomousCommand = autonCmdBuilder(chosen);
 
-    m_autonomousCommand = Commands.sequence(
-      Commands.runOnce(() -> drivetrain.resetPose(new Pose2d(4, 2, Rotation2d.fromDegrees(90)))),
-      Commands.waitSeconds(1),
-      Commands.race(
-        Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
-        Commands.waitSeconds(0.2)
-      ),
-      new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain)),
-      Commands.print("auton finished")
-    );
-
-    if (m_autonomousCommand != null) {
+    if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
   }
@@ -274,10 +547,20 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    superstructure.forceIdle().schedule();
+    // algae.toIdleCmd().schedule();
+    finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
 
+    // if(!elevator.getIsHomed()) {
+    //   elevator.currentSenseHoming().schedule();
+    // }
+
+    // if(!algae.getIsHomed()) {
+    //   algae.currentSenseHoming().schedule();
+    // }
   }
 
   @Override

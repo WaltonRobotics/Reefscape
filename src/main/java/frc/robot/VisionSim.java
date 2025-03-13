@@ -33,7 +33,7 @@ public class VisionSim {
 
     public Field2d getSimDebugField() {
         if (!Robot.isSimulation()) {
-            return null;
+            return new Field2d();
         }
 
         return m_photonVisionSim.getDebugField();
