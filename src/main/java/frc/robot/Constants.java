@@ -537,8 +537,8 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static final double kFieldXTolerance = 0.005; // meters
-        public static final double kFieldYTolerance = 0.005; // meters
+        public static final double kFieldXTolerance = 0.0025; // meters
+        public static final double kFieldYTolerance = 0.0025; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
     }
 }
