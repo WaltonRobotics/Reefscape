@@ -111,9 +111,9 @@ public class Robot extends TimedRobot {
   private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
 
-  private final Trigger trg_teleopEleHeightReq;
+  // private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
-  private final Trigger trg_eleOverride;
+  // private final Trigger trg_eleOverride;
   private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C, REEF_B, REEF_A)); // dummies
   private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4));
   private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
@@ -136,6 +136,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
   private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
  
+
   // override button
   private final Trigger trg_driverDanger = driver.b();
   private final Trigger trg_manipDanger = manipulator.b();
@@ -277,7 +278,6 @@ public class Robot extends TimedRobot {
           Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
         ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
       );
-          
 
       // driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
       // driver.y().whileTrue(drivetrain.applyRequest(() ->
@@ -395,7 +395,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    simDebugField.getObject("testObject").setPose(new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
+    robotField.getObject("testObject").setPose(new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
     Pose2d flippedPose = AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
     System.out.println(DriverStation.getAlliance().isPresent());
     if (DriverStation.getAlliance().isPresent()) {
@@ -404,22 +404,22 @@ public class Robot extends TimedRobot {
     System.out.println(flippedPose.getX());
     System.out.println(flippedPose.getY());
     System.out.println(flippedPose.getRotation().getDegrees());
-    simDebugField.getObject("testObjectFLipped").setPose(AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30))));
-    simDebugField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    simDebugField.getObject("OML REED REEF A").setPose(AllianceFlipUtil.flip(
+    robotField.getObject("testObjectFLipped").setPose(AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30))));
+    robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    robotField.getObject("OML REED REEF A").setPose(AllianceFlipUtil.flip(
       FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A)
     ));
-    simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    simDebugField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    simDebugField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    simDebugField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    simDebugField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    simDebugField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+    // simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
+    // simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
+    // simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
+    // simDebugField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
+    // simDebugField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
+    // simDebugField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
+    // simDebugField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
+    // simDebugField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
+    // simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
+    // simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
+    // simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
     WaltAutonBuilder.configureFirstCycle();
     configWaltAutonBuilder();
     
