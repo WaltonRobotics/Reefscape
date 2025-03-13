@@ -167,7 +167,7 @@ public class Constants {
                 branchPose3ds.put(ReefLocs.REEF_L, branchPositions.get(2));
 
                 // TODO: get real values for these offsets
-                double distanceFromReef = Units.inchesToMeters(36);
+                double distanceFromReef = Units.inchesToMeters(24);
                 double coralChuteOffset = -Units.inchesToMeters(2.5); // positive left, negative right (to preserve wpilib coordinate convention)
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, coralChuteOffset, Rotation2d.fromDegrees(180));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()

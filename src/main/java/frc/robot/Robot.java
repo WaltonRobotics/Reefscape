@@ -83,6 +83,9 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private final WaltAutonFactory waltAutonFactory = new WaltAutonFactory(autoFactory);
 
+  private final Trigger trg_leftTeleopAutoAlign = driver.x();
+  private final Trigger trg_rightTeleopAutoAlign = driver.a();
+
   private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
   private final Trigger trg_eleOverride;
@@ -140,11 +143,9 @@ public class Robot extends TimedRobot {
           )
       );
 
-      driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
       driver.y().whileTrue(drivetrain.applyRequest(() ->
           point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
       ));
-      driver.x().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
       /* 
        * programmer buttons
@@ -159,23 +160,23 @@ public class Robot extends TimedRobot {
       //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
-    driver.leftBumper().onTrue(
+    trg_leftTeleopAutoAlign.onTrue(
       Commands.sequence(
         Commands.race(
           Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
           Commands.waitSeconds(0.2)
         ),
         new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain))
-      )
+      ).until(() -> !trg_leftTeleopAutoAlign.getAsBoolean())
     );
-    driver.rightBumper().onTrue(
+    trg_rightTeleopAutoAlign.onTrue(
       Commands.sequence(
         Commands.race(
           Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
           Commands.waitSeconds(0.2)
         ),
         new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))
-      )
+      ).until(() -> !trg_rightTeleopAutoAlign.getAsBoolean())
     );
 
     drivetrain.registerTelemetry(logger::telemeterize);
