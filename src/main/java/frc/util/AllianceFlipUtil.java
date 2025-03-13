@@ -9,6 +9,7 @@ package frc.util;
 
 import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.Constants.FieldK.kFieldLengthMeters;
+import static frc.robot.Constants.FieldK.kFieldWidthMeters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,21 +20,33 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 
 /** Utility functions for flipping from the blue to red alliance. */
 public class AllianceFlipUtil {
-  public static double flip(double xCoordinateMeters) {
+  public static double flipXCoordinate(double xCoordinateMeters) {
     return kFieldLengthMeters - xCoordinateMeters;
   }
 
+  public static double flipYCoordinate(double yCoordinateMeters) {
+    return kFieldWidthMeters - yCoordinateMeters;
+  }
+
   /** Flips an x coordinate to the correct side of the field based on the current alliance color. */
-  public static double apply(double xCoordinate) {
+  public static double applyX(double xCoordinate) {
     if (shouldFlip()) {
-      return flip(xCoordinate);
+      return flipXCoordinate(xCoordinate);
     } else {
       return xCoordinate;
     }
   }
 
+  public static double applyY(double yCoordinate) {
+    if (shouldFlip()) {
+      return flipYCoordinate(yCoordinate);
+    } else {
+      return yCoordinate;
+    }
+  }
+
   public static Translation2d flip(Translation2d translation) {
-    return new Translation2d(apply(translation.getX()), translation.getY());
+    return new Translation2d(applyX(translation.getX()), applyY(translation.getY()));
   }
 
   /** Flips a translation to the correct side of the field based on the current alliance color. */
@@ -46,7 +59,7 @@ public class AllianceFlipUtil {
   }
 
   public static Rotation2d flip(Rotation2d rotation) {
-    return new Rotation2d(-rotation.getCos(), rotation.getSin());
+    return rotation.rotateBy(Rotation2d.k180deg);
   }
 
   /** Flips a rotation based on the current alliance color. */
@@ -73,7 +86,7 @@ public class AllianceFlipUtil {
 
   public static Translation3d flip(Translation3d translation3d) {
     return new Translation3d(
-      flip(translation3d.getX()), translation3d.getY(), translation3d.getZ());
+      flipXCoordinate(translation3d.getX()), flipYCoordinate(translation3d.getY()), translation3d.getZ());
   }
 
   public static Translation3d apply(Translation3d translation3d) {
@@ -87,5 +100,6 @@ public class AllianceFlipUtil {
   public static boolean shouldFlip() {
     return DriverStation.getAlliance().isPresent()
         && DriverStation.getAlliance().get() == Alliance.Red;
+    // return true;
   }
 }

@@ -466,8 +466,9 @@ public class Constants {
                 branchPose3ds.put(ReefLocs.REEF_L, branchPositions.get(2));
 
                 // TODO: get a real distance from the reef for this
-                double distanceFromReef = Units.inchesToMeters(20);
-                Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, 0, Rotation2d.fromDegrees(180));
+                double distanceFromReef = Units.inchesToMeters(18);
+                double leftRightOffset = -Units.inchesToMeters(1.25); // positive left robot
+                Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, leftRightOffset, Rotation2d.fromDegrees(180));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d()
@@ -536,6 +537,8 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        
+        public static final double kFieldXTolerance = 0.0025; // meters
+        public static final double kFieldYTolerance = 0.0025; // meters
+        public static final double kFieldRotationTolerance = 1; // degrees
     }
 }
