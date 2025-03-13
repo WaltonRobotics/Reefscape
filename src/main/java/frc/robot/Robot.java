@@ -190,6 +190,8 @@ public class Robot extends TimedRobot {
       trg_toL3,
       trg_toL4,
       trg_teleopScoreReq,
+      trg_deAlgae.and(trg_toL2),
+      trg_deAlgae.and(trg_toL3),
       trg_inOverride,
       new Trigger(() -> false),
       new Trigger(() -> false),
@@ -205,6 +207,8 @@ public class Robot extends TimedRobot {
       trg_toL3,
       trg_toL4,
       trg_teleopScoreReq,
+      trg_deAlgae.and(trg_toL2),
+      trg_deAlgae.and(trg_toL3),
       trg_inOverride,
       trg_simTopBeamBreak,
       trg_simBotBeamBreak,
@@ -313,19 +317,6 @@ public class Robot extends TimedRobot {
       );
 
       manipulator.leftBumper().onTrue(superstructure.forceIdle());
-
-      trg_deAlgae.and(trg_toL2).onTrue(
-        Commands.parallel(
-          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-          superstructure.algaeRemoval()
-        )
-      );
-      trg_deAlgae.and(trg_toL3).onTrue(
-        Commands.parallel(
-          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-          superstructure.algaeRemoval()
-        )
-      );
 
       trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
         Commands.parallel(
