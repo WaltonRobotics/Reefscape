@@ -57,6 +57,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.robot.Constants;
 import frc.robot.VisionSim;
 import frc.robot.generated.TunerConstants;
 /**
@@ -81,9 +82,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
-    private final PIDController m_autoAlignXController = new PIDController(4, 0, 0);
-    private final PIDController m_autoAlignYController = new PIDController(4, 0, 0);
-    private final PIDController m_autoAlignThetaController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0);
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -389,23 +390,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
             }
         ).until(
-            () -> {
-                // TODO: move these to constants
-                double xTolerance = 0.02;
-                double yTolerance = 0.02;
-                double rotTolerance = 2; // DEGREES
-                
-                Pose2d curPose = getState().Pose;
+            () -> {Pose2d curPose = getState().Pose;
 
                 double xDiff = destinationPose.getX()-curPose.getX();
                 double yDiff = destinationPose.getY()-curPose.getY();
                 double rotDiff = MathUtil.inputModulus(destinationPose.getRotation().getDegrees(), -180, 180) -
                     MathUtil.inputModulus(curPose.getRotation().getDegrees(), -180, 180);
                 
-                return MathUtil.isNear(0, xDiff, xTolerance) && MathUtil.isNear(0, yDiff, yTolerance) &&
-                    MathUtil.isNear(0, rotDiff, rotTolerance);
+                return MathUtil.isNear(0, xDiff, Constants.AutoAlignmentK.kFieldXTolerance)
+                    && MathUtil.isNear(0, yDiff, Constants.AutoAlignmentK.kFieldYTolerance)
+                    && MathUtil.isNear(0, rotDiff, Constants.AutoAlignmentK.kFieldRotationTolerance);
             }
-        ).andThen(Commands.print("Ball harder"));
+        ).andThen(Commands.print("auto align finished"));
     }
 
     /**
@@ -581,42 +577,4 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
-
-    // public Command testAuton() {
-    //     TrajectoryConfig trajConfig = new TrajectoryConfig(5, 10);
-    //     trajConfig.setKinematics(getKinematics());
-
-    //     Trajectory traj = TrajectoryGenerator.generateTrajectory(
-    //         new Pose2d(),
-    //         List.of(),
-    //         new Pose2d(3, 0, Rotation2d.fromDegrees(180)),
-    //         trajConfig
-    //     );
-
-    //     ProfiledPIDController thetaController = new ProfiledPIDController(7, 0, 7, 
-    //         new TrapezoidProfile.Constraints(3, 2));
-    //     thetaController.enableContinuousInput(-Math.PI, Math.PI);
-    //     SwerveRequest.ApplyRobotSpeeds drive = new SwerveRequest.ApplyRobotSpeeds()
-    //         .withDriveRequestType(DriveRequestType.Velocity);
-        
-        SwerveControllerCommand swerveControllerCmd = new SwerveControllerCommand(
-            traj,
-            () -> getState().Pose,
-            getKinematics(),
-            new PIDController(7, 0, 7),
-            new PIDController(7, 0, 7),
-            thetaController,
-            swerveModuleStates -> {
-                var chassisSpeeds = getKinematics().toChassisSpeeds(swerveModuleStates);
-                desiredChassisSpeeds.accept(chassisSpeeds);
-                setControl(drive.withSpeeds(chassisSpeeds));
-            },
-            this);
-
-    //     return Commands.sequence(
-    //         Commands.runOnce(() -> resetPose(traj.getInitialPose())),
-    //         swerveControllerCmd,
-    //         applyRequest(() -> drive.withSpeeds(new ChassisSpeeds(0, 0, 0)))
-    //     );
-    // }
 }
