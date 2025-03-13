@@ -62,6 +62,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.vision.Vision;
+import frc.robot.vision.VisionSim;
 import frc.robot.subsystems.Finger;
 import frc.robot.subsystems.Algae;
 import frc.robot.subsystems.Coral;

@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.vision;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
 
@@ -8,6 +8,7 @@ import org.photonvision.simulation.VisionSystemSim;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import frc.robot.Robot;
 
 public class VisionSim {
     private final VisionSystemSim m_photonVisionSim;
