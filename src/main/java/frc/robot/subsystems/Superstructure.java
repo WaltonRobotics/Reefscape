@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.subsystems.Elevator.EleHeight.*;
 
 import frc.robot.Robot;
+import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
@@ -59,6 +60,8 @@ public class Superstructure {
     private final Trigger trg_teleopL3Req; 
     private final Trigger trg_teleopL4Req; 
     private final Trigger trg_teleopScoreReq;
+    private final Trigger trg_algaeRemovalL2Req;
+    private final Trigger trg_algaeRemovalL3Req;
 
     /* teleopTrgs: overrides */
     private final Trigger trg_inOverride;
@@ -83,6 +86,9 @@ public class Superstructure {
     public final Trigger stateTrg_scoreReady = new Trigger(stateEventLoop, () -> m_state == State.SCORE_READY);
     public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
+
+    public final Trigger stateTrg_algaeRemovalL2 = new Trigger(stateEventLoop, () -> m_state == State.ALGAE_FINGER_L2);
+    public final Trigger stateTrg_algaeRemovalL3 = new Trigger(stateEventLoop, () -> m_state == State.ALGAE_FINGER_L3);
 
     public final Trigger stateTrg_eleToClimb = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_CLIMB);
     public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
@@ -131,6 +137,8 @@ public class Superstructure {
         Trigger L3Req,
         Trigger L4Req,
         Trigger scoreReq,
+        Trigger algaeRemovalL2Req,
+        Trigger algaeRemovalL3Req,
         Trigger inOverride,
         Trigger simTopBeamBreak,
         Trigger simBotBeamBreak,
@@ -152,6 +160,8 @@ public class Superstructure {
         trg_teleopL3Req = L3Req;
         trg_teleopL4Req = L4Req;
         trg_teleopScoreReq = scoreReq;
+        trg_algaeRemovalL2Req = algaeRemovalL2Req;
+        trg_algaeRemovalL3Req = algaeRemovalL3Req;
         /* overrides */
         trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor);
         trg_inOverride = inOverride;
@@ -197,6 +207,15 @@ public class Superstructure {
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.02))
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
+        
+        (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
+            .onTrue(changeStateCmd(State.ALGAE_FINGER_L2));
+        (trg_hasCoral.negate().and(trg_algaeRemovalL3Req)).and(RobotModeTriggers.teleop())
+            .onTrue(changeStateCmd(State.ALGAE_FINGER_L3));
+        (stateTrg_algaeRemovalL2.and(trg_algaeRemovalL2Req.negate()).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
+        (stateTrg_algaeRemovalL3.and(trg_algaeRemovalL3Req.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
@@ -345,6 +364,22 @@ public class Superstructure {
                     Commands.print("RUMBLE coming to a controller near you soon...")
                 )
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+            );
+
+        stateTrg_algaeRemovalL2
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightAlgae(() -> AlgaeHeight.L2),
+                    algaeRemoval()
+                )
+            );
+
+        stateTrg_algaeRemovalL3
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightAlgae(() -> AlgaeHeight.L3),
+                    algaeRemoval()
+                )
             );
 
         // stateTrg_eleToClimb
@@ -553,6 +588,9 @@ public class Superstructure {
         SCORE_READY(6, "score ready"),
         SCORING(7, "scoring"),
         SCORED(8, "scored"),
+        
+        ALGAE_FINGER_L2(9.2, "algae finger"),
+        ALGAE_FINGER_L3(9.3, "algae finger"),
 
         ELE_TO_CLIMB(10, "ele to climb"),
         CLIMB_READY(11, "climb ready"),
