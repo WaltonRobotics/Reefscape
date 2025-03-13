@@ -219,6 +219,7 @@ public class Robot extends TimedRobot {
       // );
 
     waltAutonFactory = new WaltAutonFactory(
+      elevator,
       autoFactory, 
       superstructure, 
       StartingLocs.RIGHT, 
@@ -395,6 +396,7 @@ public class Robot extends TimedRobot {
 
     if (readyToMakeAuton && autonNotMade) {
       waltAutonFactory = new WaltAutonFactory(
+        elevator,
         autoFactory, 
         superstructure, 
         WaltAutonBuilder.startingPosition, 
@@ -471,10 +473,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           // algae.currentSenseHoming(),
-          Commands.sequence(
-            elevator.externalWaitUntilHomed(),
-            chooserCommand
-          )
+          chooserCommand
       );
   }
 
