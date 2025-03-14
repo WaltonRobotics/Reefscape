@@ -4,12 +4,17 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import frc.robot.Constants.RobotK;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
@@ -17,6 +22,8 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.Elastic;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
@@ -32,6 +39,22 @@ public class WaltAutonFactory {
 
     int heightCounter = 0;
     private boolean m_alrScored = false;
+
+    public static Timer autonTimer = new Timer();
+    private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer");
+
+    private static Command printLater(Supplier<String> stringSup) {
+		return Commands.defer(() -> {
+			return Commands.print(stringSup.get());
+		}, Set.of());
+	}
+
+    private static Command logTimer(String epochName, Supplier<Timer> timerSup) {
+		return Commands.defer(() -> {
+			var timer = timerSup.get();
+			return printLater(() -> epochName + " at " + timer.get() + " s");
+		}, Set.of());
+	}
     
     private Elastic.Notification leaveStartZoneOnlySadness = 
         new Elastic.Notification(
@@ -113,6 +136,7 @@ public class WaltAutonFactory {
         // return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
+            Commands.runOnce(() -> log_autonTimer.accept(autonTimer.get())),
             m_superstructure.autonScoreReq(),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
             Commands.print("YAHOO in the score cmd with height " + eleHeight)
@@ -126,6 +150,7 @@ public class WaltAutonFactory {
         AutoTrajectory leave = m_routine.trajectory("One_Meter");
         leaveAuto.active().onTrue(
             Commands.sequence(
+                Commands.runOnce(() -> autonTimer.restart()),
                 Commands.parallel(
                     leave.resetOdometry(),
                     Commands.print("whats up gang we're moving one meter rahhhhhh")
@@ -175,6 +200,7 @@ public class WaltAutonFactory {
 
         m_routine.active().onTrue(
             Commands.sequence(
+                Commands.runOnce(() -> autonTimer.restart()),
                 firstScoreTraj.resetOdometry(),
                 firstScoreTraj.cmd()
             )
@@ -204,7 +230,7 @@ public class WaltAutonFactory {
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
                     Commands.print("b4 checking if bottom beam breaks"),
-                    Commands.waitUntil(m_superstructure.getTopBeamBreak()),
+                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
                     // Commands.waitSeconds(3),
                     Commands.print("top beam break has broken"),
                     trajCmd,
@@ -226,6 +252,7 @@ public class WaltAutonFactory {
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(
                     Commands.sequence(
+                        Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                         scoreCmd(m_heights.get(heightCounter)),
                         Commands.parallel(
                             Commands.runOnce(() -> heightCounter++),

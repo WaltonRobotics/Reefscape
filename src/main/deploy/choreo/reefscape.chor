@@ -49,8 +49,8 @@
    "offset":{
     "dimension":"Number",
     "var":{
-     "exp":"0.0826",
-     "val":0.0826
+     "exp":"0.1",
+     "val":0.1
     }
    },
    "reefSpeed":{
@@ -69,7 +69,7 @@
     },
     "y":{
      "exp":"HYVal m + (offset * sin(0 deg + degOffset deg)) m",
-     "val":4.272600000000001
+     "val":4.29
     },
     "heading":{
      "exp":"0 deg",
@@ -83,7 +83,7 @@
     },
     "y":{
      "exp":"GYVal m + (offset * sin(0 deg + degOffset deg)) m",
-     "val":3.9406894470214846
+     "val":3.958089447021485
     },
     "heading":{
      "exp":"0 deg",
@@ -93,11 +93,11 @@
    "C":{
     "x":{
      "exp":"3.6992833614349365 m + (offset * cos(60 deg + degOffset deg)) m",
-     "val":3.627749663082342
+     "val":3.6126808210564927
     },
     "y":{
      "exp":"2.987058401107788 m + (offset * sin(60 deg + degOffset deg)) m",
-     "val":3.028358401107788
+     "val":3.037058401107788
     },
     "heading":{
      "exp":"60 deg",
@@ -107,11 +107,11 @@
    "D":{
     "x":{
      "exp":"3.9885246753692627 m + (offset * cos(60 deg + degOffset deg)) m",
-     "val":3.916990977016668
+     "val":3.901922134990819
     },
     "y":{
      "exp":"2.828442096710205 m + (offset * sin(60 deg + degOffset deg)) m",
-     "val":2.869742096710205
+     "val":2.878442096710205
     },
     "heading":{
      "exp":"60 deg",
@@ -121,11 +121,11 @@
    "E":{
     "x":{
      "exp":"4.991955280303955 m + (offset * cos(120 deg + degOffset deg)) m",
-     "val":4.92042158195136
+     "val":4.905352739925511
     },
     "y":{
      "exp":"2.8231382369995117 m + (offset * sin(120 deg + degOffset deg)) m",
-     "val":2.7818382369995116
+     "val":2.773138236999512
     },
     "heading":{
      "exp":"120 deg",
@@ -135,11 +135,11 @@
    "F":{
     "x":{
      "exp":"5.276031017303467 m + (offset * cos(120 deg + degOffset deg)) m",
-     "val":5.204497318950872
+     "val":5.1894284769250225
     },
     "y":{
      "exp":"2.9924910068511963 m + (offset * sin(120 deg + degOffset deg)) m",
-     "val":2.951191006851196
+     "val":2.9424910068511965
     },
     "heading":{
      "exp":"120 deg",
@@ -153,7 +153,7 @@
     },
     "y":{
      "exp":"GYVal m + (offset * sin(180 deg + degOffset deg)) m",
-     "val":3.775489447021484
+     "val":3.758089447021484
     },
     "heading":{
      "exp":"180 deg",
@@ -167,7 +167,7 @@
     },
     "y":{
      "exp":"HYVal m + (offset * sin(180 deg + degOffset deg)) m",
-     "val":4.1074
+     "val":4.090000000000001
     },
     "heading":{
      "exp":"180 deg",
@@ -205,11 +205,11 @@
    "I":{
     "x":{
      "exp":"5.276031017303467 m + (offset * cos(-120 deg + degOffset deg)) m",
-     "val":5.347564715656062
+     "val":5.362633557681911
     },
     "y":{
      "exp":"5.062966823577881 m + (offset * sin(-120 deg + degOffset deg)) m",
-     "val":5.021666823577881
+     "val":5.012966823577881
     },
     "heading":{
      "exp":"-120 deg",
@@ -219,11 +219,11 @@
    "J":{
     "x":{
      "exp":"4.99741792678833 m + (offset * cos(-120 deg + degOffset deg)) m",
-     "val":5.068951625140925
+     "val":5.084020467166774
     },
     "y":{
      "exp":"5.226856708526611 m + (offset * sin(-120 deg + degOffset deg)) m",
-     "val":5.185556708526612
+     "val":5.1768567085266115
     },
     "heading":{
      "exp":"-120 deg",
@@ -233,11 +233,11 @@
    "K":{
     "x":{
      "exp":"3.9867637157440186 m + (offset * cos(-60 deg + degOffset deg)) m",
-     "val":4.0582974140966135
+     "val":4.073366256122463
     },
     "y":{
      "exp":"5.226856708526611 m + (offset * sin(-60 deg + degOffset deg)) m",
-     "val":5.268156708526611
+     "val":5.276856708526611
     },
     "heading":{
      "exp":"-60 deg",
@@ -247,11 +247,11 @@
    "L":{
     "x":{
      "exp":"3.708150863647461 m + (offset * cos(-60 deg + degOffset deg)) m",
-     "val":3.779684562000055
+     "val":3.7947534040259048
     },
     "y":{
      "exp":"5.052041053771973 m + (offset * sin(-60 deg + degOffset deg)) m",
-     "val":5.093341053771972
+     "val":5.1020410537719725
     },
     "heading":{
      "exp":"-60 deg",

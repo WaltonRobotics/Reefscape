@@ -116,9 +116,9 @@ public class Robot extends TimedRobot {
   // private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
   // private final Trigger trg_eleOverride;
-  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C, REEF_B, REEF_A)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
+  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
+  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
+  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -540,6 +540,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    Commands.runOnce(() -> waltAutonFactory.autonTimer.stop());
     superstructure.forceIdle().schedule();
     // algae.toIdleCmd().schedule();
     finger.fingerInCmd().schedule();
