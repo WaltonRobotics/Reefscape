@@ -304,9 +304,6 @@ public class Constants {
      }
 
      public static class VisionK {
-        // FIND SIM CAM PROPERTIES DEFINITIONS IN VISION
-        // simCameraProperties doesn't support decorators so you actually need to run code to define them
-
         public static final SimCameraProperties kEleForwardCamSimProps = new SimCameraProperties();
         static {
             // See3CAM_24CUG
@@ -327,15 +324,14 @@ public class Constants {
             kEleRearCamSimProps.setLatencyStdDevMs(15);
         }
 
-
-        public static final SimCameraProperties kLowerFrontCamSimProps = new SimCameraProperties();
+        public static final SimCameraProperties kLowerRightCamSimProps = new SimCameraProperties();
         static {
             // Arducam OV9281
-            kEleRearCamSimProps.setCalibration(1280, 720, Rotation2d.fromDegrees(100));
-            kEleRearCamSimProps.setCalibError(0.35, 0.10);
-            kEleRearCamSimProps.setFPS(45);
-            kEleRearCamSimProps.setAvgLatencyMs(25);
-            kEleRearCamSimProps.setLatencyStdDevMs(15);
+            kLowerRightCamSimProps.setCalibration(1280, 720, Rotation2d.fromDegrees(100));
+            kLowerRightCamSimProps.setCalibError(0.35, 0.10);
+            kLowerRightCamSimProps.setFPS(45);
+            kLowerRightCamSimProps.setAvgLatencyMs(25);
+            kLowerRightCamSimProps.setLatencyStdDevMs(15);
         }
         
 
@@ -345,6 +341,13 @@ public class Constants {
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
         );
         public static final String kElevatorForwardsCamSimVisualName = "EleForwardsVisionEstimation";
+
+        public static final String kLowerRightCamName = "LowerRightCam";
+        public static final Transform3d kLowerRightCamRoboToCam = new Transform3d(
+            Units.inchesToMeters(10.943), Units.inchesToMeters(-9.769), Units.inchesToMeters(8.161),
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(40))
+        );
+        public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
     }
 
     public static class FieldK {
