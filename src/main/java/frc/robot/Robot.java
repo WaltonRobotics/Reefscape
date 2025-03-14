@@ -103,9 +103,11 @@ public class Robot extends TimedRobot {
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
+  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam};
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
@@ -323,7 +325,7 @@ public class Robot extends TimedRobot {
     trg_rightTeleopAutoAlign.onTrue(
       Commands.sequence(
         Commands.race(
-          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
+          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(true).isPresent()),
           Commands.waitSeconds(0.2)
         ),
         new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))

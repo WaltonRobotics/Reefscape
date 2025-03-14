@@ -91,6 +91,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
+
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
     // private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
@@ -211,6 +213,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        m_autoAlignThetaController.enableContinuousInput(-180, 180);
     }
 
     /**
@@ -354,36 +357,26 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
 
-        m_autoAlignThetaController.enableContinuousInput(-180, 180);
-
-        SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
-
         return Commands.run(
             () -> {
                 System.out.println("ballin running");
                 Pose2d curPose = getState().Pose;
 
-                double xDiff = destinationPose.getX() - curPose.getX();
-                double yDiff = destinationPose.getY() - curPose.getY();
-                double rotDiff = -MathUtil.inputModulus(destinationPose.getRotation().getDegrees(), -180, 180) +
-                    MathUtil.inputModulus(curPose.getRotation().getDegrees(), -180, 180);
-
-                double xSpeed = -m_autoAlignXController.calculate(xDiff);
-                double ySpeed = -m_autoAlignYController.calculate(yDiff);
-                double thetaSpeed = m_autoAlignThetaController.calculate(rotDiff);
+                double xSpeed = m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
+                double ySpeed = m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getDegrees(), destinationPose.getRotation().getDegrees());
 
                 // TODO: i have no idea why this works but it does
                 if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red)) {
                     xSpeed = -xSpeed;
                     ySpeed = -ySpeed;
-                    thetaSpeed = thetaSpeed;
                 }
 
                 setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
 
-                log_errorX.accept(xDiff);
-                log_errorY.accept(yDiff);
-                log_errorTheta.accept(rotDiff);
+                log_errorX.accept(destinationPose.getX()-curPose.getX());
+                log_errorY.accept(destinationPose.getY()-curPose.getY());
+                log_errorTheta.accept(destinationPose.getRotation().getDegrees()-curPose.getRotation().getDegrees());
 
                 log_autoAlignDesiredXSpeed.accept(xSpeed);
                 log_autoAlignDesiredYSpeed.accept(ySpeed);
