@@ -120,6 +120,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_autoAlignDesiredXSpeed = WaltLogger.logDouble("Swerve", "auto align desired x speed");
     private final DoubleLogger log_autoAlignDesiredYSpeed = WaltLogger.logDouble("Swerve", "auto align desired y speed");
     private final DoubleLogger log_autoAlignDesiredThetaSpeed = WaltLogger.logDouble("Swerve", "auto align desired theta speed");
+    private final DoubleLogger log_chassisSpeedVXError = WaltLogger.logDouble("Swerve", "vx speed error");
+    private final DoubleLogger log_chassisSpeedVYError = WaltLogger.logDouble("Swerve", "vy speed error");
 
     private final StructPublisher<ChassisSpeeds> desiredChassisSpeeds = NetworkTableInstance.getDefault()
         .getStructTopic("Swerve/DesiredSpeeds", ChassisSpeeds.struct).publish();
@@ -314,8 +316,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
         var pose = getState().Pose;
+        var samplePose = sample.getPose();
 
         var targetSpeeds = sample.getChassisSpeeds();
+        var speed = getState().Speeds;
+
         targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(
             pose.getX(), sample.x
         );
@@ -333,7 +338,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         );
 
         log_choreoActualRobotPose.accept(pose);
-        log_choreoDesiredRobotPose.accept(sample.getPose());
+        log_choreoDesiredRobotPose.accept(samplePose);
+
+        log_errorX.accept(samplePose.getX() - pose.getX());
+        log_errorY.accept(samplePose.getY() - pose.getY());
+
+        log_chassisSpeedVXError.accept(targetSpeeds.vxMetersPerSecond - speed.vxMetersPerSecond);
+        log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
 
