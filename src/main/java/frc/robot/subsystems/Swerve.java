@@ -15,6 +15,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -91,7 +92,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric();
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -365,12 +366,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double xSpeed = m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
                 double ySpeed = m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
                 double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getDegrees(), destinationPose.getRotation().getDegrees());
-
-                // TODO: i have no idea why this works but it does
-                if (DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(DriverStation.Alliance.Red)) {
-                    xSpeed = -xSpeed;
-                    ySpeed = -ySpeed;
-                }
 
                 setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
 
