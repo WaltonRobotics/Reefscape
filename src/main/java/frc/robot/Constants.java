@@ -540,8 +540,18 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static final double kFieldXTolerance = 0.0025; // meters
-        public static final double kFieldYTolerance = 0.0025; // meters
+        public static final double kSideToSideTolerance = 0.0025; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
+
+        // TODO: these will really need tuning
+        public static final double kRXMaxVelocity = 3; // m/s
+        public static final double kRXMaxAccel = 3; // m/s^2
+
+        public static final double kRYMaxVelocity = 3; // m/s
+        public static final double kRYMaxAccel = 3; // m/s^2
+
+        public static final double kThetaMaxVelocity = 45; // deg/s
+        public static final double kThetaMaxAccel = 45; // deg/s^2
+        
     }
 }

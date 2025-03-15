@@ -3,11 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -33,8 +29,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
@@ -51,7 +45,6 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
@@ -59,7 +52,7 @@ import frc.robot.vision.VisionSim;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import frc.robot.Constants;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -83,16 +76,20 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
-    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
-    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
-    private final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0);
+    private final ProfiledPIDController m_autoAlignTXController = new ProfiledPIDController(7, 0, 0, 
+        new TrapezoidProfile.Constraints(AutoAlignmentK.kRXMaxVelocity, AutoAlignmentK.kRXMaxAccel));
+    private final ProfiledPIDController m_autoAlignTYController = new ProfiledPIDController(7, 0, 0, 
+        new TrapezoidProfile.Constraints(AutoAlignmentK.kRYMaxVelocity, AutoAlignmentK.kRYMaxAccel));
+    private final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(7, 0, 7,
+        new TrapezoidProfile.Constraints(AutoAlignmentK.kThetaMaxVelocity, AutoAlignmentK.kThetaMaxAccel));
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+    private final SwerveRequest.FieldCentricFacingAngle drive = new SwerveRequest.FieldCentricFacingAngle()
+        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance).withHeadingPID(7, 0, 0);
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -117,12 +114,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
     private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
     private final DoubleLogger log_destinationTheta = WaltLogger.logDouble("Swerve", "destination theta");
-    private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "auto align x error");
-    private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "auto align y error");
-    private final DoubleLogger log_errorTheta = WaltLogger.logDouble("Swerve", "auto align theta error");
-    private final DoubleLogger log_autoAlignDesiredXSpeed = WaltLogger.logDouble("Swerve", "auto align desired x speed");
-    private final DoubleLogger log_autoAlignDesiredYSpeed = WaltLogger.logDouble("Swerve", "auto align desired y speed");
-    private final DoubleLogger log_autoAlignDesiredThetaSpeed = WaltLogger.logDouble("Swerve", "auto align desired theta speed");
+    private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
+    private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
+
+    private final DoubleLogger log_fXVelDesired = WaltLogger.logDouble("Swerve", "x vel desired");
+    private final DoubleLogger log_fYVelDesired = WaltLogger.logDouble("Swerve", "y vel desired");
+    private final DoubleLogger log_tYErr = WaltLogger.logDouble("Swerve", "tYErr");
+
     private final DoubleLogger log_chassisSpeedVXError = WaltLogger.logDouble("Swerve", "vx speed error");
     private final DoubleLogger log_chassisSpeedVYError = WaltLogger.logDouble("Swerve", "vy speed error");
 
@@ -354,10 +352,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
+     * @param forwardBackAcceleration Supplier for when the robot should move closer and farther away from the reef location
      * @param destinationPoseOptional Give it a destination to go to
+     * @param visionSim VisionSim object so that this can output destination positions to the sim field
      * @return Returns a command that loops until it gets near
      */
-    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
+    public Command alignWithTag(DoubleSupplier forwardBackAcceleration, Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
         if (destinationPoseOptional.isEmpty()) {
             return Commands.none();
         }
@@ -369,38 +369,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
 
+        double maxSpeed = 0.8 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+
         return Commands.run(
             () -> {
-                System.out.println("ballin running");
+                // i did the geometry on a piece of paper. the variables reflect those names
+                // if you are not ok with this i will rename them all to sillier names and tell you i fixed them
                 Pose2d curPose = getState().Pose;
-
-                double xSpeed = m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getDegrees(), destinationPose.getRotation().getDegrees());
-
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
-
-                log_errorX.accept(destinationPose.getX()-curPose.getX());
-                log_errorY.accept(destinationPose.getY()-curPose.getY());
-                log_errorTheta.accept(destinationPose.getRotation().getDegrees()-curPose.getRotation().getDegrees());
-
-                log_autoAlignDesiredXSpeed.accept(xSpeed);
-                log_autoAlignDesiredYSpeed.accept(ySpeed);
-                log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
-            }
-        ).until(
-            () -> {Pose2d curPose = getState().Pose;
-
-                double xDiff = destinationPose.getX()-curPose.getX();
-                double yDiff = destinationPose.getY()-curPose.getY();
-                double rotDiff = MathUtil.inputModulus(destinationPose.getRotation().getDegrees(), -180, 180) -
-                    MathUtil.inputModulus(curPose.getRotation().getDegrees(), -180, 180);
+                Transform2d error = curPose.minus(destinationPose);
                 
-                return MathUtil.isNear(0, xDiff, Constants.AutoAlignmentK.kFieldXTolerance)
-                    && MathUtil.isNear(0, yDiff, Constants.AutoAlignmentK.kFieldYTolerance)
-                    && MathUtil.isNear(0, rotDiff, Constants.AutoAlignmentK.kFieldRotationTolerance);
             }
-        ).andThen(Commands.print("auto align finished"));
+        ).finallyDo(() -> setControl(drive.withVelocityX(0).withVelocityY(0)));
     }
 
     /**
