@@ -87,7 +87,7 @@ public class Vision {
         Optional<PhotonTrackedTarget> bestReefTagOptional = getBestReefTag();
         // if there is no good reef april tag available, we can't get a pose
         if (bestReefTagOptional.isEmpty()) {
-            System.out.println("no reef tag available");
+            // System.out.println("no reef tag available");
             return Optional.empty();
         }
         PhotonTrackedTarget bestReefTag = bestReefTagOptional.get();
@@ -116,7 +116,7 @@ public class Vision {
                     correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                     break;
                 default:
-                    System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
+                    // System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
                     return Optional.empty();
             }
         } else {
@@ -141,7 +141,7 @@ public class Vision {
                     correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                     break;
                 default:
-                    System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
+                    // System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
                     return Optional.empty();
             }
         }
@@ -158,35 +158,29 @@ public class Vision {
     public Optional<PhotonTrackedTarget> getBestReefTag() {
         // if no latest result is available, then we can't find the best reef tag
         if (m_latestPhotonPipelineResultOptional.isEmpty()) {
-            System.out.println("no latest photon pipeline result available");
+            // System.out.println("no latest photon pipeline result available");
             return Optional.empty();
         }
         PhotonPipelineResult latestPhotonPipelineResult = m_latestPhotonPipelineResultOptional.get();
         // if there are no april tags available, then we can't find the best reef tag
         if (!latestPhotonPipelineResult.hasTargets()) {
-            System.out.println("no april tags present");
+            // System.out.println("no april tags present");
             return Optional.empty();
         }
 
-        // if the best target is on the reef, just return ts (that shit)
-        if (isTagIdOnAllianceReef(latestPhotonPipelineResult.getBestTarget().getFiducialId())) {
-            return Optional.of(latestPhotonPipelineResult.getBestTarget());
-        }
-        
-        // PhotonPipelineResult::getTargets() should return the targets in sort order as set in photonvision UI
+        // find the target with the largest area that is on the reef
         List<PhotonTrackedTarget> trackedTargets = latestPhotonPipelineResult.getTargets();
-        int[] trackedTargetIds = new int[trackedTargets.size()];
-        for (int i = 0; i < trackedTargetIds.length; i++) {
-            trackedTargetIds[i] = trackedTargets.get(i).fiducialId;
-        }
-        for (int i = 0; i < trackedTargets.size(); i++) {
-            if (isTagIdOnAllianceReef(trackedTargets.get(i).getFiducialId())) {
-                return Optional.of(trackedTargets.get(i));
+        PhotonTrackedTarget maxAreaTag = null;
+        for (int i = 0; i < trackedTargets.size() - 1; i++) {
+            // if the current tag is on the reef and is greater than the current max area, update max area
+            if (isTagIdOnAllianceReef(trackedTargets.get(i).getFiducialId())
+                && (maxAreaTag == null || maxAreaTag.getArea() < trackedTargets.get(i).getArea())) {
+                maxAreaTag = trackedTargets.get(i);
             }
         }
         
-        // if we get to the end, there must not be any april tags on the reef
-        return Optional.empty();
+        // if maxAreaTag is null, there must not have been any available reef tags.
+        return maxAreaTag != null ? Optional.of(maxAreaTag) : Optional.empty();
     }
 
     /**
