@@ -206,7 +206,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
-        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.02))
+        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.1))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         
         (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
@@ -352,7 +352,7 @@ public class Superstructure {
                 Commands.sequence(
                     m_coral.score(),
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
-                   m_coral.stopCoralMotorCmd(),
+                    m_coral.stopCoralMotorCmd(),
                     Commands.print("in scoring the state")
                 )
             );
@@ -360,7 +360,7 @@ public class Superstructure {
         stateTrg_scored
             .onTrue(
                 Commands.sequence(
-                    Commands.waitSeconds(0.1),
+                    Commands.waitSeconds(0.2),
                     Commands.print("RUMBLE coming to a controller near you soon...")
                 )
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
