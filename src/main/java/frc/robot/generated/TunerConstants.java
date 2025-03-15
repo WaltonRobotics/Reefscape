@@ -83,7 +83,7 @@ public class TunerConstants {
     private static final double kSteerGearRatio = 21.428571428571427;
     private static final double kWheelIDInches = 3.150; // caliper measured
     private static final double kWheelWallAndTreadInches = 0.330; // caliper measured
-    public static final double kWheelDiameterInches = kWheelIDInches + (kWheelWallAndTreadInches * 2);
+    public static final double kWheelDiameterInches = 3.86;
     public static final Distance kWheelRadius = Inches.of(kWheelDiameterInches / 2);
 
     private static final boolean kInvertLeftSide = false;
