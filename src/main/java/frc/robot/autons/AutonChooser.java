@@ -9,7 +9,6 @@ public class AutonChooser {
     public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
         autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
         autoChooser.addRoutine("leave-only", () -> autonFactory.leaveOnly());
-        autoChooser.addRoutine("score-one", () -> autonFactory.scoreOneSlowly());
         autoChooser.select("auton");
 
         SmartDashboard.putData("AutonChooser", autoChooser);
