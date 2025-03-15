@@ -11,41 +11,31 @@ import java.util.function.Consumer;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.Timestamp;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import choreo.Choreo;
-import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
@@ -55,13 +45,9 @@ import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonBuilder.NumCycles;
 
-// import frc.robot.autons.AutonChooser.NumCycles;
-import static frc.robot.autons.TrajsAndLocs.*;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
-import static frc.robot.subsystems.Elevator.EleHeight.L4;
 
 import frc.robot.autons.WaltAutonFactory;
-// import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import frc.util.AllianceFlipUtil;
@@ -69,11 +55,7 @@ import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
 import frc.robot.vision.VisionSim;
-import frc.robot.subsystems.Finger;
-import frc.robot.subsystems.Algae;
-import frc.robot.subsystems.Coral;
-import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.*;
 
 public class Robot extends TimedRobot {
 
@@ -240,10 +222,12 @@ public class Robot extends TimedRobot {
       elevator,
       autoFactory, 
       superstructure, 
+      drivetrain,
       StartingLocs.RIGHT, 
       scoreLocs, 
       heights, 
-      hpStations);
+      hpStations,
+      false);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
@@ -265,7 +249,26 @@ public class Robot extends TimedRobot {
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
 
-    driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+    /* 
+       * programmer buttons
+       * make sure u comment out when not in use
+       */
+      // Run SysId routines when holding back/start and X/Y.
+      // Note that each routine should be run exactly once in a single log.
+      driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+      driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+      driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+      driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+
+      driver.back().and(driver.a()).whileTrue(elevator.sysIdDynamic(Direction.kForward));
+      driver.back().and(driver.b()).whileTrue(elevator.sysIdDynamic(Direction.kReverse));
+      driver.start().and(driver.a()).whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
+      driver.start().and(driver.b()).whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
+
+      driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+      driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+
+    // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
   private void configureBindings() {
@@ -299,19 +302,6 @@ public class Robot extends TimedRobot {
           superstructure.forceIdle()
         )
       );
-
-      /* 
-       * programmer buttons
-       * make sure u comment out when not in use
-       */
-      // Run SysId routines when holding back/start and X/Y.
-      // Note that each routine should be run exactly once in a single log.
-      //driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-      //driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-      //driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-      //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-      //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-      //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
 
     trg_leftTeleopAutoAlign.onTrue(
       Commands.sequence(
@@ -446,10 +436,12 @@ public class Robot extends TimedRobot {
         elevator,
         autoFactory, 
         superstructure, 
+        drivetrain,
         WaltAutonBuilder.startingPosition, 
         WaltAutonBuilder.getCycleScoringLocs(), 
         WaltAutonBuilder.getCycleEleHeights(), 
-        WaltAutonBuilder.getCycleHPStations()
+        WaltAutonBuilder.getCycleHPStations(),
+        false
       );
 
       // dummy one
