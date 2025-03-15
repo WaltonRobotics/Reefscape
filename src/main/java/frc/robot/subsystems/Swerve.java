@@ -322,8 +322,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         var pose = getState().Pose;
         var samplePose = sample.getPose();
 
-        var targetSpeeds = sample.getChassisSpeeds();
         var speed = getState().Speeds;
+        var targetSpeeds = sample.getChassisSpeeds();
 
         targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(
             pose.getX(), sample.x
@@ -462,6 +462,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return modulePoses;
     }
 
+
     public Command wheelRadiusCharacterization(double omegaDirection) {
 
         /* wheel radius characterization schtuffs */
@@ -551,10 +552,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         double[] wheelDistance = new double[swerveState.ModulePositions.length];
         double[] wheelRotations = new double[swerveState.ModulePositions.length];
+        double[] wheelSpeeds = new double[swerveState.ModuleStates.length];
+        double[] wheelSpeedTargets = new double[swerveState.ModuleTargets.length];
         for (int i = 0; i < swerveState.ModulePositions.length; i++) {
-            var state = swerveState.ModulePositions[i];
-            var inches = Units.metersToInches(state.distanceMeters); 
-            var rots =  state.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            var modPos = swerveState.ModulePositions[i];
+            var modState = swerveState.ModuleStates[i];
+            var modTarg = swerveState.ModuleTargets[i];
+
+            // position
+            var inches = Units.metersToInches(modPos.distanceMeters); 
+            var rots =  modPos.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
             wheelRotations[i] = rots;
             wheelDistance[i] = inches;
         }
