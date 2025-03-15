@@ -152,7 +152,9 @@ public class Constants {
          public static final double kCoralSpeed = 1;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
-             .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+             .withMotorOutput(new MotorOutputConfigs()
+                .withInverted(InvertedValue.Clockwise_Positive)
+                .withNeutralMode(NeutralModeValue.Brake));
      }
  
      public final class FingerK {
@@ -222,12 +224,12 @@ public class Constants {
          public static final double kGearRatio = 50/12;
          public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
  
-         public static final double kP = 40;
-         public static final double kI = 50;
-         public static final double kS = 0.5;
-         public static final double kV = 0;
+         public static final double kP = 5;
+         public static final double kI = 0;
+         public static final double kS = 0.05;
+         public static final double kV = 0.58403;
          public static final double kA = 0;
-         public static final double kG = 0; 
+         public static final double kG = 0.57989; 
  
          public static final Mass kCarriageMassKg = Pounds.of(5);
          public static final Distance kMinimumHeight = Feet.of(0);
@@ -275,14 +277,14 @@ public class Constants {
              .withInverted(InvertedValue.CounterClockwise_Positive);
          public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
              .withForwardSoftLimitEnable(true)
-             .withForwardSoftLimitThreshold(12.895)  // true hard 12.9849854
+             .withForwardSoftLimitThreshold(12.8975)  // true hard 12.9849854
              .withReverseSoftLimitEnable(true)
              .withReverseSoftLimitThreshold(0);
          public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
          private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
-             .withMotionMagicCruiseVelocity(12)
-             .withMotionMagicAcceleration(50)
-             .withMotionMagicJerk(200);
+             .withMotionMagicCruiseVelocity(20)
+             .withMotionMagicAcceleration(100)
+             .withMotionMagicJerk(0);
  
  
          public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
@@ -469,7 +471,7 @@ public class Constants {
                 branchPose3ds.put(ReefLocs.REEF_L, branchPositions.get(2));
 
                 // TODO: get a real distance from the reef for this
-                double distanceFromReef = Units.inchesToMeters(18);
+                double distanceFromReef = Units.inchesToMeters(17);
                 double leftRightOffset = -Units.inchesToMeters(1.25); // positive left robot
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, leftRightOffset, Rotation2d.fromDegrees(180));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
