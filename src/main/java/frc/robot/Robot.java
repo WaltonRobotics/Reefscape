@@ -231,11 +231,20 @@ public class Robot extends TimedRobot {
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
-    configureBindings();
-    // configureTestBindings();
+    // configureBindings();
+    configureTestBindings();
   }
 
   private void configureTestBindings() {
+
+    drivetrain.setDefaultCommand(
+          // Drivetrain will execute this command periodically
+          drivetrain.applyRequest(() ->
+              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
+                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+          )
+      );
     // driver.a().onTrue(
     //   Commands.sequence(
     //     algae.toAngle(WristPos.GROUND),
@@ -267,6 +276,10 @@ public class Robot extends TimedRobot {
 
       driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
       driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+
+      driver.leftBumper().whileTrue(drivetrain.applyRequest(() ->
+          point.withModuleDirection(new Rotation2d(0, 0))
+      ));
 
     // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
