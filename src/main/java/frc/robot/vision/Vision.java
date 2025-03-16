@@ -19,6 +19,7 @@ import frc.robot.Constants.FieldK.Reef;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
+import java.lang.StackWalker.Option;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.List;
 import java.util.Optional;
@@ -82,13 +83,13 @@ public class Vision {
         }
     }
 
-    public Pose2d getReefScorePose(Pose2d currentPose, boolean rightReef) {
+    public Optional<Pose2d> getReefScorePose(Pose2d currentPose, boolean rightReef) {
         // cache current alliance
         Optional<Alliance> curAlliance = DriverStation.getAlliance();
 
         // this WILL get updated. it loops through all april tags later
-        AprilTag closestReefAprilTag = null;
-        double minimumDistance = 999; // meters (nothing will actually be 999 meters away, right?)
+        Optional<AprilTag> closestReefAprilTag = Optional.empty();
+        double minimumDistance = 999999; // meters (nothing will actually be 999 kilometers away, right?)
         for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
             // makes sure it is on the correct reef before doing anything
             if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
@@ -99,18 +100,20 @@ public class Vision {
             double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2));
             // actually update values if the distance is the smallest
             if (distance > minimumDistance) {
-                closestReefAprilTag = aprilTag;
+                System.out.println("VISION[102]");
+                closestReefAprilTag = Optional.of(aprilTag);
                 minimumDistance = distance;
             }
         }
 
-        if (closestReefAprilTag == null || !isTagIdOnAllianceReef(closestReefAprilTag.ID, curAlliance)) {
-            System.out.println("VISION[108] FAIL: Vision::getReefScorePose set closestReefAprilTag to non-reef aprilTag or is null");
+        if (closestReefAprilTag.isEmpty() || !isTagIdOnAllianceReef(closestReefAprilTag.get().ID, curAlliance)) {
+            System.out.println("VISION[109] FAIL: Vision::getReefScorePose set closestReefAprilTag to non-reef aprilTag or is empty");
+            return Optional.empty();
         }
         // it shouldn't make it to this point if it doesn't have the correct tag id
         // also shouldn't be able to have a closest tag on the opposing alliance reef
         ReefLocs correctReefLocation = null;
-        switch (closestReefAprilTag.ID) {
+        switch (closestReefAprilTag.get().ID) {
             case 18:
                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
                 break;
@@ -148,12 +151,16 @@ public class Vision {
                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                 break;
             default:
-                System.out.println("VISION[132] WARN: see line 108");
-                correctReefLocation = ReefLocs.REEF_A;
+                System.out.println("VISION[153] WARN: see line 108");
+
+        }
+
+        if (correctReefLocation == null) {
+            return Optional.empty();
         }
 
         // AllianceFlipUtil::flip handles checking whether flipping should occur
-        return AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation));
+        return Optional.of(AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
     }
 
     // /**

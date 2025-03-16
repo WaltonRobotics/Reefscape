@@ -354,11 +354,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPose Give it a destination to go to
+     * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
      * @param visionSim visionSim object to get simField from to do sim debugging
      * @return Returns a command that loops until it gets near
      */
-    public Command moveToPose(Pose2d destinationPose, VisionSim visionSim) {
+    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
+        if (destinationPoseOptional.isEmpty()) {
+            System.out.println("Swerve moveToPose fail, destination unavailable");
+            return Commands.none();
+        }
+         Pose2d destinationPose = destinationPoseOptional.get();
+
         log_destinationX.accept(destinationPose.getX());
         log_destinationY.accept(destinationPose.getY());
         log_destinationTheta.accept(destinationPose.getRotation().getRadians());
