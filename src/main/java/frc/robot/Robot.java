@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
-  // private final Algae algae;
+  private final Algae algae;
   private final Superstructure superstructure;
 
   private Command m_autonomousCommand;
@@ -211,12 +211,12 @@ public class Robot extends TimedRobot {
       this::driverRumble);
     }
       
-      // algae = new Algae(
-      //   trg_algaeIntake, 
-      //   trg_processorReq, 
-      //   trg_shootReq, 
-      //   this::manipRumble
-      // );
+      algae = new Algae(
+        trg_algaeIntake, 
+        trg_processorReq, 
+        trg_shootReq, 
+        this::manipRumble
+      );
 
     waltAutonFactory = new WaltAutonFactory(
       elevator,
@@ -231,8 +231,8 @@ public class Robot extends TimedRobot {
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
-    // configureBindings();
-    configureTestBindings();
+    configureBindings();
+    // configureTestBindings();
   }
 
   private void configureTestBindings() {
@@ -311,7 +311,7 @@ public class Robot extends TimedRobot {
 
       driver.rightBumper().onTrue(
         Commands.parallel(
-          // algae.toIdleCmd(),
+          algae.toIdleCmd(),
           superstructure.forceIdle()
         )
       );
@@ -345,8 +345,8 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
         Commands.parallel(
           elevator.currentSenseHoming(),
-          finger.currentSenseHoming() // TODO: add back in a comma
-          // algae.currentSenseHoming()
+          finger.currentSenseHoming(),
+          algae.currentSenseHoming()
         ).andThen(superstructure.forceIdle())
       );
 
@@ -524,7 +524,7 @@ public class Robot extends TimedRobot {
     return Commands.parallel(
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
-          // algae.currentSenseHoming(),
+          algae.currentSenseHoming(),
           chooserCommand
       );
   }
@@ -549,7 +549,7 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
     Commands.runOnce(() -> waltAutonFactory.autonTimer.stop());
     superstructure.forceIdle().schedule();
-    // algae.toIdleCmd().schedule();
+    algae.toIdleCmd().schedule();
     finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
