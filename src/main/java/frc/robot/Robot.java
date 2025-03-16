@@ -224,7 +224,7 @@ public class Robot extends TimedRobot {
       superstructure, 
       drivetrain,
       StartingLocs.RIGHT, 
-      scoreLocs, 
+      scoreLocs,
       heights, 
       hpStations,
       false);
