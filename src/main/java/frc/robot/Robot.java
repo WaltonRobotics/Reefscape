@@ -316,23 +316,15 @@ public class Robot extends TimedRobot {
         )
       );
 
-    trg_leftTeleopAutoAlign.onTrue(
-      Commands.sequence(
-        Commands.race(
-          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(false).isPresent()),
-          Commands.waitSeconds(0.2)
-        ),
-        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain))
-      ).until(() -> !trg_leftTeleopAutoAlign.getAsBoolean())
+    trg_leftTeleopAutoAlign.whileTrue(
+      Commands.repeatingSequence(
+        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
+      )
     );
-    trg_rightTeleopAutoAlign.onTrue(
-      Commands.sequence(
-        Commands.race(
-          Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(true).isPresent()),
-          Commands.waitSeconds(0.2)
-        ),
-        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))
-      ).until(() -> !trg_rightTeleopAutoAlign.getAsBoolean())
+    trg_rightTeleopAutoAlign.whileTrue(
+      Commands.repeatingSequence(
+        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
+      )
     );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
