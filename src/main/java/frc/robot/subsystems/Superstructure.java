@@ -194,13 +194,13 @@ public class Superstructure {
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
-        (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL2.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL2.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL3.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL3.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL4.and(trg_inOverride.negate()).debounce(1).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToL4.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
@@ -557,6 +557,7 @@ public class Superstructure {
         log_botSensor.accept(transTrg_botSensor);
 
         log_hasCoral.accept(trg_hasCoral);
+        log_scoringReq.accept(trg_teleopScoreReq.or(trg_autonScoreReq));
     }
 
     public void logSimThings() {
