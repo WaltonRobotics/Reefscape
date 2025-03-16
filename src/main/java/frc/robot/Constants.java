@@ -392,6 +392,8 @@ public class Constants {
             public static final Map<ReefLocs, Map<ReefHeight, Pose3d>> branchPose3ds = new HashMap<>(); // Map reef locations to Pose3ds. uses branchPositions behind the scenes
             public static final List<Map<ReefHeight, Pose3d>> branchPositions = new ArrayList<>();
             public static final Map<ReefLocs, Pose2d> reefLocationToIdealRobotPoseMap = new HashMap<ReefLocs, Pose2d>();
+            public static final List<ReefLocs> leftReefs = new ArrayList<>();
+            public static final List<ReefLocs> rightReefs = new ArrayList<>();
             
             static {
                 // Initialize faces
