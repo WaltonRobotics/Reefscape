@@ -266,19 +266,21 @@ public class Elevator extends SubsystemBase {
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
     }
 
+    private static final double kInch = 0.169;
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.3),
         L1(5.590325),
-        L2(5.653564 + 0.169),
-        L3(8.451660 + (0.169 / 2)),
+        L2(5.653564 + kInch),
+        L3(8.451660 + (kInch / 2)),
         L4(12.89),
-        CLIMB_UP(1.590325), // this height will move the robot up for climb
-        CLIMB_DOWN(5.090325), //this height will ove robot down for climb
-        HP(2.08); //human player station intake height
+        CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
+        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will ove robot down for climb
+        HP(2.08 - (kInch * 5)); //human player station intake height
 
         public final double rotations;
+        
 
         private EleHeight(double rotations){
             this.rotations = rotations;

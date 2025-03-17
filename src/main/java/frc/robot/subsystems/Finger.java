@@ -43,6 +43,10 @@ public class Finger extends SubsystemBase {
         setDefaultCommand(currentSenseHoming());
     }
 
+    private void setFingerPos(double rotations) {
+        m_motor.setControl(m_PosVoltReq.withPosition(rotations));
+    }
+
     public void fingerOut() {
         log_fingerOut.accept(true);
         System.out.println("Finger Requested out");
@@ -51,6 +55,10 @@ public class Finger extends SubsystemBase {
 
     public Command fingerOutCmd() {
         return runOnce(this::fingerOut);
+    }
+
+    public Command fingerClimbDownCmd() {
+        return runOnce(() -> setFingerPos(-0.85));
     }
 
     public void fingerIn() {
