@@ -49,7 +49,6 @@ import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.Swerve;
 import frc.util.AllianceFlipUtil;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -85,11 +84,11 @@ public class Robot extends TimedRobot {
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
-    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+  //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};
+  private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
@@ -213,7 +212,7 @@ public class Robot extends TimedRobot {
       
       algae = new Algae(
         trg_algaeIntake, 
-        trg_processorReq, 
+        new Trigger(() -> false), 
         trg_shootReq, 
         this::manipRumble
       );
@@ -316,16 +315,16 @@ public class Robot extends TimedRobot {
         )
       );
 
-    trg_leftTeleopAutoAlign.whileTrue(
-      Commands.repeatingSequence(
-        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
-      )
-    );
-    trg_rightTeleopAutoAlign.whileTrue(
-      Commands.repeatingSequence(
-        new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
-      )
-    );
+    // trg_leftTeleopAutoAlign.whileTrue(
+    //   Commands.repeatingSequence(
+    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
+    //   )
+    // );
+    // trg_rightTeleopAutoAlign.whileTrue(
+    //   Commands.repeatingSequence(
+    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
+    //   )
+    // );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
       trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
@@ -357,7 +356,14 @@ public class Robot extends TimedRobot {
         )
       );
 
-      drivetrain.registerTelemetry(logger::telemeterize);
+    manipulator.y().and(manipulator.povUp())
+    .onTrue(Commands.parallel(
+      elevator.toHeight(EleHeight.CLIMB_UP.rotations),
+      finger.fingerClimbDownCmd()
+    ));
+
+    manipulator.y().and(manipulator.povDown())
+      .onTrue(elevator.toHeight(EleHeight.CLIMB_DOWN.rotations));
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
