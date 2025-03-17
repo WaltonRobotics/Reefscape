@@ -20,6 +20,7 @@ import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
@@ -30,17 +31,18 @@ public class WaltAutonFactory {
     private AutoRoutine m_routine;
     private final Superstructure m_superstructure;
     private final Elevator m_ele;
+    private final Swerve m_drivetrain;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
     private ArrayList<ReefLocs> m_scoreLocs;
     private ArrayList<EleHeight> m_heights; // needs to hv same size as m_scoreLocs
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
+    private boolean m_pushTime; 
 
     int heightCounter = 0;
-    private boolean m_alrScored = false;
 
-    public static Timer autonTimer = new Timer();
+    public Timer autonTimer = new Timer();
     private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer");
 
     private static Command printLater(Supplier<String> stringSup) {
@@ -49,9 +51,10 @@ public class WaltAutonFactory {
 		}, Set.of());
 	}
 
-    private static Command logTimer(String epochName, Supplier<Timer> timerSup) {
+    private Command logTimer(String epochName, Supplier<Timer> timerSup) {
 		return Commands.defer(() -> {
 			var timer = timerSup.get();
+            log_autonTimer.accept(autonTimer.get());
 			return printLater(() -> epochName + " at " + timer.get() + " s");
 		}, Set.of());
 	}
@@ -73,20 +76,24 @@ public class WaltAutonFactory {
         Elevator ele,
         AutoFactory autoFactory, 
         Superstructure superstructure,
+        Swerve drivetrain,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
-        ArrayList<HPStation> hpStations
+        ArrayList<HPStation> hpStations,
+        boolean pushTime
     ) {
         m_autoFactory = autoFactory;
         m_routine = m_autoFactory.newRoutine("auton"); 
         m_superstructure = superstructure;
         m_ele = ele;
+        m_drivetrain = drivetrain;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
         m_heights = heights;
         m_hpStations = hpStations;
+        m_pushTime = pushTime;
     }
 
     private boolean weAtLeastScoreOneChecker() {
@@ -133,16 +140,23 @@ public class WaltAutonFactory {
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
-        // return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
-            Commands.runOnce(() -> log_autonTimer.accept(autonTimer.get())),
+            logTimer("CoralScored", () -> autonTimer),
             m_superstructure.autonScoreReq(),
-            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
-            Commands.print("YAHOO in the score cmd with height " + eleHeight)
-            // Commands.waitSeconds(5)
+            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
         );
     }
+
+    // private Command pushTime() {
+    //     if(m_pushTime) {
+    //         return m_drivetrain.applyRequest(
+
+    //         );
+    //     } else {
+    //         return Commands.none();
+    //     }
+    // }
 
     public AutoRoutine leaveOnly() {
         AutoRoutine leaveAuto = m_autoFactory.newRoutine("leave only");
@@ -151,36 +165,12 @@ public class WaltAutonFactory {
         leaveAuto.active().onTrue(
             Commands.sequence(
                 Commands.runOnce(() -> autonTimer.restart()),
-                Commands.parallel(
-                    leave.resetOdometry(),
-                    Commands.print("whats up gang we're moving one meter rahhhhhh")
-                ),
-                leave.cmd(),
-                Commands.print("yo we're actually moving now RAHHHH MF")
+                leave.resetOdometry(),
+                leave.cmd()
             )
         );
 
         return leaveAuto;
-    }
-
-    public AutoRoutine scoreOneSlowly() {
-        AutoRoutine scoreOneSlowly = m_autoFactory.newRoutine("score one");
-        AutoTrajectory scoreOneSadnessTime = m_routine.trajectory("Start_Mid_G");
-        scoreOneSlowly.active().onTrue(
-            Commands.sequence(
-                Commands.print("starting score-one"),
-                scoreOneSadnessTime.resetOdometry(),
-                Commands.print("done resetting odometry, running path"),
-                scoreOneSadnessTime.cmd(),
-                Commands.print("done running path, scoring")
-            )
-        );
-
-        scoreOneSadnessTime.done().onTrue(
-            scoreCmd(EleHeight.L4)
-        );
-
-        return scoreOneSlowly;
     }
 
     public AutoRoutine generateAuton() {
@@ -220,7 +210,6 @@ public class WaltAutonFactory {
         
         int allTrajIdx = 0;
         while (allTrajIdx < allTheTrajs.size()) {
-            System.out.println("in the while loop");
             
             Command trajCmd = Commands.none();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
@@ -229,10 +218,7 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    Commands.print("b4 checking if bottom beam breaks"),
                     Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
-                    // Commands.waitSeconds(3),
-                    Commands.print("top beam break has broken"),
                     trajCmd,
                     Commands.print("Running Path: " + trajCmd)
                 ));
@@ -240,7 +226,6 @@ public class WaltAutonFactory {
             allTrajIdx++;
             
             if (allTrajIdx > allTheTrajs.size() - 1) {
-                System.out.println("sad times");
                 break;
             }
 
