@@ -11,31 +11,41 @@ import java.util.function.Consumer;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonUtils;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.Timestamp;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import choreo.Choreo;
+import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
@@ -45,16 +55,25 @@ import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.autons.WaltAutonBuilder.NumCycles;
 
+// import frc.robot.autons.AutonChooser.NumCycles;
+import static frc.robot.autons.TrajsAndLocs.*;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
+import static frc.robot.subsystems.Elevator.EleHeight.L4;
 
 import frc.robot.autons.WaltAutonFactory;
+// import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Swerve;
 import frc.util.AllianceFlipUtil;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
 import frc.robot.vision.VisionSim;
-import frc.robot.subsystems.*;
+import frc.robot.subsystems.Finger;
+import frc.robot.subsystems.Algae;
+import frc.robot.subsystems.Coral;
+import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Superstructure;
 
 public class Robot extends TimedRobot {
 
@@ -76,7 +95,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
-  private final Algae algae;
+  // private final Algae algae;
   private final Superstructure superstructure;
 
   private Command m_autonomousCommand;
@@ -84,11 +103,11 @@ public class Robot extends TimedRobot {
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
-  //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
@@ -210,23 +229,21 @@ public class Robot extends TimedRobot {
       this::driverRumble);
     }
       
-      algae = new Algae(
-        trg_algaeIntake, 
-        new Trigger(() -> false), 
-        trg_shootReq, 
-        this::manipRumble
-      );
+      // algae = new Algae(
+      //   trg_algaeIntake, 
+      //   trg_processorReq, 
+      //   trg_shootReq, 
+      //   this::manipRumble
+      // );
 
     waltAutonFactory = new WaltAutonFactory(
       elevator,
       autoFactory, 
       superstructure, 
-      drivetrain,
       StartingLocs.RIGHT, 
-      scoreLocs,
+      scoreLocs, 
       heights, 
-      hpStations,
-      false);
+      hpStations);
 
     AutonChooser.addPathsAndCmds(waltAutonFactory);
 
@@ -235,15 +252,6 @@ public class Robot extends TimedRobot {
   }
 
   private void configureTestBindings() {
-
-    drivetrain.setDefaultCommand(
-          // Drivetrain will execute this command periodically
-          drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
-                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-          )
-      );
     // driver.a().onTrue(
     //   Commands.sequence(
     //     algae.toAngle(WristPos.GROUND),
@@ -257,30 +265,7 @@ public class Robot extends TimedRobot {
     // driver.x().onTrue(elevator.toHeight(Feet.of(1).in(Meters)));
     // driver.y().onTrue(elevator.toHeight(Inches.of(1).in(Meters)));
 
-    /* 
-       * programmer buttons
-       * make sure u comment out when not in use
-       */
-      // Run SysId routines when holding back/start and X/Y.
-      // Note that each routine should be run exactly once in a single log.
-      driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-      driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-      driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-      driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-      driver.back().and(driver.a()).whileTrue(elevator.sysIdDynamic(Direction.kForward));
-      driver.back().and(driver.b()).whileTrue(elevator.sysIdDynamic(Direction.kReverse));
-      driver.start().and(driver.a()).whileTrue(elevator.sysIdQuasistatic(Direction.kForward));
-      driver.start().and(driver.b()).whileTrue(elevator.sysIdQuasistatic(Direction.kReverse));
-
-      driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
-      driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
-
-      driver.leftBumper().whileTrue(drivetrain.applyRequest(() ->
-          point.withModuleDirection(new Rotation2d(0, 0))
-      ));
-
-    // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+    driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
   private void configureBindings() {
@@ -310,21 +295,35 @@ public class Robot extends TimedRobot {
 
       driver.rightBumper().onTrue(
         Commands.parallel(
-          algae.toIdleCmd(),
+          // algae.toIdleCmd(),
           superstructure.forceIdle()
         )
       );
 
-    // trg_leftTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
-    //   )
-    // );
-    // trg_rightTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
-    //   )
-    // );
+      /* 
+       * programmer buttons
+       * make sure u comment out when not in use
+       */
+      // Run SysId routines when holding back/start and X/Y.
+      // Note that each routine should be run exactly once in a single log.
+      //driver.back().and(driver.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
+      //driver.back().and(driver.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
+      //driver.start().and(driver.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
+      //driver.start().and(driver.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
+      //driver.povRight().whileTrue(drivetrain.wheelRadiusCharacterization(1));
+      //driver.povLeft().whileTrue(drivetrain.wheelRadiusCharacterization(-1));
+    
+      trg_leftTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(() -> drivetrain.alignWithTag(driver::getLeftY, eleForwardsCam.getReefScorePose(false), visionSim), Set.of(drivetrain))
+        )
+      );
+      trg_rightTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(() -> drivetrain.alignWithTag(driver::getLeftY, eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain))
+        )
+      );
+
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
       trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
@@ -336,8 +335,8 @@ public class Robot extends TimedRobot {
       trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
         Commands.parallel(
           elevator.currentSenseHoming(),
-          finger.currentSenseHoming(),
-          algae.currentSenseHoming()
+          finger.currentSenseHoming() // TODO: add back in a comma
+          // algae.currentSenseHoming()
         ).andThen(superstructure.forceIdle())
       );
 
@@ -356,14 +355,7 @@ public class Robot extends TimedRobot {
         )
       );
 
-    manipulator.y().and(manipulator.povUp())
-    .onTrue(Commands.parallel(
-      elevator.toHeight(EleHeight.CLIMB_UP.rotations),
-      finger.fingerClimbDownCmd()
-    ));
-
-    manipulator.y().and(manipulator.povDown())
-      .onTrue(elevator.toHeight(EleHeight.CLIMB_DOWN.rotations));
+      drivetrain.registerTelemetry(logger::telemeterize);
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
@@ -422,12 +414,10 @@ public class Robot extends TimedRobot {
         elevator,
         autoFactory, 
         superstructure, 
-        drivetrain,
         WaltAutonBuilder.startingPosition, 
         WaltAutonBuilder.getCycleScoringLocs(), 
         WaltAutonBuilder.getCycleEleHeights(), 
-        WaltAutonBuilder.getCycleHPStations(),
-        false
+        WaltAutonBuilder.getCycleHPStations()
       );
 
       // dummy one
@@ -497,7 +487,7 @@ public class Robot extends TimedRobot {
     return Commands.parallel(
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
-          algae.currentSenseHoming(),
+          // algae.currentSenseHoming(),
           chooserCommand
       );
   }
@@ -535,7 +525,7 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
     Commands.runOnce(() -> waltAutonFactory.autonTimer.stop());
     superstructure.forceIdle().schedule();
-    algae.toIdleCmd().schedule();
+    // algae.toIdleCmd().schedule();
     finger.fingerInCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();

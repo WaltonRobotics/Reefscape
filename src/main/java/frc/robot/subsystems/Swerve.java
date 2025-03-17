@@ -320,8 +320,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         var pose = getState().Pose;
         var samplePose = sample.getPose();
 
-        var speed = getState().Speeds;
         var targetSpeeds = sample.getChassisSpeeds();
+        var speed = getState().Speeds;
 
         targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(
             pose.getX(), sample.x
@@ -352,16 +352,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
-     * @param visionSim visionSim object to get simField from to do sim debugging
+     * @param forwardBackAcceleration Supplier for when the robot should move closer and farther away from the reef location
+     * @param destinationPoseOptional Give it a destination to go to
+     * @param visionSim VisionSim object so that this can output destination positions to the sim field
      * @return Returns a command that loops until it gets near
      */
     public Command alignWithTag(DoubleSupplier forwardBackAcceleration, Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
         if (destinationPoseOptional.isEmpty()) {
-            System.out.println("Swerve moveToPose fail, destination unavailable");
             return Commands.none();
         }
-         Pose2d destinationPose = destinationPoseOptional.get();
+        Pose2d destinationPose = destinationPoseOptional.get();
 
         log_destinationX.accept(destinationPose.getX());
         log_destinationY.accept(destinationPose.getY());
@@ -440,7 +440,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         }
         return modulePoses;
     }
-
 
     public Command wheelRadiusCharacterization(double omegaDirection) {
 
@@ -531,16 +530,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         double[] wheelDistance = new double[swerveState.ModulePositions.length];
         double[] wheelRotations = new double[swerveState.ModulePositions.length];
-        double[] wheelSpeeds = new double[swerveState.ModuleStates.length];
-        double[] wheelSpeedTargets = new double[swerveState.ModuleTargets.length];
         for (int i = 0; i < swerveState.ModulePositions.length; i++) {
-            var modPos = swerveState.ModulePositions[i];
-            var modState = swerveState.ModuleStates[i];
-            var modTarg = swerveState.ModuleTargets[i];
-
-            // position
-            var inches = Units.metersToInches(modPos.distanceMeters); 
-            var rots =  modPos.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            var state = swerveState.ModulePositions[i];
+            var inches = Units.metersToInches(state.distanceMeters); 
+            var rots =  state.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
             wheelRotations[i] = rots;
             wheelDistance[i] = inches;
         }
