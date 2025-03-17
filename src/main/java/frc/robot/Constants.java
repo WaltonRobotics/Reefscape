@@ -549,11 +549,11 @@ public class Constants {
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
-        public static final double kRXMaxVelocity = 3; // m/s
-        public static final double kRXMaxAccel = 3; // m/s^2
+        public static final double kXMaxVelocity = 3; // m/s
+        public static final double kXMaxAccel = 3; // m/s^2
 
-        public static final double kRYMaxVelocity = 3; // m/s
-        public static final double kRYMaxAccel = 3; // m/s^2
+        public static final double kYMaxVelocity = 3; // m/s
+        public static final double kYMaxAccel = 3; // m/s^2
 
         public static final double kThetaMaxVelocity = 45; // deg/s
         public static final double kThetaMaxAccel = 45; // deg/s^2

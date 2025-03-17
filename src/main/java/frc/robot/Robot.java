@@ -8,7 +8,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
+import java.util.function.Supplier;
 import java.util.Optional;
 import java.util.Set;
 
@@ -315,16 +315,19 @@ public class Robot extends TimedRobot {
         )
       );
 
-    // trg_leftTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
-    //   )
-    // );
-    // trg_rightTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
-    //   )
-    // );
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim);
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim);
+
+      trg_leftTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        )
+      );
+      trg_rightTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        )
+      );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
       trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
@@ -504,21 +507,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    // Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
-    // m_autonomousCommand = autonCmdBuilder(chosen);
-
-    m_autonomousCommand = Commands.sequence(
-      Commands.runOnce(() -> drivetrain.resetPose(new Pose2d(3.75, 2.6, Rotation2d.kCCW_90deg))),
-      Commands.waitSeconds(01),
-      Commands.print("wait complete"),
-      Commands.race(
-        Commands.waitUntil(() -> eleForwardsCam.getReefScorePose(true).isPresent()),
-        Commands.waitSeconds(0.2)
-      ),
-      Commands.print("found reef score pose"),
-      new DeferredCommand(() -> drivetrain.alignWithTag(() -> 0.1, eleForwardsCam.getReefScorePose(true), visionSim), Set.of(drivetrain)),
-      Commands.print("alignment command finish")
-    );
+    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
+    m_autonomousCommand = autonCmdBuilder(chosen);
 
     if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();

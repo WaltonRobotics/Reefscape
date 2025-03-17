@@ -15,12 +15,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
 import frc.robot.Constants.FieldK;
-import frc.robot.Constants.FieldK.Reef;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
-import java.lang.StackWalker.Option;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.List;
 import java.util.Optional;
 
@@ -100,14 +97,14 @@ public class Vision {
             double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2));
             // actually update values if the distance is the smallest
             if (distance >= minimumDistance) {
-                System.out.println("VISION[102]");
+                System.out.println("AUTO ALIGN [VISION]: Vision::getReefScorePose updates nearest reef aprilTag");
                 closestReefAprilTag = Optional.of(aprilTag);
                 minimumDistance = distance;
             }
         }
 
         if (closestReefAprilTag.isEmpty() || !isTagIdOnAllianceReef(closestReefAprilTag.get().ID, curAlliance)) {
-            System.out.println("VISION[109] FAIL: Vision::getReefScorePose set closestReefAprilTag to non-reef aprilTag or is empty");
+            System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose set closestReefAprilTag to non-reef aprilTag or is empty");
             return Optional.empty();
         }
         // it shouldn't make it to this point if it doesn't have the correct tag id
@@ -151,87 +148,19 @@ public class Vision {
                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
                 break;
             default:
-                System.out.println("VISION[153] WARN: see line 108");
+                System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose switch case defaulted");
+                return Optional.empty();
 
         }
 
         if (correctReefLocation == null) {
+            System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose correctReefLocation null uncaught");
             return Optional.empty();
         }
 
         // AllianceFlipUtil::flip handles checking whether flipping should occur
         return Optional.of(AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
     }
-
-    // /**
-    //  * @param rightReef Negative left reef, positive right reef
-    //  * @return Returns empty optional if an ideal robot pose could not be found, returns a Pose2d of where to go if it can be found
-    //  */
-    // public Optional<Pose2d> getReefScorePose(boolean rightReef) {
-    //     Optional<PhotonTrackedTarget> bestReefTagOptional = getBestReefTag();
-    //     // if there is no good reef april tag available, we can't get a pose
-    //     if (bestReefTagOptional.isEmpty()) {
-    //         // System.out.println("no reef tag available");
-    //         return Optional.empty();
-    //     }
-    //     PhotonTrackedTarget bestReefTag = bestReefTagOptional.get();
-    //     int tagId = bestReefTag.getFiducialId();
-    //     ReefLocs correctReefLocation;
-    //     // map nearest tag and left vs right to correct reef branch
-    //     if (DriverStation.getAlliance().isEmpty() || DriverStation.getAlliance().get().equals(Alliance.Blue)) {
-    //         // blue
-    //         switch (tagId) {
-    //             case 18:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-    //                 break;
-    //             case 17:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-    //                 break;
-    //             case 22:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-    //                 break;
-    //             case 21:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-    //                 break;
-    //             case 20:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-    //                 break;
-    //             case 19:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-    //                 break;
-    //             default:
-    //                 // System.out.println("VISION[109] WARN: getBestReefTag returned not reef tag for some reason");
-    //                 return Optional.empty();
-    //         }
-    //     } else {
-    //         // red
-    //         switch (tagId) {
-    //             case 7:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-    //                 break;
-    //             case 8:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-    //                 break;
-    //             case 9:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-    //                 break;
-    //             case 10:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-    //                 break;
-    //             case 11:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-    //                 break;
-    //             case 6:
-    //                 correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-    //                 break;
-    //             default:
-    //                 // System.out.println("VISION[134] WARN: getBestReefTag returned not reef tag for some reason");
-    //                 return Optional.empty();
-    //         }
-    //     }
-    //     return AllianceFlipUtil.shouldFlip() ? Optional.of(AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)))
-    //         : Optional.of(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation));
-    // }
 
     /**
      * This code selects the best reef tag.
@@ -315,10 +244,16 @@ public class Vision {
         return visionEst;
     }
 
+    /**
+     * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
+     * @param givenId integer april tag id
+     * @param curAlliance current alliance, if the optional is empty assume blue
+     * @return whether a tag id corresponds to an apriltag on the current alliance reef
+     */
     private boolean isTagIdOnAllianceReef(int givenId, Optional<Alliance> curAlliance) {
         if (curAlliance.isEmpty() || (curAlliance.isPresent() && curAlliance.get().equals(Alliance.Blue))) {
             if (curAlliance.isEmpty()) {
-                System.out.println("VISION[165] WARN: default to blue alliance");
+                System.out.println("VISION WARN: Vision::isTagIdOnAllianceReef default to blue alliance");
             }
             
             // this sets our function to use correct bounds to determine if a given tag is on the correct reef
@@ -326,7 +261,19 @@ public class Vision {
         } else {
             return givenId >= 6 && givenId <= 11;
         }
-    } 
+    }
+
+    /**
+     * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
+     * <p>If no alliance is available from the driver station, assumes blue
+     * <p>Consider caching the alliance and using {@link #isTagIdOnAllianceReef(int, Optional)}
+     *  to improve performance
+     * @param givenId integer april tag id
+     * @return whether a tag id corresponds to an apriltag on the current alliance reef
+     */
+    private boolean isTagIdOnAllianceReef(int givenId) {
+        return isTagIdOnAllianceReef(givenId, DriverStation.getAlliance());
+    }
 
     /**
      * Calculates new standard deviations This algorithm is a heuristic that creates dynamic standard
