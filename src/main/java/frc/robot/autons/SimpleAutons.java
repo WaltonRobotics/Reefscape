@@ -23,8 +23,8 @@ public class SimpleAutons {
     public AutoRoutine moveForward() {
         AutoRoutine routine = m_autoFactory.newRoutine("drive forward");
 
-        AutoTrajectory drive = routine.trajectory(TrajsAndLocs.Trajectories.StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID, ReefLocs.REEF_H)));
-        AutoTrajectory drive2 = routine.trajectory(TrajsAndLocs.Trajectories.StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID, ReefLocs.REEF_H)));
+        AutoTrajectory drive = routine.trajectory(TrajsAndLocs.Trajectories.StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_H)));
+        AutoTrajectory drive2 = routine.trajectory(TrajsAndLocs.Trajectories.StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_H)));
 
         routine.active().onTrue(
             Commands.sequence(

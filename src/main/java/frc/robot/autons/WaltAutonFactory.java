@@ -148,15 +148,15 @@ public class WaltAutonFactory {
         );
     }
 
-    // private Command pushTime() {
-    //     if(m_pushTime) {
-    //         return m_drivetrain.applyRequest(
-
-    //         );
-    //     } else {
-    //         return Commands.none();
-    //     }
-    // }
+    private Command pushTime() {
+        AutoTrajectory pushingTraj = m_routine.trajectory(PushingTrajs.get(m_startLoc));
+        
+        return Commands.sequence(
+            Commands.runOnce(() -> autonTimer.restart()),
+            pushingTraj.resetOdometry(),
+            pushingTraj.cmd()
+        );
+    }
 
     public AutoRoutine leaveOnly() {
         AutoRoutine leaveAuto = m_autoFactory.newRoutine("leave only");
@@ -188,13 +188,22 @@ public class WaltAutonFactory {
         System.out.println("Running Path: " + theTraj);
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
-        m_routine.active().onTrue(
+        if(m_pushTime) {
+            m_routine.active().onTrue(
+                Commands.sequence(
+                    pushTime(),
+                    firstScoreTraj.cmd()
+                )
+            );
+        } else {
+            m_routine.active().onTrue(
             Commands.sequence(
-                Commands.runOnce(() -> autonTimer.restart()),
-                firstScoreTraj.resetOdometry(),
-                firstScoreTraj.cmd()
-            )
-        );
+                    Commands.runOnce(() -> autonTimer.restart()),
+                    firstScoreTraj.resetOdometry(),
+                    firstScoreTraj.cmd()
+                )
+            );
+        }
 
         firstScoreTraj.done()
             .onTrue(

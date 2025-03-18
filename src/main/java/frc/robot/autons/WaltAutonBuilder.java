@@ -31,7 +31,7 @@ public class WaltAutonBuilder {
     // default, initial values
     public static NumCycles m_cycles = NumCycles.CYCLE_1;
     public static EleHeight startingHeight = EleHeight.L4;
-    public static StartingLocs startingPosition = StartingLocs.MID;
+    public static StartingLocs startingPosition = StartingLocs.RIGHT;
     public static ReefLocs scoringPosition = ReefLocs.REEF_A;
     public static HPStation hpStation = HPStation.HP_LEFT;
 
@@ -58,20 +58,35 @@ public class WaltAutonBuilder {
 
         // add Starting Position options
         startingPositionChooser.addOption("Left", StartingLocs.LEFT);
-        startingPositionChooser.addOption("Middle", StartingLocs.MID);
+        startingPositionChooser.addOption("Middle Left", StartingLocs.MID_H);
+        startingPositionChooser.addOption("Middle Right", StartingLocs.MID_G);
         startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
+        startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
+        startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
 
         // changing the starting position AFFECTS HERE - see robot periodic
         if (startingPosition.equals(StartingLocs.LEFT)) {
             for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
                 firstScoringChooser.addOption(loc.name(), loc);
             }
-        } else if (startingPosition.equals(StartingLocs.MID)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidStartCycles) {
+        } else if (startingPosition.equals(StartingLocs.SUPER_LEFT)) {
+            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperLeftStartCycles) {
+                firstScoringChooser.addOption(loc.name(), loc);
+            }
+        } else if (startingPosition.equals(StartingLocs.MID_G)) {
+            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidGStartCycles) {
+                firstScoringChooser.addOption(loc.name(), loc);
+            }
+        } else if (startingPosition.equals(StartingLocs.MID_H)) {
+            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidHStartCycles) {
+                firstScoringChooser.addOption(loc.name(), loc);
+            }
+        } else if (startingPosition.equals(StartingLocs.RIGHT)) {
+            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalRightStartCycles) {
                 firstScoringChooser.addOption(loc.name(), loc);
             }
         } else {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalRightStartCycles) {
+            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperRightStartCycles) {
                 firstScoringChooser.addOption(loc.name(), loc);
             }
         }
