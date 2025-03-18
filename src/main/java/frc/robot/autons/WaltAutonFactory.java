@@ -4,15 +4,28 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+
+import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.Constants.RobotK;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -22,6 +35,7 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.vision.VisionSim;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -148,14 +162,40 @@ public class WaltAutonFactory {
         );
     }
 
-    private Command pushTime() {
-        AutoTrajectory pushingTraj = m_routine.trajectory(PushingTrajs.get(m_startLoc));
-        
+    private BooleanSupplier nearPoseXY(Pose2d dest, double toleranceMeters) {
+        return () -> {
+            double distance = dest.getTranslation().getDistance(m_drivetrain.getState().Pose.getTranslation());
+            return distance <= 0.25;
+        };
+    }
+    
+
+    // move these maybe
+    private static final Transform2d partnerPushBlue = new Transform2d(Meters.of(0.4), Meters.of(0), Rotation2d.kZero);
+    private static final Transform2d partnerPushRed = new Transform2d(Meters.of(-0.4), Meters.of(0), Rotation2d.kZero);
+
+    private Command pushPartnerNeedsDefer() {
+        Pose2d startPose = m_drivetrain.getState().Pose;
+        Transform2d transform = partnerPushBlue;
+        var allianceOpt = DriverStation.getAlliance();
+        if (allianceOpt.isPresent() && allianceOpt.get().equals(Alliance.Red)) {
+            transform = partnerPushRed;
+        }
+        Pose2d destinationPose = startPose.transformBy(transform);
+
+        System.out.println("PUSH_PARTNER Going from " + startPose.toString() + " to " + destinationPose.toString());
+
         return Commands.sequence(
             Commands.runOnce(() -> autonTimer.restart()),
-            pushingTraj.resetOdometry(),
-            pushingTraj.cmd()
+            m_drivetrain.moveToPose(destinationPose),
+            Commands.waitUntil(nearPoseXY(destinationPose, 0.05)),
+            m_drivetrain.moveToPose(startPose),
+            Commands.waitUntil(nearPoseXY(startPose, 0.05))
         );
+    }
+
+    public Command pushPartner() {
+        return Commands.defer(() -> pushPartnerNeedsDefer(), Set.of());
     }
 
     public AutoRoutine leaveOnly() {
@@ -191,7 +231,7 @@ public class WaltAutonFactory {
         if(m_pushTime) {
             m_routine.active().onTrue(
                 Commands.sequence(
-                    pushTime(),
+                    pushPartner(),
                     firstScoreTraj.cmd()
                 )
             );
