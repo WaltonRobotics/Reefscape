@@ -348,7 +348,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @param visionSim visionSim object to get simField from to do sim debugging
      * @return Returns a command that loops until it gets near
      */
-    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
+    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, SwerveDriveState swerveDriveState, VisionSim visionSim) {
         if (destinationPoseOptional.isEmpty()) {
             // System.out.println("Swerve moveToPose fail, destination unavailable");
             return Commands.none();
@@ -360,6 +360,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_destinationTheta.accept(destinationPose.getRotation().getRadians());
 
         visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
+        
+        double heading = swerveDriveState.Pose.getRotation().getRadians();
+
+        double fieldXVelInitial = swerveDriveState.Speeds.vxMetersPerSecond * Math.cos(heading)
+            + swerveDriveState.Speeds.vyMetersPerSecond * Math.sin(heading + (Math.PI / 2));
+        double fieldYVelInitial = swerveDriveState.Speeds.vxMetersPerSecond * Math.sin(heading)
+            + swerveDriveState.Speeds.vyMetersPerSecond * Math.cos(heading + (Math.PI / 2));
+        double thetaVelInital = swerveDriveState.Speeds.omegaRadiansPerSecond;
+        
+        AutoAlignmentK.m_autoAlignXController.reset(swerveDriveState.Pose.getX(), fieldXVelInitial);
+        AutoAlignmentK.m_autoAlignYController.reset(swerveDriveState.Pose.getY(), fieldYVelInitial);
+        AutoAlignmentK.m_autoAlignThetaController.reset(swerveDriveState.Pose.getRotation().getRadians(), thetaVelInital);
 
         return Commands.run(
             () -> {

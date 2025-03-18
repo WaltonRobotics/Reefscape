@@ -548,23 +548,28 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        
-        public static final PIDController m_autoAlignXController = new PIDController(6, 0, 0);
-        public static final PIDController m_autoAlignYController = new PIDController(6, 0, 0);
-        public static final PIDController m_autoAlignThetaController = new PIDController(8, 0, 0);
-
-        public static final double kSideToSideTolerance = 0.0025; // meters
+        public static final double kSideToSideTolerance = 0.0020; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
         public static final double kXMaxVelocity = 3; // m/s
-        public static final double kXMaxAccel = 3; // m/s^2
+        public static final double kXMaxAccel = 5; // m/s^2
 
         public static final double kYMaxVelocity = 3; // m/s
-        public static final double kYMaxAccel = 3; // m/s^2
+        public static final double kYMaxAccel = 5; // m/s^2
 
-        public static final double kThetaMaxVelocity = 45; // deg/s
+        public static final double kThetaMaxVelocity = 360; // deg/s
         public static final double kThetaMaxAccel = 45; // deg/s^2
+
+        public static final ProfiledPIDController m_autoAlignXController = new ProfiledPIDController(7, 0, 0.1,
+            new TrapezoidProfile.Constraints(kXMaxVelocity, kXMaxAccel));
+        public static final ProfiledPIDController m_autoAlignYController = new ProfiledPIDController(7, 0, 0.1,
+            new TrapezoidProfile.Constraints(kYMaxVelocity, kYMaxAccel));
+        public static final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(10, 0, 0.1,
+            new TrapezoidProfile.Constraints(kThetaMaxVelocity, kThetaMaxAccel));
+        static {
+            m_autoAlignThetaController.enableContinuousInput(-180, 180);
+        }
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */

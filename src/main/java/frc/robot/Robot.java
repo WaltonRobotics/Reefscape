@@ -23,6 +23,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -97,6 +98,8 @@ public class Robot extends TimedRobot {
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
+  private final DoubleLogger log_calculatedFieldX = WaltLogger.logDouble("Swerve", "calculated field x");
+  private final DoubleLogger log_calculatedFieldY = WaltLogger.logDouble("Swerve", "calculated field y");
 
  private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -327,14 +330,21 @@ public class Robot extends TimedRobot {
         )
       );
 
-      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
+        SwerveDriveState swerveDriveState = drivetrain.getState();
+        return drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(swerveDriveState.Pose, false),
+          swerveDriveState,
           visionSim);
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
+      };
+        
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
+        SwerveDriveState swerveDriveState = drivetrain.getState();
+        return drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(swerveDriveState.Pose, true),
+          swerveDriveState,
           visionSim);
+      };
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
@@ -559,7 +569,17 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    SwerveDriveState swerveDriveState = drivetrain.getState();
+    ChassisSpeeds curChassisSpeeds = swerveDriveState.Speeds;
+    double heading = swerveDriveState.Pose.getRotation().getRadians();
+
+    double fieldXVel = curChassisSpeeds.vxMetersPerSecond * Math.cos(heading) + curChassisSpeeds.vyMetersPerSecond * Math.sin(Math.PI / 2 + heading);
+    double fieldYVel = curChassisSpeeds.vyMetersPerSecond * Math.sin(heading) + curChassisSpeeds.vyMetersPerSecond * Math.cos(Math.PI / 2 + heading);
+
+    log_calculatedFieldX.accept(fieldXVel);
+    log_calculatedFieldY.accept(fieldYVel);
+  }
 
   @Override
   public void teleopExit() {}
