@@ -222,18 +222,18 @@ public class Robot extends TimedRobot {
         this::manipRumble
       );
 
-    waltAutonFactory = new WaltAutonFactory(
-      elevator,
-      autoFactory, 
-      superstructure, 
-      drivetrain,
-      StartingLocs.RIGHT, 
-      scoreLocs,
-      heights, 
-      hpStations,
-      false);
+    // waltAutonFactory = new WaltAutonFactory(
+    //   elevator,
+    //   autoFactory, 
+    //   superstructure, 
+    //   drivetrain,
+    //   StartingLocs.RIGHT, 
+    //   scoreLocs,
+    //   heights, 
+    //   hpStations,
+    //   false);
 
-    AutonChooser.addPathsAndCmds(waltAutonFactory);
+    // AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
     // configureTestBindings();
@@ -448,18 +448,20 @@ public class Robot extends TimedRobot {
         WaltAutonBuilder.getCycleScoringLocs(), 
         WaltAutonBuilder.getCycleEleHeights(), 
         WaltAutonBuilder.getCycleHPStations(),
-        false
+        WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
       );
 
       // dummy one
       // waltAutonFactory = new WaltAutonFactory(
+      //   elevator,
       //   autoFactory, 
       //   superstructure, 
-      //   StartingLocs.MID, 
-      //   reefLocs, 
+      //   drivetrain,
+      //   StartingLocs.RIGHT, 
+      //   scoreLocs,
       //   heights, 
-      //   hpStations
-      // );
+      //   hpStations,
+      //   false);
 
       AutonChooser.addPathsAndCmds(waltAutonFactory);
       autonNotMade = false;
@@ -527,6 +529,7 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
     m_autonomousCommand = autonCmdBuilder(chosen);
+    beforeAuton = false;
 
     if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();

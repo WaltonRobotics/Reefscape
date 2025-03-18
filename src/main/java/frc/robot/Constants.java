@@ -170,7 +170,7 @@ public class Constants {
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.7;
          public static final double kClimbRotations = -0.88;
-         public static final double kDefaultPos = -0.08;   
+         public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
              .withInverted(InvertedValue.Clockwise_Positive)
@@ -549,11 +549,11 @@ public class Constants {
 
     public static class AutoAlignmentK {
         
-        public static final PIDController m_autoAlignXController = new PIDController(6, 0, 0);
-        public static final PIDController m_autoAlignYController = new PIDController(6, 0, 0);
-        public static final PIDController m_autoAlignThetaController = new PIDController(8, 0, 0);
+        public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
+        public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
+        public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
 
-        public static final double kSideToSideTolerance = 0.0025; // meters
+        public static final double kSideToSideTolerance = 0.001; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
