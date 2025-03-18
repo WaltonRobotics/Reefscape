@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -22,6 +23,7 @@ import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
 import java.lang.StackWalker.Option;
+import java.rmi.StubNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +38,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
+import static edu.wpi.first.units.Units.Rotation;
 import static frc.robot.Constants.FieldK.kTagLayout;
 
 public class Vision {
@@ -128,7 +131,7 @@ public class Vision {
                 continue;
             }
             Pose2d aprilTagPose = aprilTag.pose.toPose2d();
-            Transform2d diff = currentPose.minus(aprilTagPose);
+            Transform2d diff = currentPose.minus(aprilTagPose).plus(new Transform2d(new Translation2d(), Rotation2d.k180deg));
             // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
             // should work to throw out poses that have more disimilar rotations
             double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2)
@@ -140,10 +143,11 @@ public class Vision {
             }
         }
         if (closestReefAprilTag.isEmpty()) {
+            System.out.println("AUTO ALIGN EMPTY closestReefAprilTag");
             return Optional.empty();
         }
 
-        return Optional.empty();
+        return Optional.of(closestReefAprilTag.get().ID);
     }
 
     /**

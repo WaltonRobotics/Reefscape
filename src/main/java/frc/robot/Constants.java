@@ -23,6 +23,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,6 +33,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
@@ -545,6 +548,11 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
+        
+        public static final PIDController m_autoAlignXController = new PIDController(6, 0, 0);
+        public static final PIDController m_autoAlignYController = new PIDController(6, 0, 0);
+        public static final PIDController m_autoAlignThetaController = new PIDController(8, 0, 0);
+
         public static final double kSideToSideTolerance = 0.0025; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
@@ -560,7 +568,7 @@ public class Constants {
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */
-        public static final double kRotationWeight = 0.5;
+        public static final double kRotationWeight = 0.2;
         
         /**<p>[0, 1]. Controls weight of predicted future pose in velocity weighted tag selection.
          * <p> 0 is no weight, 1 is 100% weight (no input from current state).

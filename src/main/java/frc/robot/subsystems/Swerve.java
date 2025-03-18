@@ -76,11 +76,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
-    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
-    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
-    private final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(10, 0, 0,
-        new TrapezoidProfile.Constraints(AutoAlignmentK.kThetaMaxVelocity, AutoAlignmentK.kThetaMaxAccel));
-
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
@@ -212,7 +207,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (Utils.isSimulation()) {
             startSimThread();
         }
-        m_autoAlignThetaController.enableContinuousInput(-180, 180);
     }
 
     /**
@@ -371,9 +365,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             () -> {
                 Pose2d curPose = getState().Pose;
 
-                double xSpeed = m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
                 setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
