@@ -23,6 +23,8 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,6 +33,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
@@ -545,8 +548,34 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static final double kFieldXTolerance = 0.0025; // meters
-        public static final double kFieldYTolerance = 0.0025; // meters
+        
+        public static final PIDController m_autoAlignXController = new PIDController(6, 0, 0);
+        public static final PIDController m_autoAlignYController = new PIDController(6, 0, 0);
+        public static final PIDController m_autoAlignThetaController = new PIDController(8, 0, 0);
+
+        public static final double kSideToSideTolerance = 0.0025; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
+
+        // TODO: these will really need tuning
+        public static final double kXMaxVelocity = 3; // m/s
+        public static final double kXMaxAccel = 3; // m/s^2
+
+        public static final double kYMaxVelocity = 3; // m/s
+        public static final double kYMaxAccel = 3; // m/s^2
+
+        public static final double kThetaMaxVelocity = 45; // deg/s
+        public static final double kThetaMaxAccel = 45; // deg/s^2
+        
+        /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
+         * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */
+        public static final double kRotationWeight = 0.2;
+        
+        /**<p>[0, 1]. Controls weight of predicted future pose in velocity weighted tag selection.
+         * <p> 0 is no weight, 1 is 100% weight (no input from current state).
+         * <p> Impacts {@link #kCurrentWeight} */
+        public static final double kFutureWeight = 0.2;
+        /**<p>Equal to 1 - {@link #kFutureWeight}. Controls weight of the current pose in velocity weighted tag selection */
+        public static final double kCurrentWeight = 1 - kFutureWeight;
+        public static final double kFutureDelta = 0.1; // s
     }
 }
