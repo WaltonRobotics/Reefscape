@@ -558,5 +558,16 @@ public class Constants {
         public static final double kThetaMaxVelocity = 45; // deg/s
         public static final double kThetaMaxAccel = 45; // deg/s^2
         
+        /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
+         * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */
+        public static final double kRotationWeight = 0.5;
+        
+        /**<p>[0, 1]. Controls weight of predicted future pose in velocity weighted tag selection.
+         * <p> 0 is no weight, 1 is 100% weight (no input from current state).
+         * <p> Impacts {@link #kCurrentWeight} */
+        public static final double kFutureWeight = 0.2;
+        /**<p>Equal to 1 - {@link #kFutureWeight}. Controls weight of the current pose in velocity weighted tag selection */
+        public static final double kCurrentWeight = 1 - kFutureWeight;
+        public static final double kFutureDelta = 0.1; // s
     }
 }

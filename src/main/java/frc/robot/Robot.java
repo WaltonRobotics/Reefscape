@@ -50,6 +50,8 @@ import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.util.AllianceFlipUtil;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
@@ -92,6 +94,9 @@ public class Robot extends TimedRobot {
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
+
+  private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
+  private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
 
  private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -287,12 +292,19 @@ public class Robot extends TimedRobot {
       // Note that X is defined as forward according to WPILib convention,
       // and Y is defined as to the left according to WPILib convention.
       drivetrain.setDefaultCommand(
+        // TODO: remember to remove this logging!
+        Commands.parallel(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
-                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-          )
+            drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+              .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
+              .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+          ),
+          Commands.runOnce(() -> {
+            log_stickDesiredFieldX.accept(-driver.getLeftY() * MaxSpeed);
+            log_stickDesiredFieldY.accept(-driver.getLeftX() * MaxSpeed);
+          })
+        )
       );
 
       trg_driverDanger.and(driver.leftBumper()).whileTrue(

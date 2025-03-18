@@ -356,7 +356,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      */
     public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
         if (destinationPoseOptional.isEmpty()) {
-            System.out.println("Swerve moveToPose fail, destination unavailable");
+            // System.out.println("Swerve moveToPose fail, destination unavailable");
             return Commands.none();
         }
         Pose2d destinationPose = destinationPoseOptional.get();

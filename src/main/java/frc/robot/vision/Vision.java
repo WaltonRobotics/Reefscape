@@ -4,8 +4,10 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
@@ -14,6 +16,7 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
@@ -30,6 +33,8 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
+
+import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
 
@@ -82,7 +87,67 @@ public class Vision {
     }
 
     /**
+     * <p>Calculates slightly future pose using constants and combines it with current pose to account somewhat for velocity.
+     * <p>See {@link #getMostRealisticScorePose(SwerveDriveState, boolean)}
+     * <p>Takes in a current swerve drive state and returns weighted pose from current velociites and position.
+     * @param swerveDriveState Current state of the drivetrain
+     * @return Velocity weighted pose.
+     */
+    public static Pose2d getVelocityWeightedPose(SwerveDriveState swerveDriveState) {
+        Pose2d curPose = swerveDriveState.Pose;
+        ChassisSpeeds curChassisSpeeds = swerveDriveState.Speeds;
+        double heading = curPose.getRotation().getRadians();
+
+        // yay the math should finally be worked out (but TODO check math. implemented teleop drive logging for it)
+        double fieldXVel = curChassisSpeeds.vxMetersPerSecond * Math.cos(heading) + curChassisSpeeds.vyMetersPerSecond * Math.sin(Math.PI / 2 + heading);
+        double fieldYVel = curChassisSpeeds.vyMetersPerSecond * Math.sin(heading) + curChassisSpeeds.vyMetersPerSecond * Math.cos(Math.PI / 2 + heading);
+        Transform2d transformToFuture = new Transform2d(fieldXVel * AutoAlignmentK.kFutureDelta, fieldYVel * AutoAlignmentK.kFutureDelta,
+            Rotation2d.fromRadians(curChassisSpeeds.omegaRadiansPerSecond * AutoAlignmentK.kFutureDelta));
+        Pose2d futurePoseFieldCalculated = curPose.transformBy(transformToFuture);
+
+        // this might cook? math would be more verbose and i trust the wpilib people to optimize their code better than mine
+        return curPose.interpolate(futurePoseFieldCalculated, AutoAlignmentK.kFutureWeight);
+    }
+
+    /**
      * <p>See {@link #getMostRealisticScorePose(Pose2d, boolean)}
+     * <p>Takes in a current pose and returns the id of the closest reef april tag
+     * @param currentPose a Pose2d for the current position
+     * @return returns empty if it fails for some reason to avoid crashing the robot in the event it fails
+     */
+    public static Optional<Integer> getClosestReefTagId(Pose2d currentPose) {
+        // cache current alliance
+        Optional<Alliance> curAlliance = DriverStation.getAlliance();
+
+        // this WILL get updated. it loops through all april tags later
+        Optional<AprilTag> closestReefAprilTag = Optional.empty();
+        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
+        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
+            // makes sure it is on the correct reef before doing anything
+            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
+                continue;
+            }
+            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
+            Transform2d diff = currentPose.minus(aprilTagPose);
+            // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
+            // should work to throw out poses that have more disimilar rotations
+            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2)
+                + AutoAlignmentK.kRotationWeight * Math.pow(diff.getRotation().getRadians(), 2));
+            // actually update values if the distance is the smallest
+            if (distance <= minimumDistance) {
+                closestReefAprilTag = Optional.of(aprilTag);
+                minimumDistance = distance;
+            }
+        }
+        if (closestReefAprilTag.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * <p>See {@link #getMostRealisticScorePose(Pose2d, boolean)} or {@link #getMostRealisticScorePose(SwerveDriveState, boolean)}
      * <p>This takes in a reef aprilTag id and whether you want left or right reef and returns the correct pose.
      * @param tagId
      * @param rightReef
@@ -142,42 +207,6 @@ public class Vision {
     }
 
     /**
-     * See {@link #getMostRealisticScorePose(Pose2d, boolean)}
-     * Takes in a current pose and returns the id of the closest reef april tag
-     * @param currentPose a Pose2d for the current position
-     * @return returns empty if it fails for some reason to avoid crashing the robot in the event it fails
-     */
-    public static Optional<Integer> getClosestReefTagId(Pose2d currentPose) {
-        // cache current alliance
-        Optional<Alliance> curAlliance = DriverStation.getAlliance();
-
-        // this WILL get updated. it loops through all april tags later
-        Optional<AprilTag> closestReefAprilTag = Optional.empty();
-        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
-        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
-            // makes sure it is on the correct reef before doing anything
-            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
-                continue;
-            }
-            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
-            Transform2d diff = currentPose.minus(aprilTagPose);
-            // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
-            // should work to throw out poses that have more disimilar rotations
-            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2) + Math.pow(diff.getRotation().getRadians(), 2));
-            // actually update values if the distance is the smallest
-            if (distance <= minimumDistance) {
-                closestReefAprilTag = Optional.of(aprilTag);
-                minimumDistance = distance;
-            }
-        }
-        if (closestReefAprilTag.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return Optional.empty();
-    }
-
-    /**
      * Returns the most realistic scoring position.
      * @param curPose Current position
      * @param rightReef false for left reef, true for right reef
@@ -186,6 +215,21 @@ public class Vision {
      */
     public static Optional<Pose2d> getMostRealisticScorePose(Pose2d curPose, boolean rightReef) {
         Optional<Integer> closestReefFaceTagId = getClosestReefTagId(curPose);
+        if (closestReefFaceTagId.isEmpty()) {
+            return Optional.empty();
+        }
+        return getScorePose(closestReefFaceTagId.get(), rightReef);
+    }
+
+    /**
+     * Returns the most realistic scoring position taking into some account velocity
+     * @param swerveDriveState Current drivetrain state
+     * @param rightReef false for left reef, true for right reef
+     * @return <p>Returns the scoring position in the form of a Pose2d if no error is encountered.
+     * If it encounters an error, it returns empty to avoid crashing the robot in the event of a failure.
+     */
+    public static Optional<Pose2d> getMostRealisticScorePose(SwerveDriveState swerveDriveState, boolean rightReef) {
+        Optional<Integer> closestReefFaceTagId = getClosestReefTagId(getVelocityWeightedPose(swerveDriveState));
         if (closestReefFaceTagId.isEmpty()) {
             return Optional.empty();
         }
