@@ -42,7 +42,7 @@ public class Vision {
     private final PhotonCamera m_camera;
     private final PhotonPoseEstimator photonEstimator;
     private Matrix<N3, N1> curStdDevs;
-    private Optional<PhotonPipelineResult> m_latestPhotonPipelineResultOptional = Optional.empty();
+    // private Optional<PhotonPipelineResult> m_latestPhotonPipelineResultOptional = Optional.empty();
 
     // Simulation
     private PhotonCameraSim m_cameraSim;
@@ -251,14 +251,14 @@ public class Vision {
         List<PhotonPipelineResult> unreadCameraResults = m_camera.getAllUnreadResults();
 
         // update m_latestPhotonPipelineResult
-        if (unreadCameraResults.size() > 0) {
-            m_latestPhotonPipelineResultOptional = Optional.of(unreadCameraResults.get(unreadCameraResults.size()-1));
-        } else {
-            // i could make a threshold of time difference between result time and current time
-            // to make it stale after a time, but that adds potential for silliness and i would
-            // rather just not use something older when something new should come in regularly
-            m_latestPhotonPipelineResultOptional = Optional.empty();
-        }
+        // if (unreadCameraResults.size() > 0) {
+        //     m_latestPhotonPipelineResultOptional = Optional.of(unreadCameraResults.get(unreadCameraResults.size()-1));
+        // } else {
+        //     // i could make a threshold of time difference between result time and current time
+        //     // to make it stale after a time, but that adds potential for silliness and i would
+        //     // rather just not use something older when something new should come in regularly
+        //     m_latestPhotonPipelineResultOptional = Optional.empty();
+        // }
 
         for (var change : unreadCameraResults) {
             visionEst = photonEstimator.update(change);
@@ -291,7 +291,7 @@ public class Vision {
      * @return whether a tag id corresponds to an apriltag on the current alliance reef
      */
     private static boolean isTagIdOnAllianceReef(int givenId, Optional<Alliance> curAlliance) {
-        if (curAlliance.isEmpty() || (curAlliance.isPresent() && curAlliance.get().equals(Alliance.Blue))) {
+        if (curAlliance.isEmpty() || curAlliance.get().equals(Alliance.Blue)) {
             if (curAlliance.isEmpty()) {
                 System.out.println("VISION WARN: Vision::isTagIdOnAllianceReef default to blue alliance");
             }
