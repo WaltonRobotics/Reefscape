@@ -76,11 +76,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final PIDController m_pathYController = new PIDController(10, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
-    private final ProfiledPIDController m_autoAlignXController = new ProfiledPIDController(7, 0, 0, 
-        new TrapezoidProfile.Constraints(AutoAlignmentK.kXMaxVelocity, AutoAlignmentK.kXMaxAccel));
-    private final ProfiledPIDController m_autoAlignYController = new ProfiledPIDController(7, 0, 0, 
-        new TrapezoidProfile.Constraints(AutoAlignmentK.kYMaxVelocity, AutoAlignmentK.kYMaxAccel));
-    private final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(7, 0, 7,
+    private final PIDController m_autoAlignXController = new PIDController(7, 0, 0);
+    private final PIDController m_autoAlignYController = new PIDController(7, 0, 0);
+    private final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(10, 0, 0,
         new TrapezoidProfile.Constraints(AutoAlignmentK.kThetaMaxVelocity, AutoAlignmentK.kThetaMaxAccel));
 
     /* Swerve requests to apply during SysId characterization */
@@ -375,39 +373,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
                 double xSpeed = m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
                 double ySpeed = m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getDegrees(), destinationPose.getRotation().getDegrees());
+                double thetaSpeed = m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(Units.degreesToRadians(thetaSpeed)));
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
-                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getDegrees()-curPose.getRotation().getDegrees());
+                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
 
                 // log_autoAlignDesiredXSpeed.accept(xSpeed);
                 // log_autoAlignDesiredYSpeed.accept(ySpeed);
                 // log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
             }
         );
-    }
-
-    /**
-     * Generates a trajectory from the robots current pose to the given pose
-     * @param destinationPoseOptional
-     * @return
-     */
-    public Optional<Trajectory> generateTrajectory(Optional<Pose2d> destinationPoseOptional) {
-        if (destinationPoseOptional.isEmpty()) {
-            System.out.println("destination pose not available");
-            return Optional.empty();
-        }
-        Pose2d destinationPose = destinationPoseOptional.get();
-        TrajectoryConfig trajConfig = new TrajectoryConfig(5, 3);
-        SwerveDriveState curState = getState();
-        trajConfig.setKinematics(getKinematics());
-        trajConfig.setStartVelocity(Math.sqrt(Math.pow(curState.Speeds.vxMetersPerSecond, 2) + Math.pow(curState.Speeds.vyMetersPerSecond, 2)));
-        trajConfig.setEndVelocity(0);
-
-        return Optional.of(TrajectoryGenerator.generateTrajectory(curState.Pose, new ArrayList<Translation2d>(), destinationPose, trajConfig));
     }
 
     /**

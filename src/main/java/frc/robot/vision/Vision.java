@@ -96,7 +96,7 @@ public class Vision {
             Transform2d diff = currentPose.minus(aprilTagPose);
             double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2));
             // actually update values if the distance is the smallest
-            if (distance >= minimumDistance) {
+            if (distance <= minimumDistance) {
                 System.out.println("AUTO ALIGN [VISION]: Vision::getReefScorePose updates nearest reef aprilTag");
                 closestReefAprilTag = Optional.of(aprilTag);
                 minimumDistance = distance;
@@ -159,7 +159,7 @@ public class Vision {
         }
 
         // AllianceFlipUtil::flip handles checking whether flipping should occur
-        return Optional.of(AllianceFlipUtil.flip(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
+        return Optional.of(AllianceFlipUtil.apply(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
     }
 
     /**
