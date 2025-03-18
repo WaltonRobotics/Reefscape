@@ -316,7 +316,7 @@ public class Robot extends TimedRobot {
       );
 
       Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim);
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim);
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim);
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
