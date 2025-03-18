@@ -8,7 +8,7 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
+import java.util.function.Supplier;
 import java.util.Optional;
 import java.util.Set;
 
@@ -50,6 +50,8 @@ import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.util.AllianceFlipUtil;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
@@ -92,6 +94,9 @@ public class Robot extends TimedRobot {
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private WaltAutonFactory waltAutonFactory = null;
+
+  private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
+  private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
 
  private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -287,12 +292,19 @@ public class Robot extends TimedRobot {
       // Note that X is defined as forward according to WPILib convention,
       // and Y is defined as to the left according to WPILib convention.
       drivetrain.setDefaultCommand(
+        // TODO: remember to remove this logging!
+        Commands.parallel(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
-                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-          )
+            drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
+              .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
+              .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+          ),
+          Commands.runOnce(() -> {
+            log_stickDesiredFieldX.accept(-driver.getLeftY() * MaxSpeed);
+            log_stickDesiredFieldY.accept(-driver.getLeftX() * MaxSpeed);
+          })
+        )
       );
 
       trg_driverDanger.and(driver.leftBumper()).whileTrue(
@@ -315,16 +327,25 @@ public class Robot extends TimedRobot {
         )
       );
 
-    // trg_leftTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
-    //   )
-    // );
-    // trg_rightTeleopAutoAlign.whileTrue(
-    //   Commands.repeatingSequence(
-    //     new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim), Set.of(drivetrain))
-    //   )
-    // );
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
+        drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
+          visionSim);
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
+        drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
+          visionSim);
+
+      trg_leftTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        )
+      );
+      trg_rightTeleopAutoAlign.whileTrue(
+        Commands.repeatingSequence(
+          new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        )
+      );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
       trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
@@ -391,31 +412,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    robotField.getObject("testObject").setPose(new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
-    Pose2d flippedPose = AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30)));
-    System.out.println(DriverStation.getAlliance().isPresent());
-    if (DriverStation.getAlliance().isPresent()) {
-      System.out.println(DriverStation.getAlliance().get());
-    }
-    System.out.println(flippedPose.getX());
-    System.out.println(flippedPose.getY());
-    System.out.println(flippedPose.getRotation().getDegrees());
-    robotField.getObject("testObjectFLipped").setPose(AllianceFlipUtil.flip( new Pose2d(1, 1, Rotation2d.fromDegrees(30))));
-    robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    robotField.getObject("OML REED REEF A").setPose(AllianceFlipUtil.flip(
-      FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A)
-    ));
-    // simDebugField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    // simDebugField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    // simDebugField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    // simDebugField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    // simDebugField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    // simDebugField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    // simDebugField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    // simDebugField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    // simDebugField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    // simDebugField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    // simDebugField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
     WaltAutonBuilder.configureFirstCycle();
     configWaltAutonBuilder();
     
