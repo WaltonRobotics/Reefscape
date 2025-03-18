@@ -19,6 +19,7 @@ import frc.robot.subsystems.Swerve;
 
 public class WaltAutonBuilder {
     public static GenericEntry nte_autonEntry;
+    public static GenericEntry nte_autonRobotPush;  // button to select if we are pushing another robot b4 starting path
     
     // ---- Initial
     // Define Initial Choosers
@@ -44,6 +45,11 @@ public class WaltAutonBuilder {
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
                   .add("Ready to Make", false)
+                  .withWidget(BuiltInWidgets.kToggleSwitch)
+                  .getEntry();
+
+        nte_autonRobotPush = Shuffleboard.getTab("AutonChooser")
+                  .add("Push another robot?", false)
                   .withWidget(BuiltInWidgets.kToggleSwitch)
                   .getEntry();
     }
