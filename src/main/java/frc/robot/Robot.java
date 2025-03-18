@@ -315,8 +315,16 @@ public class Robot extends TimedRobot {
         )
       );
 
-      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim);
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, true), visionSim);
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
+        return drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
+          visionSim);
+      };
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
+        return drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
+          visionSim);
+      };
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
@@ -507,14 +515,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    // Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
-    // m_autonomousCommand = autonCmdBuilder(chosen);
-
-    m_autonomousCommand = Commands.sequence(
-      Commands.runOnce(() -> drivetrain.resetPose(new Pose2d(4, 2, Rotation2d.kCCW_90deg))),
-      Commands.waitSeconds(0.5),
-      new DeferredCommand(() -> drivetrain.moveToPose(eleForwardsCam.getReefScorePose(drivetrain.getState().Pose, false), visionSim), Set.of(drivetrain))
-    );
+    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
+    m_autonomousCommand = autonCmdBuilder(chosen);
 
     if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();

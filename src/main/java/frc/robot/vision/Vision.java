@@ -18,6 +18,7 @@ import frc.robot.Constants.FieldK;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
+import java.lang.StackWalker.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -80,37 +81,16 @@ public class Vision {
         }
     }
 
-    public Optional<Pose2d> getReefScorePose(Pose2d currentPose, boolean rightReef) {
-        // cache current alliance
-        Optional<Alliance> curAlliance = DriverStation.getAlliance();
-
-        // this WILL get updated. it loops through all april tags later
-        Optional<AprilTag> closestReefAprilTag = Optional.empty();
-        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
-        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
-            // makes sure it is on the correct reef before doing anything
-            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
-                continue;
-            }
-            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
-            Transform2d diff = currentPose.minus(aprilTagPose);
-            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2));
-            // actually update values if the distance is the smallest
-            if (distance <= minimumDistance) {
-                System.out.println("AUTO ALIGN [VISION]: Vision::getReefScorePose updates nearest reef aprilTag");
-                closestReefAprilTag = Optional.of(aprilTag);
-                minimumDistance = distance;
-            }
-        }
-
-        if (closestReefAprilTag.isEmpty() || !isTagIdOnAllianceReef(closestReefAprilTag.get().ID, curAlliance)) {
-            System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose set closestReefAprilTag to non-reef aprilTag or is empty");
-            return Optional.empty();
-        }
-        // it shouldn't make it to this point if it doesn't have the correct tag id
-        // also shouldn't be able to have a closest tag on the opposing alliance reef
+    /**
+     * <p>See {@link #getMostRealisticScorePose(Pose2d, boolean)}
+     * <p>This takes in a reef aprilTag id and whether you want left or right reef and returns the correct pose.
+     * @param tagId
+     * @param rightReef
+     * @return
+     */
+    public static Optional<Pose2d> getScorePose(int tagId, boolean rightReef) {
         ReefLocs correctReefLocation = null;
-        switch (closestReefAprilTag.get().ID) {
+        switch (tagId) {
             case 18:
                 correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
                 break;
@@ -150,7 +130,6 @@ public class Vision {
             default:
                 System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose switch case defaulted");
                 return Optional.empty();
-
         }
 
         if (correctReefLocation == null) {
@@ -163,39 +142,56 @@ public class Vision {
     }
 
     /**
-     * This code selects the best reef tag.
-     * Only selects from tags on the correct reef for the correct alliance as selected in FMS/DS.
-     * @return Returns the a PhotonTrackedTarget for the best reef tag if possible. <p>
-     *  Otherwise return empty
+     * See {@link #getMostRealisticScorePose(Pose2d, boolean)}
+     * Takes in a current pose and returns the id of the closest reef april tag
+     * @param currentPose a Pose2d for the current position
+     * @return returns empty if it fails for some reason to avoid crashing the robot in the event it fails
      */
-    // public Optional<PhotonTrackedTarget> getBestReefTag() {
-    //     // if no latest result is available, then we can't find the best reef tag
-    //     if (m_latestPhotonPipelineResultOptional.isEmpty()) {
-    //         // System.out.println("no latest photon pipeline result available");
-    //         return Optional.empty();
-    //     }
-    //     PhotonPipelineResult latestPhotonPipelineResult = m_latestPhotonPipelineResultOptional.get();
-    //     // if there are no april tags available, then we can't find the best reef tag
-    //     if (!latestPhotonPipelineResult.hasTargets()) {
-    //         // System.out.println("no april tags present");
-    //         return Optional.empty();
-    //     }
+    public static Optional<Integer> getClosestReefTagId(Pose2d currentPose) {
+        // cache current alliance
+        Optional<Alliance> curAlliance = DriverStation.getAlliance();
 
-    //     // find the target with the largest area that is on the reef
-    //     List<PhotonTrackedTarget> trackedTargets = latestPhotonPipelineResult.getTargets();
-    //     PhotonTrackedTarget maxAreaTag = null;
-    //     for (int i = 0; i < trackedTargets.size() - 1; i++) {
-    //         // if the current tag is on the reef and is greater than the current max area, update max area
-    //         if (isTagIdOnAllianceReef(trackedTargets.get(i).getFiducialId())
-    //             && (maxAreaTag == null || maxAreaTag.getArea() < trackedTargets.get(i).getArea())) {
-    //             maxAreaTag = trackedTargets.get(i);
-    //         }
-    //     }
-        
-    //     // if maxAreaTag is null, there must not have been any available reef tags.
-    //     return maxAreaTag != null ? Optional.of(maxAreaTag) : Optional.empty();
-    // }
+        // this WILL get updated. it loops through all april tags later
+        Optional<AprilTag> closestReefAprilTag = Optional.empty();
+        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
+        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
+            // makes sure it is on the correct reef before doing anything
+            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
+                continue;
+            }
+            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
+            Transform2d diff = currentPose.minus(aprilTagPose);
+            // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
+            // should work to throw out poses that have more disimilar rotations
+            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2) + Math.pow(diff.getRotation().getRadians(), 2));
+            // actually update values if the distance is the smallest
+            if (distance <= minimumDistance) {
+                closestReefAprilTag = Optional.of(aprilTag);
+                minimumDistance = distance;
+            }
+        }
+        if (closestReefAprilTag.isEmpty()) {
+            return Optional.empty();
+        }
 
+        return Optional.empty();
+    }
+
+    /**
+     * Returns the most realistic scoring position.
+     * @param curPose Current position
+     * @param rightReef false for left reef, true for right reef
+     * @return <p>Returns the scoring position in the form of a Pose2d if no error is encountered.
+     * If it encounters an error, it returns empty to avoid crashing the robot in the event of a failure.
+     */
+    public static Optional<Pose2d> getMostRealisticScorePose(Pose2d curPose, boolean rightReef) {
+        Optional<Integer> closestReefFaceTagId = getClosestReefTagId(curPose);
+        if (closestReefFaceTagId.isEmpty()) {
+            return Optional.empty();
+        }
+        return getScorePose(closestReefFaceTagId.get(), rightReef);
+    }
+    
     /**
      * The latest estimated robot pose on the field from vision data. This may be empty. This should
      * only be called once per loop.
@@ -250,7 +246,7 @@ public class Vision {
      * @param curAlliance current alliance, if the optional is empty assume blue
      * @return whether a tag id corresponds to an apriltag on the current alliance reef
      */
-    private boolean isTagIdOnAllianceReef(int givenId, Optional<Alliance> curAlliance) {
+    private static boolean isTagIdOnAllianceReef(int givenId, Optional<Alliance> curAlliance) {
         if (curAlliance.isEmpty() || (curAlliance.isPresent() && curAlliance.get().equals(Alliance.Blue))) {
             if (curAlliance.isEmpty()) {
                 System.out.println("VISION WARN: Vision::isTagIdOnAllianceReef default to blue alliance");
