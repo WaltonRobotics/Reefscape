@@ -342,6 +342,24 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+    public Command moveToPose(Pose2d destination) {
+        return Commands.run(
+            () -> {
+                Pose2d curPose = getState().Pose;
+
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destination.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
+
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+
+                log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
+                log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
+                log_autoAlignErrorTheta.accept(destination.getRotation().getRadians()-curPose.getRotation().getRadians());
+            }
+        );
+    }
+
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
