@@ -146,27 +146,32 @@ public class WaltAutonFactory {
 
     private ArrayList<AutoTrajectory> trajMaker() {
         ArrayList<AutoTrajectory> trajsList = new ArrayList<>();
-        for (int i = 0; i < m_scoreLocs.size(); i++) {
-            String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
-            trajsList.add(m_routine.trajectory(rToH));
-            if (i < m_scoreLocs.size() - 1) {
-                String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
-                trajsList.add(m_routine.trajectory(hToR));
-                System.out.println(rToH);
+        try {
+            for (int i = 0; i < m_scoreLocs.size(); i++) {
+                String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+                trajsList.add(m_routine.trajectory(rToH));
+                if (i < m_scoreLocs.size() - 1) {
+                    String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
+                    trajsList.add(m_routine.trajectory(hToR));
+                    System.out.println(rToH);
+                }
             }
-        }
 
-        // for .5 autos.
-        if(m_hpStations.size() > m_scoreLocs.size()) {
-            trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
-                new Pair<ReefLocs, HPStation>(
-                    m_scoreLocs.get(m_scoreLocs.size() - 1), 
-                    m_hpStations.get(m_hpStations.size() - 1)
-                )
-            )));
-        }
+            // for .5 autos.
+            if(m_hpStations.size() > m_scoreLocs.size()) {
+                trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
+                    new Pair<ReefLocs, HPStation>(
+                        m_scoreLocs.get(m_scoreLocs.size() - 1), 
+                        m_hpStations.get(m_hpStations.size() - 1)
+                    )
+                )));
+            }
 
-        return trajsList;
+            return trajsList;
+        } catch (Exception e) {
+            return trajsList;
+        }
+       
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
@@ -246,7 +251,6 @@ public class WaltAutonFactory {
         var theTraj = StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0)));
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
-        ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
         if (onlyPreload()) {
             if(m_pushTime) {
@@ -275,6 +279,9 @@ public class WaltAutonFactory {
 
             return m_routine;
         }
+
+        // normal cycle logic down here
+        ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
         if(m_pushTime) {
             m_routine.active().onTrue(
