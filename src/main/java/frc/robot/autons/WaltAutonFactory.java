@@ -222,7 +222,7 @@ public class WaltAutonFactory {
             if(m_pushTime) {
                 m_routine.active().onTrue(
                     Commands.sequence(
-                        pushPartner(),
+                        SimpleAutons.pushPartner(m_drivetrain),
                         firstScoreTraj.cmd()
                     )
                 );
