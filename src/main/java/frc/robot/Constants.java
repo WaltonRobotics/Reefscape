@@ -368,7 +368,7 @@ public class Constants {
             );
         }
 
-        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
         private static final List<AprilTag> kRedReefTags = List.of(
             kTagLayout.getTags().get(5),
             kTagLayout.getTags().get(6), 
