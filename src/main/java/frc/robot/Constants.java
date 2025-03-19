@@ -351,7 +351,7 @@ public class Constants {
         public static final String kLowerRightCamName = "LowerRightCam";
         public static final Transform3d kLowerRightCamRoboToCam = new Transform3d(
             Units.inchesToMeters(10.943), Units.inchesToMeters(-9.769), Units.inchesToMeters(8.161),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(40))
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(30))
         );
         public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
     }

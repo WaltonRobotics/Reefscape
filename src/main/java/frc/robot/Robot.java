@@ -522,7 +522,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
-          SimpleAutons.pushPartner(drivetrain)
+          chooserCommand          
       );
   }
 
