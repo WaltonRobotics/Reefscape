@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.SimpleAutons;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -521,7 +522,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
-          chooserCommand
+          SimpleAutons.pushPartner(drivetrain)
       );
   }
 

@@ -162,41 +162,7 @@ public class WaltAutonFactory {
         );
     }
 
-    private BooleanSupplier nearPoseXY(Pose2d dest, double toleranceMeters) {
-        return () -> {
-            double distance = dest.getTranslation().getDistance(m_drivetrain.getState().Pose.getTranslation());
-            return distance <= 0.25;
-        };
-    }
     
-
-    // move these maybe
-    private static final Transform2d partnerPushBlue = new Transform2d(Meters.of(0.4), Meters.of(0), Rotation2d.kZero);
-    private static final Transform2d partnerPushRed = new Transform2d(Meters.of(-0.4), Meters.of(0), Rotation2d.kZero);
-
-    private Command pushPartnerNeedsDefer() {
-        Pose2d startPose = m_drivetrain.getState().Pose;
-        Transform2d transform = partnerPushBlue;
-        var allianceOpt = DriverStation.getAlliance();
-        if (allianceOpt.isPresent() && allianceOpt.get().equals(Alliance.Red)) {
-            transform = partnerPushRed;
-        }
-        Pose2d destinationPose = startPose.transformBy(transform);
-
-        System.out.println("PUSH_PARTNER Going from " + startPose.toString() + " to " + destinationPose.toString());
-
-        return Commands.sequence(
-            Commands.runOnce(() -> autonTimer.restart()),
-            m_drivetrain.moveToPose(destinationPose),
-            Commands.waitUntil(nearPoseXY(destinationPose, 0.05)),
-            m_drivetrain.moveToPose(startPose),
-            Commands.waitUntil(nearPoseXY(startPose, 0.05))
-        );
-    }
-
-    public Command pushPartner() {
-        return Commands.defer(() -> pushPartnerNeedsDefer(), Set.of());
-    }
 
     public AutoRoutine leaveOnly() {
         AutoRoutine leaveAuto = m_autoFactory.newRoutine("leave only");
@@ -231,7 +197,7 @@ public class WaltAutonFactory {
         if(m_pushTime) {
             m_routine.active().onTrue(
                 Commands.sequence(
-                    pushPartner(),
+                    SimpleAutons.pushPartner(m_drivetrain),
                     firstScoreTraj.cmd()
                 )
             );
