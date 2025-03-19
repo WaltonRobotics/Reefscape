@@ -110,8 +110,24 @@ public class WaltAutonFactory {
         m_pushTime = pushTime;
     }
 
-    private boolean weAtLeastScoreOneChecker() {
-        if(m_scoreLocs.size() >= 1 && m_heights.size() >= 1) {
+    private boolean doNothing() {
+        if (m_scoreLocs.size() == 0 && m_heights.size() == 0 && m_hpStations.size() == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean areWeLeaving() {
+        if (m_scoreLocs.size() == 0 && m_heights.size() == 0 && m_hpStations.size() == 1) { // have a hp station to act as a flag for leaving or staying still
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean onlyPreload() {
+        if (m_scoreLocs.size() == 1 && m_heights.size() == 1 && m_hpStations.size() == 0) {
             return true;
         } else {
             return false;
@@ -214,7 +230,11 @@ public class WaltAutonFactory {
     }
 
     public AutoRoutine generateAuton() {
-        if(!weAtLeastScoreOneChecker()) {
+        if (doNothing()) {
+            return m_routine;
+        }
+
+        if (areWeLeaving()) {
             Elastic.sendNotification(leaveStartZoneOnlySadness);   
             return leaveOnly();
         }
@@ -227,6 +247,34 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
+
+        if (onlyPreload()) {
+            if(m_pushTime) {
+                m_routine.active().onTrue(
+                    Commands.sequence(
+                        pushPartner(),
+                        firstScoreTraj.cmd()
+                    )
+                );
+            } else {
+                m_routine.active().onTrue(
+                Commands.sequence(
+                        Commands.runOnce(() -> autonTimer.restart()),
+                        firstScoreTraj.resetOdometry(),
+                        firstScoreTraj.cmd()
+                    )
+                );
+            }
+
+            firstScoreTraj.done()
+            .onTrue(
+                Commands.sequence(
+                    scoreCmd(m_heights.get(heightCounter))
+                )
+            );
+
+            return m_routine;
+        }
 
         if(m_pushTime) {
             m_routine.active().onTrue(

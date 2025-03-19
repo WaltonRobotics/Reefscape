@@ -50,7 +50,9 @@ import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.util.AllianceFlipUtil;
+import frc.util.Elastic;
 import frc.util.WaltLogger;
+import frc.util.Elastic.Notification.NotificationLevel;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -480,11 +482,27 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.getCycleHPStations(),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
+        WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
       }
     
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
-        //TODO: someone figure out how this works :)
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.SUPER_LEFT, 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of(HPStation.HP_LEFT)),  // uses an hp station as a flag that its leaving and not doing nothing
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Taxi Time!"));
+        WaltAutonBuilder.nte_taxiOnly.setBoolean(false);
       }
 
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
@@ -499,6 +517,9 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
+        WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
       }
 
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
@@ -513,10 +534,12 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
+        WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
 
       if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
-        //TODO: ISNT WORKING
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
           autoFactory, 
@@ -528,13 +551,37 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of()),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid Only auton generated"));
+        WaltAutonBuilder.nte_midGOnly.setBoolean(false);
+      }
+
+      // fail-case (no auton selected) - do nothing
+      if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.SUPER_LEFT, 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "DO NOTHING!"));
       }
 
       // SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
         AutonChooser.addPathsAndCmds(waltAutonFactory.get());
         autonNotMade = false;
+        WaltAutonBuilder.nte_autonEntry.setBoolean(false);
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CREATED", "Ready for Autonomous!"));
       }
+
     }
 
     // if user hits clearAll button, the auton process resets
@@ -543,8 +590,9 @@ public class Robot extends TimedRobot {
       autonNotMade = true;
       WaltAutonBuilder.nte_autonEntry.setBoolean(false);
       AutonChooser.resetAutoChooser();
-
       WaltAutonBuilder.nte_clearAll.setBoolean(false);
+
+      Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CLEARED", "Remake your auton!"));
     }
   }
 

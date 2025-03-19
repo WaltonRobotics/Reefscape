@@ -97,6 +97,7 @@ public class WaltAutonBuilder {
     // adds the options
     public static void configureFirstCycle() {
         // add cycle options
+        cyclesChooser.addOption("Preload Only", NumCycles.PRELOAD_ONLY);
         cyclesChooser.addOption("1 Cycle", NumCycles.CYCLE_1);
         cyclesChooser.addOption("2 Cycle", NumCycles.CYCLE_2);
         cyclesChooser.addOption("3 Cycle", NumCycles.CYCLE_3);
@@ -110,7 +111,7 @@ public class WaltAutonBuilder {
         startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
         startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
 
-        // changing the starting position AFFECTS HERE - see robot periodic
+        // changing the starting position AFFECTS HERE - see disable periodic
         if (startingPosition.equals(StartingLocs.LEFT)) {
             for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
                 firstScoringChooser.addOption(loc.name(), loc);
@@ -275,6 +276,7 @@ public class WaltAutonBuilder {
     }
 
     public enum NumCycles {
+        PRELOAD_ONLY(0),
         CYCLE_1(1),
         CYCLE_2(2),
         CYCLE_3(3),
