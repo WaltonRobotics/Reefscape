@@ -277,7 +277,7 @@ public class Elevator extends SubsystemBase {
         L4(12.89),
         CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
         CLIMB_DOWN(2.08 - (kInch * 8)), //this height will ove robot down for climb
-        HP(2.08 - kInch - 0.15); //human player station intake height
+        HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
         
