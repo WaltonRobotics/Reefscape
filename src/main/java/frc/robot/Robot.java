@@ -60,6 +60,8 @@ import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
 import frc.robot.vision.VisionSim;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.Algae.State;
+import frc.robot.subsystems.Algae.WristPos;
 
 public class Robot extends TimedRobot {
 
@@ -371,6 +373,9 @@ public class Robot extends TimedRobot {
 
     manipulator.y().and(manipulator.povDown())
       .onTrue(elevator.toHeight(EleHeight.CLIMB_DOWN.rotations));
+
+    manipulator.y()
+      .onTrue(algae.changeStateCmd(State.HOME));
 
     drivetrain.registerTelemetry(logger::telemeterize);
   }
