@@ -368,7 +368,7 @@ public class Constants {
             );
         }
 
-        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
         private static final List<AprilTag> kRedReefTags = List.of(
             kTagLayout.getTags().get(5),
             kTagLayout.getTags().get(6), 
@@ -552,8 +552,12 @@ public class Constants {
         public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
         public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
         public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
+        // we need to do this so the PIDController works properly
+        static {
+            m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+        }
 
-        public static final double kSideToSideTolerance = 0.001; // meters
+        public static final double kSideToSideTolerance = 0.002; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning

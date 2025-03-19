@@ -118,7 +118,7 @@ public abstract class TrajsAndLocs {
     public static enum HPStation {
         HP_LEFT(new Pose2d(Meters.of(1.45), Meters.of(6.89), Rotation2d.fromRadians(-0.90)), "left"),
         HP_RIGHT(new Pose2d(Meters.of(1.53), Meters.of(1.16), Rotation2d.fromRadians(0.92)), "right");
-
+        
         public final Pose2d pose;
         public final String str;
         private HPStation(Pose2d _pose, String _str) {
