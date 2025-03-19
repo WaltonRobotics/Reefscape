@@ -552,19 +552,14 @@ public class Constants {
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
-        public static final double kXMaxVelocity = 3; // m/s
-        public static final double kXMaxAccel = 5; // m/s^2
-
-        public static final double kYMaxVelocity = 3; // m/s
-        public static final double kYMaxAccel = 5; // m/s^2
+        public static final double kMaxVelocity = 3; // m/s
+        public static final double kMaxAccel = 5; // m/s^2
 
         public static final double kThetaMaxVelocity = 360; // deg/s
         public static final double kThetaMaxAccel = 45; // deg/s^2
 
-        public static final ProfiledPIDController m_autoAlignXController = new ProfiledPIDController(7, 0, 0.1,
-            new TrapezoidProfile.Constraints(kXMaxVelocity, kXMaxAccel));
-        public static final ProfiledPIDController m_autoAlignYController = new ProfiledPIDController(7, 0, 0.1,
-            new TrapezoidProfile.Constraints(kYMaxVelocity, kYMaxAccel));
+        public static final PIDController kAutoAlignXController = new PIDController(7, 0, 0.1);
+        public static final PIDController kAutoAlignYController = new PIDController(7, 0, 0.1);
         public static final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(10, 0, 0.1,
             new TrapezoidProfile.Constraints(kThetaMaxVelocity, kThetaMaxAccel));
         static {
