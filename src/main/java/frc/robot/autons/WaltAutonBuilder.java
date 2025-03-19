@@ -19,7 +19,15 @@ import frc.robot.subsystems.Swerve;
 
 public class WaltAutonBuilder {
     public static GenericEntry nte_autonEntry;
+    public static GenericEntry nte_customAutonReady;
     public static GenericEntry nte_autonRobotPush;  // button to select if we are pushing another robot b4 starting path
+    public static GenericEntry nte_clearAll;
+
+    // DEFINE PRESET BUTTONS
+    public static GenericEntry nte_taxiOnly;
+    public static GenericEntry nte_rightThreePiece;
+    public static GenericEntry nte_leftThreePiece;
+    public static GenericEntry nte_midGOnly;
     
     // ---- Initial
     // Define Initial Choosers
@@ -44,19 +52,52 @@ public class WaltAutonBuilder {
         SmartDashboard.putData("First HP Station", firstToHPStationChooser);
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
-                  .add("Ready to Make", false)
-                  .withWidget(BuiltInWidgets.kToggleSwitch)
-                  .getEntry();
+                .add("Ready to Make", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
 
         nte_autonRobotPush = Shuffleboard.getTab("AutonChooser")
-                  .add("Push another robot?", false)
-                  .withWidget(BuiltInWidgets.kToggleSwitch)
-                  .getEntry();
+                .add("Push another robot?", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        nte_clearAll = Shuffleboard.getTab("AutonChooser")
+                .add("CLEAR AUTON", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        nte_customAutonReady = Shuffleboard.getTab("AutonChooser")
+                .add("Custom Auton Ready", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        // DEFINE PRESETS
+
+        nte_taxiOnly = Shuffleboard.getTab("AutonChooser")
+                .add("Taxi Only", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        nte_rightThreePiece = Shuffleboard.getTab("AutonChooser")
+                .add("Right 3 Piece", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+        
+        nte_leftThreePiece = Shuffleboard.getTab("AutonChooser")
+                .add("Left 3 Piece", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        nte_midGOnly = Shuffleboard.getTab("AutonChooser")
+                .add("Mid G Only", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
     }
 
     // adds the options
     public static void configureFirstCycle() {
         // add cycle options
+        cyclesChooser.addOption("Preload Only", NumCycles.PRELOAD_ONLY);
         cyclesChooser.addOption("1 Cycle", NumCycles.CYCLE_1);
         cyclesChooser.addOption("2 Cycle", NumCycles.CYCLE_2);
         cyclesChooser.addOption("3 Cycle", NumCycles.CYCLE_3);
@@ -70,7 +111,7 @@ public class WaltAutonBuilder {
         startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
         startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
 
-        // changing the starting position AFFECTS HERE - see robot periodic
+        // changing the starting position AFFECTS HERE - see disable periodic
         if (startingPosition.equals(StartingLocs.LEFT)) {
             for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
                 firstScoringChooser.addOption(loc.name(), loc);
@@ -235,6 +276,7 @@ public class WaltAutonBuilder {
     }
 
     public enum NumCycles {
+        PRELOAD_ONLY(0),
         CYCLE_1(1),
         CYCLE_2(2),
         CYCLE_3(3),
