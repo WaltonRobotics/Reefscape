@@ -320,13 +320,13 @@ public class Robot extends TimedRobot {
       );
 
       Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false), drivetrain.getState(),
-          visionSim);
+        drivetrain.pathplannerAutoAlign(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false), 
+          visionSim.getSimDebugField());
       Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true), drivetrain.getState(),
-          visionSim);
+        drivetrain.pathplannerAutoAlign(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true), 
+          visionSim.getSimDebugField());
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
