@@ -354,6 +354,11 @@ public class Constants {
             new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(30))
         );
         public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
+
+        // TODO: make sure that these numbers are good
+        public static final double kZAxisErrorTolerance = 1; // meters
+        // kDistanceCutoff only affects anything when the robot is enabled
+        public static final double kDistanceCutoff = 0.5; // meters
     }
 
     public static class FieldK {

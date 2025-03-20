@@ -1,6 +1,7 @@
 package frc.robot.vision;
 
 import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
 import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
+import frc.robot.Constants.VisionK;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
@@ -26,6 +28,8 @@ import java.lang.StackWalker.Option;
 import java.rmi.StubNotFoundException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -54,6 +58,10 @@ public class Vision {
 
     private String m_cameraName;
     private final Transform3d m_roboToCam;
+    private final int[] m_poisonedTagIds;
+
+    private final BooleanSupplier m_isEnabled;
+    private final Supplier<Pose2d> m_drivetrainPoseEstimateSupplier;
 
     //Constants
     public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(1.5, 1.5, 6.24);
@@ -62,12 +70,17 @@ public class Vision {
     private final StructPublisher<Pose2d> log_camPose;
     private final DoubleArrayPublisher log_stdDevs;
 
-    public Vision(String cameraName, String simVisualName, Transform3d roboToCam, VisionSim visionSim, SimCameraProperties simCameraProperties) {
+    public Vision(String cameraName, String simVisualName, Transform3d roboToCam, VisionSim visionSim, SimCameraProperties simCameraProperties,
+        int[] poisonedTagIds, BooleanSupplier isEnabled, Supplier<Pose2d> drivetrainPoseEstimateSupplier) {
         m_cameraName = cameraName;
         m_camera = new PhotonCamera(m_cameraName);
         m_roboToCam = roboToCam;
         m_simVisualName = simVisualName;
         m_visionSim = visionSim;
+        m_poisonedTagIds = poisonedTagIds;
+
+        m_isEnabled = isEnabled;
+        m_drivetrainPoseEstimateSupplier = drivetrainPoseEstimateSupplier;
 
         photonEstimator =
                 new PhotonPoseEstimator(kTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, roboToCam);
@@ -289,6 +302,35 @@ public class Vision {
     }
 
     /**
+     * Get the estimated global pose except it gets thrown out if some things are true
+     * @return Returns an EstimatedRobotPose if it is available and it is not filtered out, otherwise return empty
+     */
+    public Optional<EstimatedRobotPose> getFilteredEstimatedGlobalPose() {
+        Optional<EstimatedRobotPose> estimatedGlobalPoseOptional = getEstimatedGlobalPose();
+        if (estimatedGlobalPoseOptional.isEmpty()) {
+            return Optional.empty();
+        }
+        EstimatedRobotPose estimatedGlobalPose = estimatedGlobalPoseOptional.get();
+        for (PhotonTrackedTarget target : estimatedGlobalPose.targetsUsed) {
+            if (isTagIdPoisoned(target.getFiducialId())) {
+                return Optional.empty();
+            }
+        }
+        // if the pose estimate puts it more than the tolerance away from the ground on the z axis, throw it out
+        if (!MathUtil.isNear(estimatedGlobalPose.estimatedPose.getZ(), 0, VisionK.kZAxisErrorTolerance)) {
+            return Optional.empty();
+        }
+        // make it so that if it is more than an amount away it throws it out (there is a less verbose way to do this)
+        double distanceToEstimate = Math.sqrt(Math.pow(estimatedGlobalPose.estimatedPose.getX() - m_drivetrainPoseEstimateSupplier.get().getX(), 2)
+            + Math.pow(estimatedGlobalPose.estimatedPose.getY() - m_drivetrainPoseEstimateSupplier.get().getY(), 2));
+        if (m_isEnabled.getAsBoolean() && distanceToEstimate > VisionK.kDistanceCutoff) {
+            return Optional.empty();
+        }
+        
+        return estimatedGlobalPoseOptional;
+    }
+
+    /**
      * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
      * @param givenId integer april tag id
      * @param curAlliance current alliance, if the optional is empty assume blue
@@ -317,6 +359,19 @@ public class Vision {
      */
     private boolean isTagIdOnAllianceReef(int givenId) {
         return isTagIdOnAllianceReef(givenId, DriverStation.getAlliance());
+    }
+
+    /**
+     * @param tagId ID of tag in question
+     * @return Returns true if the given tagId was designated as poisoned in constructor
+     */
+    private boolean isTagIdPoisoned(int tagId) {
+        for (int i = 0; i < m_poisonedTagIds.length; i++) {
+            if (tagId == m_poisonedTagIds[i]) {
+                return true;
+            } 
+        }
+        return false;
     }
 
     /**

@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
@@ -89,8 +90,10 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
   // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
   private final VisionSim visionSim = new VisionSim();
+  private final int[] poisonedTagIds = {};
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
-    VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
+    VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps, poisonedTagIds, RobotModeTriggers.disabled().negate(),
+    () -> drivetrain.getState().Pose);
   // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
   //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
@@ -427,7 +430,7 @@ public class Robot extends TimedRobot {
     
     // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
     for (Vision camera : cameras) {
-      Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
+      Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getFilteredEstimatedGlobalPose();
       if (estimatedPoseOptional.isPresent()) {
         EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
         Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
