@@ -109,9 +109,7 @@ public class Superstructure {
 
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
-    private BooleanLogger log_toIdleOverride = WaltLogger.logBoolean(kLogTab, "to idle override");
-
-    private BooleanLogger log_eleToHPReq = WaltLogger.logBoolean(kLogTab, "ele to HP req");
+   
     private BooleanLogger log_eleAtSetpt = WaltLogger.logBoolean(kLogTab, "ele at setpoint");
     private BooleanLogger log_topSensor = WaltLogger.logBoolean(kLogTab, "top beam break");
     private BooleanLogger log_botSensor = WaltLogger.logBoolean(kLogTab, "bot beam break");
@@ -150,8 +148,13 @@ public class Superstructure {
         
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
-        transTrg_topSensor = new Trigger(m_coral.trg_topBeamBreak).or(trg_isSimulation.and(simTopBeamBreak));
-        transTrg_botSensor = new Trigger(m_coral.trg_botBeamBreak).or(trg_isSimulation.and(simBotBeamBreak));
+        if (!Robot.isSimulation()) {
+            transTrg_topSensor = m_coral.trg_topBeamBreak;
+            transTrg_botSensor = m_coral.trg_botBeamBreak;
+        } else {
+            transTrg_topSensor = simTopBeamBreak;
+            transTrg_botSensor = simBotBeamBreak;
+        }
 
         /* teleop trigs */
         trg_teleopEleToHPReq = eleToHPReq;
@@ -547,6 +550,13 @@ public class Superstructure {
 
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
+
+        log_eleToL1Req.accept(trg_teleopL1Req);
+        log_eleToL2Req.accept(trg_teleopL2Req);
+        log_eleToL3Req.accept(trg_teleopL3Req);
+        log_eleToL4Req.accept(trg_teleopL4Req);
+
+        log_algaeRemovalButton.accept(trg_algaeRemovalL2Req.or(trg_algaeRemovalL3Req));
     }
 
     public void logStateChangeReqs() {
@@ -571,7 +581,7 @@ public class Superstructure {
         logStateChangeReqs();
         logState();
 
-        if(Utils.isSimulation()) {
+        if(Robot.isSimulation()) {
             logSimThings();
         }
     }
