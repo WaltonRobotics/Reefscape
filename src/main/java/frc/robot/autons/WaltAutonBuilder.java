@@ -55,7 +55,7 @@ public class WaltAutonBuilder {
         SmartDashboard.putData("First HP Station", firstToHPStationChooser);
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
-                .add("Ready to Make", false)
+                .add("Make", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
