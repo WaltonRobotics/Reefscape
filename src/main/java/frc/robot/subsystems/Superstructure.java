@@ -21,6 +21,7 @@ import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.util.WaltLogger.IntLogger;
 import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
@@ -124,6 +125,10 @@ public class Superstructure {
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
     private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
+
+    /* logs: pieces */
+    private IntLogger log_coralScored = WaltLogger.logInt(kLogTab, "coral scored");
+    private int coralScored = 0;
 
     public Superstructure(
         Coral coral,
@@ -408,6 +413,10 @@ public class Superstructure {
             m_state = newState;
             log_stateIdx.accept(m_state.idx);
             log_stateName.accept(m_state.name);
+            if (newState == State.SCORED) {
+                coralScored++;
+                log_coralScored.accept(coralScored);
+            }
         });
     }
 

@@ -23,6 +23,9 @@ public class WaltAutonBuilder {
     public static GenericEntry nte_autonRobotPush;  // button to select if we are pushing another robot b4 starting path
     public static GenericEntry nte_clearAll;
 
+    public static GenericEntry nte_autonReadyToGo;  // to let the user know that an auton is loaded
+    public static GenericEntry nte_autonName;
+
     // DEFINE PRESET BUTTONS
     public static GenericEntry nte_taxiOnly;
     public static GenericEntry nte_rightThreePiece;
@@ -52,7 +55,7 @@ public class WaltAutonBuilder {
         SmartDashboard.putData("First HP Station", firstToHPStationChooser);
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
-                .add("Ready to Make", false)
+                .add("Make", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
@@ -69,6 +72,16 @@ public class WaltAutonBuilder {
         nte_customAutonReady = Shuffleboard.getTab("AutonChooser")
                 .add("Custom Auton Ready", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+
+        nte_autonReadyToGo = Shuffleboard.getTab("AutonChooser")
+                .add("Auton Ready", false)
+                .withWidget(BuiltInWidgets.kBooleanBox)
+                .getEntry();
+
+        nte_autonName = Shuffleboard.getTab("AutonChooser")
+                .add("Auton", "No Auton Made")
+                .withWidget(BuiltInWidgets.kTextView)
                 .getEntry();
 
         // DEFINE PRESETS
