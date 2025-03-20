@@ -2,7 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -12,6 +12,12 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -22,7 +28,6 @@ import choreo.auto.AutoFactory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,10 +36,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
@@ -42,6 +43,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -81,8 +83,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+    private final SwerveRequest.FieldCentric driveFieldOriented = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+    private final SwerveRequest.RobotCentric driveRobotCentric = new SwerveRequest.RobotCentric();
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -126,6 +129,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private double[] startWheelPositions = new double[4];
     private double currentEffectiveWheelRadius = 0;
+
+    private boolean m_pathPlannerConfigured = false;
    
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
@@ -207,6 +212,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        init();
     }
 
     /**
@@ -231,6 +237,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        init();
     }
 
     /**
@@ -263,6 +270,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        init();
+    }
+
+    /**
+     * Added to each constructor at the end, will run whenever the drivetrain is constructed.
+     */
+    public void init() {
+        m_pathPlannerConfigured = configPathPlannerAutoAlign();
     }
 
     /**
@@ -292,6 +307,30 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         );
     }
 
+    public boolean configPathPlannerAutoAlign() {
+        // they get this from the GUI which id reckon is why the try catch was there but why change it
+        try {
+            AutoBuilder.configure(
+                () -> getState().Pose, 
+                this::resetPose, 
+                () -> getState().Speeds, 
+                this::pathPlannerControl, 
+                new PPHolonomicDriveController(
+                    new PIDConstants(7.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(7.0, 0.0, 0.0)  // Rotation PID constants
+                ), 
+                AutoAlignmentK.kRobotConfig, 
+                () -> false, 
+                this
+            );
+        } catch (Exception e) {
+            System.out.println("auto align config failed");
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
 
     public void setNeutralMode(NeutralModeValue mode) {
         this.configNeutralMode(mode);
@@ -305,6 +344,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      */
     public Command applyRequest(Supplier<SwerveRequest> requestSupplier) {
         return run(() -> this.setControl(requestSupplier.get()));
+    }
+
+    private void pathPlannerControl(ChassisSpeeds chassisSpeeds) {
+        setControl(driveRobotCentric.withVelocityX(chassisSpeeds.vxMetersPerSecond).withVelocityY(chassisSpeeds.vyMetersPerSecond)
+            .withRotationalRate(chassisSpeeds.omegaRadiansPerSecond));
     }
 
     public void followPath(SwerveSample sample) {
@@ -341,7 +385,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
-
     public Command moveToPose(Pose2d destination) {
         return Commands.run(
             () -> {
@@ -351,13 +394,46 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
 
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(driveFieldOriented.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
                 log_autoAlignErrorTheta.accept(destination.getRotation().getRadians()-curPose.getRotation().getRadians());
             }
         );
+    }
+
+    /**
+     * Utilize pathPlanner to navigate to a pose on the field
+     * @param destinationPoseOptional Optional containing the destination
+     * @param field2d
+     * @return
+     */
+    public Command pathplannerAutoAlign(Optional<Pose2d> destinationPoseOptional, Field2d field2d) {
+        if (destinationPoseOptional.isEmpty()) {
+            return Commands.none();
+        }
+        if (!AutoBuilder.isConfigured()) {
+            System.out.println("pathPlannerAutoAlign fail due to unconfigured AutoBuilder");
+            return Commands.none();
+        }
+        Pose2d destinationPose = destinationPoseOptional.get();
+        field2d.getObject("destination pose").setPose(destinationPose);
+        
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose);
+        // TODO: be wary of pathConstraints being made and reused
+        // also room for optimization in doing a little more with approach angle - you could reasonably try and get it as close to direction of motion as possible
+        PathPlannerPath path = new PathPlannerPath(waypoints, 
+            AutoAlignmentK.pathConstraints, 
+            null, 
+            new GoalEndState(0, destinationPose.getRotation()));
+        // this should already be handled in config, but better safe than sorry
+        path.preventFlipping = true;
+
+        return AutoBuilder.followPath(path);
+
+        // also we can try this for a little less control, unsure of computation speed
+        // return AutoBuilder.pathfindToPose(destinationPose, AutoAlignmentK.pathConstraints);
     }
 
     /**
@@ -393,7 +469,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(driveFieldOriented.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());

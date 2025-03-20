@@ -33,6 +33,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
@@ -44,6 +45,9 @@ import com.ctre.phoenix6.signals.MotorArrangementValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorPhaseValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.path.PathConstraints;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -51,6 +55,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.generated.TunerConstants;
 
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -548,7 +553,11 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        
+        public static final RobotConfig kRobotConfig = new RobotConfig(68, 6, 
+            new ModuleConfig(1.905, TunerConstants.kSpeedAt12Volts.in(MetersPerSecond), 
+                1, DCMotor.getKrakenX60Foc(1), 50.0, 1), 
+            Units.inchesToMeters(11.375) * 2);
+
         public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
         public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
         public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
@@ -561,14 +570,12 @@ public class Constants {
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
-        public static final double kXMaxVelocity = 3; // m/s
-        public static final double kXMaxAccel = 3; // m/s^2
+        public static final double kMaxVelocity = 3; // m/s
+        public static final double kMaxAccel = 5; // m/s^2
 
-        public static final double kYMaxVelocity = 3; // m/s
-        public static final double kYMaxAccel = 3; // m/s^2
-
-        public static final double kThetaMaxVelocity = 45; // deg/s
-        public static final double kThetaMaxAccel = 45; // deg/s^2
+        public static final double kThetaMaxVelocity = 360; // deg/s
+        public static final double kThetaMaxAccel = 360; // deg/s^2
+        public static final PathConstraints pathConstraints = new PathConstraints(kMaxVelocity, kMaxAccel, kThetaMaxVelocity, kThetaMaxAccel);
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */

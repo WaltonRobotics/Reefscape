@@ -104,9 +104,6 @@ public class Robot extends TimedRobot {
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
-
-  private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
-  private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
   private final DoubleLogger log_calculatedFieldX = WaltLogger.logDouble("Swerve", "calculated field x");
   private final DoubleLogger log_calculatedFieldY = WaltLogger.logDouble("Swerve", "calculated field y");
 
@@ -324,11 +321,11 @@ public class Robot extends TimedRobot {
 
       Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
         drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false), drivetrain.getState(),
           visionSim);
       Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
         drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true), drivetrain.getState(),
           visionSim);
 
       trg_leftTeleopAutoAlign.whileTrue(
