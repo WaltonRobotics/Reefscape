@@ -170,7 +170,7 @@ public class Constants {
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.7;
          public static final double kClimbRotations = -0.88;
-         public static final double kDefaultPos = -0.08;   
+         public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
              .withInverted(InvertedValue.Clockwise_Positive)
@@ -351,7 +351,7 @@ public class Constants {
         public static final String kLowerRightCamName = "LowerRightCam";
         public static final Transform3d kLowerRightCamRoboToCam = new Transform3d(
             Units.inchesToMeters(10.943), Units.inchesToMeters(-9.769), Units.inchesToMeters(8.161),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(40))
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(30))
         );
         public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
     }
@@ -368,7 +368,7 @@ public class Constants {
             );
         }
 
-        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+        public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
         private static final List<AprilTag> kRedReefTags = List.of(
             kTagLayout.getTags().get(5),
             kTagLayout.getTags().get(6), 
@@ -548,23 +548,27 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static final double kSideToSideTolerance = 0.0020; // meters
+        
+        public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
+        public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
+        public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
+        // we need to do this so the PIDController works properly
+        static {
+            m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+        }
+
+        public static final double kSideToSideTolerance = 0.002; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         // TODO: these will really need tuning
-        public static final double kMaxVelocity = 3; // m/s
-        public static final double kMaxAccel = 5; // m/s^2
+        public static final double kXMaxVelocity = 3; // m/s
+        public static final double kXMaxAccel = 3; // m/s^2
 
-        public static final double kThetaMaxVelocity = 360; // deg/s
+        public static final double kYMaxVelocity = 3; // m/s
+        public static final double kYMaxAccel = 3; // m/s^2
+
+        public static final double kThetaMaxVelocity = 45; // deg/s
         public static final double kThetaMaxAccel = 45; // deg/s^2
-
-        public static final PIDController kAutoAlignXController = new PIDController(7, 0, 0.1);
-        public static final PIDController kAutoAlignYController = new PIDController(7, 0, 0.1);
-        public static final ProfiledPIDController m_autoAlignThetaController = new ProfiledPIDController(10, 0, 0.1,
-            new TrapezoidProfile.Constraints(kThetaMaxVelocity, kThetaMaxAccel));
-        static {
-            m_autoAlignThetaController.enableContinuousInput(-180, 180);
-        }
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */

@@ -18,6 +18,13 @@
      "val":4.19
     }
    },
+   "PushingDistance":{
+    "dimension":"Number",
+    "var":{
+     "exp":"7.260873794555664",
+     "val":7.260873794555664
+    }
+   },
    "StartLineXVal":{
     "dimension":"Number",
     "var":{
@@ -268,8 +275,8 @@
      "val":6.1655120849609375
     },
     "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
+     "exp":"270 deg",
+     "val":4.71238898038469
     }
    },
    "StartMidG":{
@@ -384,8 +391,8 @@
    "val":63.502931800000006
   },
   "inertia":{
-   "exp":"35.7 kg m ^ 2",
-   "val":35.7
+   "exp":"6 kg m ^ 2",
+   "val":6.0
   },
   "gearing":{
    "exp":"6.12",

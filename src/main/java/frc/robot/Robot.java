@@ -40,6 +40,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.SimpleAutons;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -52,12 +53,17 @@ import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
 import frc.util.AllianceFlipUtil;
 import frc.util.WaltLogger;
+import frc.util.Elastic;
+import frc.util.WaltLogger;
+import frc.util.Elastic.Notification.NotificationLevel;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.Vision;
 import frc.robot.vision.VisionSim;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.Algae.State;
+import frc.robot.subsystems.Algae.WristPos;
 
 public class Robot extends TimedRobot {
 
@@ -94,7 +100,10 @@ public class Robot extends TimedRobot {
   private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
 
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private WaltAutonFactory waltAutonFactory = null;
+  private Optional<WaltAutonFactory> waltAutonFactory = Optional.empty();
+
+  private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
+  private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -107,9 +116,6 @@ public class Robot extends TimedRobot {
   // private final Trigger trg_teleopEleHeightReq;
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
   // private final Trigger trg_eleOverride;
-  private ArrayList<ReefLocs> scoreLocs = new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)); // dummies
-  private ArrayList<EleHeight> heights = new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4));
-  private ArrayList<HPStation> hpStations = new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT));
 
   private final Trigger trg_intakeReq = manipulator.rightBumper();
   
@@ -147,7 +153,6 @@ public class Robot extends TimedRobot {
   private boolean startingHeightChange = false;
   private boolean initialHPStationChange = false;
 
-  private boolean beforeAuton = true;
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
 
@@ -224,19 +229,6 @@ public class Robot extends TimedRobot {
         trg_shootReq, 
         this::manipRumble
       );
-
-    waltAutonFactory = new WaltAutonFactory(
-      elevator,
-      autoFactory, 
-      superstructure, 
-      drivetrain,
-      StartingLocs.RIGHT, 
-      scoreLocs,
-      heights, 
-      hpStations,
-      false);
-
-    AutonChooser.addPathsAndCmds(waltAutonFactory);
 
     configureBindings();
     // configureTestBindings();
@@ -330,21 +322,14 @@ public class Robot extends TimedRobot {
         )
       );
 
-      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
-        SwerveDriveState swerveDriveState = drivetrain.getState();
-        return drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(swerveDriveState.Pose, false),
-          swerveDriveState,
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
+        drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
           visionSim);
-      };
-        
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
-        SwerveDriveState swerveDriveState = drivetrain.getState();
-        return drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(swerveDriveState.Pose, true),
-          swerveDriveState,
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
+        drivetrain.moveToPose(
+          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
           visionSim);
-      };
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
@@ -396,6 +381,9 @@ public class Robot extends TimedRobot {
     manipulator.y().and(manipulator.povDown())
       .onTrue(elevator.toHeight(EleHeight.CLIMB_DOWN.rotations));
 
+    manipulator.y()
+      .onTrue(algae.changeStateCmd(State.HOME));
+
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
@@ -443,62 +431,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-
-    if (autonNotMade) {
-      readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
-    }
-
-    if (readyToMakeAuton && autonNotMade) {
-      waltAutonFactory = new WaltAutonFactory(
-        elevator,
-        autoFactory, 
-        superstructure, 
-        drivetrain,
-        WaltAutonBuilder.startingPosition, 
-        WaltAutonBuilder.getCycleScoringLocs(), 
-        WaltAutonBuilder.getCycleEleHeights(), 
-        WaltAutonBuilder.getCycleHPStations(),
-        false
-      );
-
-      // dummy one
-      // waltAutonFactory = new WaltAutonFactory(
-      //   autoFactory, 
-      //   superstructure, 
-      //   StartingLocs.MID, 
-      //   reefLocs, 
-      //   heights, 
-      //   hpStations
-      // );
-
-      AutonChooser.addPathsAndCmds(waltAutonFactory);
-      autonNotMade = false;
-    }
-
-    if (beforeAuton) {
-      if (numCycleChange) {
-        WaltAutonBuilder.updateNumCycles();
-        WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
-        numCycleChange = false;
-      }
-      if (startingPositionChange) {
-        WaltAutonBuilder.updateStartingPosition();
-        WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
-        startingPositionChange = false;
-      }
-      if (initialHPStationChange) {
-        WaltAutonBuilder.updateInitalHPStation();
-        initialHPStationChange = false;
-      }
-      if (firstScoringPositionChange) {
-        WaltAutonBuilder.updateInitialScoringPosition();
-        firstScoringPositionChange = false;
-      }
-      if (startingHeightChange) {
-        WaltAutonBuilder.updateStartingHeight();
-        startingHeightChange = false;
-      }
-    }
     
     // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
     for (Vision camera : cameras) {
@@ -519,7 +451,163 @@ public class Robot extends TimedRobot {
   public void disabledInit() {}
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if (autonNotMade) {
+      // check if the AUTON READY button has been pressed
+      readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
+
+      // ---- CUSTOM CYCLE AUTON
+      // continues checking choosers for the correct values if the CUSTOM CYCLE READY button HAS NOT been pressed
+      if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
+        if (numCycleChange) {
+          WaltAutonBuilder.updateNumCycles();
+          WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+          numCycleChange = false;
+        }
+        if (startingPositionChange) {
+          WaltAutonBuilder.updateStartingPosition();
+          WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+          startingPositionChange = false;
+        }
+        if (initialHPStationChange) {
+          WaltAutonBuilder.updateInitalHPStation();
+          initialHPStationChange = false;
+        }
+        if (firstScoringPositionChange) {
+          WaltAutonBuilder.updateInitialScoringPosition();
+          firstScoringPositionChange = false;
+        }
+        if (startingHeightChange) {
+          WaltAutonBuilder.updateStartingHeight();
+          startingHeightChange = false;
+        }
+      }
+
+      if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          WaltAutonBuilder.startingPosition, 
+          WaltAutonBuilder.getCycleScoringLocs(), 
+          WaltAutonBuilder.getCycleEleHeights(), 
+          WaltAutonBuilder.getCycleHPStations(),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
+        WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
+      }
+    
+      // --- PRESET AUTONS
+      if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.SUPER_LEFT, 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of(HPStation.HP_LEFT)),  // uses an hp station as a flag that its leaving and not doing nothing
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Taxi Time!"));
+        WaltAutonBuilder.nte_taxiOnly.setBoolean(false);
+      }
+
+      if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.RIGHT, 
+          new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
+          new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4)), 
+          new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
+        WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
+      }
+
+      if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.LEFT, 
+          new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
+          new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4)), 
+          new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
+        WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
+      }
+
+      if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.MID_G, 
+          new ArrayList<>(List.of(REEF_G)), 
+          new ArrayList<>(List.of(EleHeight.L4)), 
+          new ArrayList<>(List.of()),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid Only auton generated"));
+        WaltAutonBuilder.nte_midGOnly.setBoolean(false);
+      }
+
+      // fail-case (no auton selected) - do nothing
+      if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
+        waltAutonFactory = Optional.of(new WaltAutonFactory(
+          elevator,
+          autoFactory, 
+          superstructure, 
+          drivetrain,
+          StartingLocs.SUPER_LEFT, 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()), 
+          new ArrayList<>(List.of()),
+          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "DO NOTHING!"));
+      }
+
+      // SETS THE AUTON
+      if (readyToMakeAuton && waltAutonFactory.isPresent()) {
+        AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+        autonNotMade = false;
+        WaltAutonBuilder.nte_autonEntry.setBoolean(false);
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CREATED", "Ready for Autonomous!"));
+      }
+
+    }
+
+    // if user hits clearAll button, the auton process resets
+    if (WaltAutonBuilder.nte_clearAll.getBoolean(false)) {
+      waltAutonFactory = Optional.empty();
+      autonNotMade = true;
+      WaltAutonBuilder.nte_autonEntry.setBoolean(false);
+      AutonChooser.resetAutoChooser();
+      WaltAutonBuilder.nte_clearAll.setBoolean(false);
+
+      Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CLEARED", "Remake your auton!"));
+    }
+  }
 
   @Override
   public void disabledExit() {}
@@ -529,7 +617,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
-          chooserCommand
+          chooserCommand          
       );
   }
 
@@ -551,7 +639,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    Commands.runOnce(() -> waltAutonFactory.autonTimer.stop());
+    if (waltAutonFactory.isPresent()) {
+      Commands.runOnce(() -> waltAutonFactory.get().autonTimer.stop());
+    }
     superstructure.forceIdle().schedule();
     algae.toIdleCmd().schedule();
     finger.fingerInCmd().schedule();

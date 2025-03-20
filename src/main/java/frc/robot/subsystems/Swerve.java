@@ -84,10 +84,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
-    private TrapezoidProfile.State m_autoAlignState = new TrapezoidProfile.State();
-    private final TrapezoidProfile m_autoAlignProfile = new TrapezoidProfile(
-        new TrapezoidProfile.Constraints(AutoAlignmentK.kMaxVelocity, AutoAlignmentK.kMaxAccel));
-
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
     // private final SlewRateLimiter m_omegaLimiter = new SlewRateLimiter(0.5);
@@ -346,6 +342,24 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
+    public Command moveToPose(Pose2d destination) {
+        return Commands.run(
+            () -> {
+                Pose2d curPose = getState().Pose;
+
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destination.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
+
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+
+                log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
+                log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
+                log_autoAlignErrorTheta.accept(destination.getRotation().getRadians()-curPose.getRotation().getRadians());
+            }
+        );
+    }
+
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
@@ -371,26 +385,25 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         double distance = translation.getNorm();
         Rotation2d heading = translation.getAngle();
 
-        // start at 0 distance, 0 velocity
-        m_autoAlignState = new TrapezoidProfile.State(0, 0);
-        var goal = new TrapezoidProfile.State(distance, 0);
+        return Commands.run(
+            () -> {
+                Pose2d curPose = getState().Pose;
 
-        return applyRequest(() -> {
-            // calculate our new distance and velocity in the desired direction of travel
-            m_autoAlignState = m_autoAlignProfile.calculate(0.020, m_autoAlignState, goal);
-            Pose2d curPose = getState().Pose;
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
-            // X and Y controllers are now regular PIDControllers instead of profiled
-            // x is m_state * cos(heading), y is m_state * sin(heading)
-            double xSpeed = m_autoAlignState.velocity * heading.getCos() +
-                AutoAlignmentK.kAutoAlignXController.calculate(curPose.getX(), m_autoAlignState.position * heading.getCos());
-            double ySpeed = m_autoAlignState.velocity * heading.getSin() +
-                AutoAlignmentK.kAutoAlignYController.calculate(curPose.getY(), m_autoAlignState.position * heading.getSin());
-            // Theta can remain a ProfiledPIDController
-            double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
-            return drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed);
-        });
+                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
+                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
+                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
+
+                // log_autoAlignDesiredXSpeed.accept(xSpeed);
+                // log_autoAlignDesiredYSpeed.accept(ySpeed);
+                // log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
+            }
+        );
     }
 
     /**
