@@ -136,9 +136,6 @@ public class Robot extends TimedRobot {
 
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
 
-  private final StructPublisher<Pose2d> log_robotPose = NetworkTableInstance.getDefault()
-        .getStructTopic("Robot/Pose", Pose2d.struct).publish();
-
   /* WaltAutonBuilder vars */
   private boolean numCycleChange = false;
   private boolean startingPositionChange = false;
@@ -216,12 +213,15 @@ public class Robot extends TimedRobot {
       this::driverRumble);
     }
       
-      algae = new Algae(
-        trg_algaeIntake, 
-        new Trigger(() -> false), 
-        trg_shootReq, 
-        this::manipRumble
-      );
+    algae = new Algae(
+      trg_algaeIntake, 
+      new Trigger(() -> false), 
+      trg_shootReq, 
+      this::manipRumble
+    );
+
+    drivetrain.registerTelemetry(logger::telemeterize);
+
 
     configureBindings();
     // configureTestBindings();
@@ -377,7 +377,6 @@ public class Robot extends TimedRobot {
     manipulator.y()
       .onTrue(algae.changeStateCmd(State.HOME));
 
-    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   /* WaltAutonBuilder thingies */
@@ -436,8 +435,7 @@ public class Robot extends TimedRobot {
       }
     }
 
-    robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
-    log_robotPose.accept(drivetrain.getState().Pose);
+    // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
 
   @Override
