@@ -148,6 +148,7 @@ public class Robot extends TimedRobot {
 
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
+  private String autonName = "No Auton Made";
 
   /* WaltAutonBuilder trigs */
   // When the user selects a different option, this thing runs
@@ -489,6 +490,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
+        autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
         WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
       }
@@ -507,6 +509,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
+        autonName = "Taxi";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Taxi Time!"));
         WaltAutonBuilder.nte_taxiOnly.setBoolean(false);
       }
@@ -524,6 +527,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
+        autonName = "Right 3 Piece: E, D, C";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
         WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
       }
@@ -541,6 +545,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
+        autonName = "Left 3 Piece: J, K, L";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
@@ -558,7 +563,8 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid Only auton generated"));
+        autonName = "Mid G";
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
         WaltAutonBuilder.nte_midGOnly.setBoolean(false);
       }
 
@@ -576,15 +582,18 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
+        autonName = "Do Nothing";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "DO NOTHING!"));
       }
 
-      // SETS THE AUTON
+      // ---- SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
         AutonChooser.addPathsAndCmds(waltAutonFactory.get());
         autonNotMade = false;
         WaltAutonBuilder.nte_autonEntry.setBoolean(false);
 
+        WaltAutonBuilder.nte_autonReadyToGo.setBoolean(!autonNotMade);
+        WaltAutonBuilder.nte_autonName.setString(autonName);
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CREATED", "Ready for Autonomous!"));
       }
 
@@ -594,10 +603,13 @@ public class Robot extends TimedRobot {
     if (WaltAutonBuilder.nte_clearAll.getBoolean(false)) {
       waltAutonFactory = Optional.empty();
       autonNotMade = true;
+      autonName = "No Auton Made";
       WaltAutonBuilder.nte_autonEntry.setBoolean(false);
       AutonChooser.resetAutoChooser();
       WaltAutonBuilder.nte_clearAll.setBoolean(false);
 
+      WaltAutonBuilder.nte_autonReadyToGo.setBoolean(!autonNotMade);
+      WaltAutonBuilder.nte_autonName.setString(autonName);
       Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CLEARED", "Remake your auton!"));
     }
   }
