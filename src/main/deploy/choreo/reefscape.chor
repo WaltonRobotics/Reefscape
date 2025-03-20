@@ -49,15 +49,15 @@
    "maxAccel":{
     "dimension":"LinAcc",
     "var":{
-     "exp":"5 m / s ^ 2",
-     "val":5.0
+     "exp":"4 m / s ^ 2",
+     "val":4.0
     }
    },
    "movingSpeed":{
     "dimension":"LinVel",
     "var":{
-     "exp":"3 m / s",
-     "val":3.0
+     "exp":"2.2 m / s",
+     "val":2.2
     }
    },
    "offset":{
@@ -406,8 +406,8 @@
    "val":6.12
   },
   "radius":{
-   "exp":"1.93 in",
-   "val":0.049022
+   "exp":"1.905 in",
+   "val":0.048387
   },
   "vmax":{
    "exp":"5000 RPM",
