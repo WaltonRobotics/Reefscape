@@ -98,7 +98,7 @@ public class Superstructure {
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
-    private final Trigger trg_hasCoral;
+    public final Trigger trg_hasCoral;
 
     /* loggin' */
     private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
@@ -507,17 +507,18 @@ public class Superstructure {
 
     // use this in autonfactory
     public Command autonEleToScoringPosReq(EleHeight height) {
+        var cmdToRun = Commands.none();
         if(height == L1) {
-            return autonEleToL1Req();
+            cmdToRun = autonEleToL1Req();
         } else if(height == L2) {
-            return autonEleToL2Req();
+            cmdToRun = autonEleToL2Req();
         } else if(height == L3) {
-            return autonEleToL3Req();
+            cmdToRun = autonEleToL3Req();
         } else if(height == L4) {
-            return autonEleToL4Req();
-        } else {
-            return Commands.print("invalid height for auton score req. wanted " + height);
+            cmdToRun = autonEleToL4Req();
         }
+
+        return m_ele.externalWaitUntilHomed().andThen(cmdToRun);
     }
 
     public Command autonPreloadReq() {

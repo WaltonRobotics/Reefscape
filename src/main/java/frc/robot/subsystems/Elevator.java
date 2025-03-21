@@ -233,7 +233,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public Command externalWaitUntilHomed() {
-        return Commands.run(() -> {}).until(() -> m_isHomed);
+        return Commands.waitUntil(() -> m_isHomed);
     }
     
     public boolean getIsHomed() {
