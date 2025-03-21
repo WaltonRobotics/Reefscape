@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static frc.robot.subsystems.Elevator.EleHeight.*;
 
 import frc.robot.Robot;
+import frc.robot.subsystems.Algae.State;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.WaltLogger;
@@ -243,19 +244,9 @@ public class Superstructure {
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
     // stuff will prolly get added as i need them
     private void configureSimTransitions() {
-        // (stateTrg_idle.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(1) 
-        //     .onTrue(
-        //         Commands.runOnce(() -> m_eleToHPStateTransReq = true)
-        //     );
-        (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        (stateTrg_intaking.and(() -> Robot.isSimulation())).debounce(0.5)
             .onTrue(simIntook());
-        // (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
-        //     .onTrue(
-        //         Commands.sequence(
-        //             Commands.runOnce(() -> m_eleToL4Req = true)
-        //         )
-        //     );
-        (stateTrg_scoreReady.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        (stateTrg_scoreReady.and(() -> Robot.isSimulation())).debounce(0.5)
             .onTrue(simScored());
         // (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
         //     .onTrue(simScored());
@@ -522,6 +513,9 @@ public class Superstructure {
     }
 
     public Command autonPreloadReq() {
+        if (Robot.isSimulation()) {
+            return changeStateCmd(State.INTAKING);
+        }
         return (changeStateCmd(State.INTOOK));
     }
 

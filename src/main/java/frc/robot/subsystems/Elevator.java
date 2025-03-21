@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import frc.robot.Robot;
 import frc.robot.Constants.ElevatorK;
 import frc.robot.generated.TunerConstants;
 import frc.util.WaltLogger;
@@ -144,8 +145,9 @@ public class Elevator extends SubsystemBase {
 
         SmartDashboard.putData("Elevator Sim", m_mech2d);
 
-        setDefaultCommand(currentSenseHoming());
-
+        if (Robot.isReal()) {
+            setDefaultCommand(currentSenseHoming());
+        }
     }
 
     private void setCoast(boolean coast) {

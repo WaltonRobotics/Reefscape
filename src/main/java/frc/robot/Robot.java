@@ -122,8 +122,8 @@ public class Robot extends TimedRobot {
   private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
   // simulation
-  private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
-  private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
+  private final Trigger trg_simBotBeamBreak = manipulator.a();
+  private final Trigger trg_simTopBeamBreak = manipulator.b();
  
 
   // override button
