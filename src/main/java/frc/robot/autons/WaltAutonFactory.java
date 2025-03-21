@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import frc.robot.Robot;
 import frc.robot.Constants.RobotK;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -39,7 +40,7 @@ public class WaltAutonFactory {
     private ArrayList<ReefLocs> m_scoreLocs;
     private ArrayList<EleHeight> m_heights; // needs to hv same size as m_scoreLocs
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
-    private boolean m_pushTime; 
+    private boolean m_pushTime;
 
     int heightCounter = 0;
 
@@ -59,23 +60,23 @@ public class WaltAutonFactory {
 			return printLater(() -> epochName + " at " + timer.get() + " s");
 		}, Set.of());
 	}
-    
-    private Elastic.Notification leaveStartZoneOnlySadness = 
+
+    private Elastic.Notification leaveStartZoneOnlySadness =
         new Elastic.Notification(
-            Elastic.Notification.NotificationLevel.ERROR, 
-            "Why We No Score :(", 
+            Elastic.Notification.NotificationLevel.ERROR,
+            "Why We No Score :(",
             "Just FYI, we're only going to move forward"
         );
-    private Elastic.Notification youMessedUpInAutonChooser = 
+    private Elastic.Notification youMessedUpInAutonChooser =
         new Elastic.Notification(
-            Elastic.Notification.NotificationLevel.ERROR, 
-            "Can't run full path", 
+            Elastic.Notification.NotificationLevel.ERROR,
+            "Can't run full path",
             "ArrayList sizes didnt match up for reef, height, and HP. Will run as much of the path as possible"
         );
 
     public WaltAutonFactory(
         Elevator ele,
-        AutoFactory autoFactory, 
+        AutoFactory autoFactory,
         Superstructure superstructure,
         Swerve drivetrain,
         StartingLocs startLoc,
@@ -85,7 +86,7 @@ public class WaltAutonFactory {
         boolean pushTime
     ) {
         m_autoFactory = autoFactory;
-        m_routine = m_autoFactory.newRoutine("auton"); 
+        m_routine = m_autoFactory.newRoutine("auton");
         m_superstructure = superstructure;
         m_ele = ele;
         m_drivetrain = drivetrain;
@@ -148,7 +149,7 @@ public class WaltAutonFactory {
             if(m_hpStations.size() > m_scoreLocs.size()) {
                 trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
                     new Pair<ReefLocs, HPStation>(
-                        m_scoreLocs.get(m_scoreLocs.size() - 1), 
+                        m_scoreLocs.get(m_scoreLocs.size() - 1),
                         m_hpStations.get(m_hpStations.size() - 1)
                     )
                 )));
@@ -158,7 +159,7 @@ public class WaltAutonFactory {
         } catch (Exception e) {
             return trajsList;
         }
-       
+
     }
 
     private Command optimalScoreCmd(EleHeight eleHeight) {
@@ -170,14 +171,9 @@ public class WaltAutonFactory {
 
         if(eleHeight == EleHeight.L2) {
             var eleReqCmd = Commands.sequence(
-                Commands.print("Waiting For Ele Homing..."),
                 m_ele.externalWaitUntilHomed(),
-                Commands.print("EleHomeOK!!"),
                 m_superstructure.autonEleToScoringPosReq(eleHeight),
-                Commands.print("ScorePosReq SENT " + eleHeight),
-                Commands.waitUntil(m_superstructure.stateTrg_scoreReady),
-                Commands.print("ScoreReady!!!!, hasCoral: " + m_superstructure.trg_hasCoral.getAsBoolean())
-
+                Commands.waitUntil(m_superstructure.stateTrg_scoreReady)
             );
             scoreCommand = eleReqCmd.andThen(scoreCommand);
         }
@@ -195,6 +191,9 @@ public class WaltAutonFactory {
 
     private Command runAutoTrajCmd(AutoTrajectory path) {
         var trajCmd = path.cmd();
+        if (Robot.isSimulation()) {
+            trajCmd = path.resetOdometry().andThen(path.cmd());
+        }
         return Commands.sequence(
             autonTimerStart(),
             Commands.parallel(
@@ -233,7 +232,7 @@ public class WaltAutonFactory {
         }
 
         if (areWeLeaving()) {
-            Elastic.sendNotification(leaveStartZoneOnlySadness);   
+            Elastic.sendNotification(leaveStartZoneOnlySadness);
             return leaveOnly();
         }
 
@@ -245,7 +244,7 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(firstScoreTrajName);
 
         var firstEleHeight = m_heights.get(0);
-        
+
         // attach first path to routine active
         m_routine.active().onTrue(
             runInitialScoringPathCmd(firstScoreTraj, firstEleHeight)
@@ -262,16 +261,22 @@ public class WaltAutonFactory {
 
         // normal cycle logic down here
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
+        var postFirstCmd = Commands.print("No additional cycles, auton done!");
+        if (allTheTrajs.size() > 0) {
+            var firstLoopCycleTraj = allTheTrajs.get(0);
+            postFirstCmd = firstLoopCycleTraj.cmd();
+        }
 
         firstScoreTraj.done()
-            .onTrue(
-                optimalScoreCmd(m_heights.get(heightCounter)
+            .onTrue(Commands.sequence(
+                optimalScoreCmd(m_heights.get(heightCounter)),
+                postFirstCmd
             )
         );
 
         // increment height counter after first score
         heightCounter++;
-        
+
         int allTrajIdx = 0;
         while (allTrajIdx < allTheTrajs.size()) {
             Optional<AutoTrajectory> theTrajOpt = Optional.empty();
