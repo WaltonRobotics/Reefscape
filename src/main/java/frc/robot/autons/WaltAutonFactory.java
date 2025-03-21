@@ -192,7 +192,7 @@ public class WaltAutonFactory {
         leaveAuto.active().onTrue(
             Commands.sequence(
                 Commands.runOnce(() -> autonTimer.restart()),
-                leave.resetOdometry(),
+                // leave.resetOdometry(),
                 leave.cmd()
             )
         );
@@ -230,7 +230,7 @@ public class WaltAutonFactory {
                 m_routine.active().onTrue(
                 Commands.sequence(
                         Commands.runOnce(() -> autonTimer.restart()),
-                        firstScoreTraj.resetOdometry(),
+                        // firstScoreTraj.resetOdometry(),
                         firstScoreTraj.cmd()
                     )
                 );
@@ -260,7 +260,7 @@ public class WaltAutonFactory {
             m_routine.active().onTrue(
             Commands.sequence(
                     Commands.runOnce(() -> autonTimer.restart()),
-                    firstScoreTraj.resetOdometry(),
+                    // firstScoreTraj.resetOdometry(),
                     firstScoreTraj.cmd()
                 )
             );
