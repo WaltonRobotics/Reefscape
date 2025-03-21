@@ -177,8 +177,8 @@ public class WaltAutonFactory {
     private Command scoreCmd(EleHeight eleHeight) {
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
-            logTimer("CoralScored", () -> autonTimer),
             m_superstructure.autonScoreReq(),
+            logTimer("CoralScored", () -> autonTimer),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
         );
     }
@@ -307,9 +307,8 @@ public class WaltAutonFactory {
                 .onTrue(
                     Commands.sequence(
                         Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                        scoreCmd(m_heights.get(heightCounter)),
+                        scoreCmd(m_heights.get(heightCounter++)),
                         Commands.parallel(
-                            Commands.runOnce(() -> heightCounter++),
                             nextTrajCmd,
                             Commands.print("Running Path: " + nextTrajCmd)
                         )   
