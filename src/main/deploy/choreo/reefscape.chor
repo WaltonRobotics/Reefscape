@@ -73,6 +73,13 @@
      "exp":"1 m / s",
      "val":1.0
     }
+   },
+   "startSpeed":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"2.2 m / s",
+     "val":2.2
+    }
    }
   },
   "poses":{
