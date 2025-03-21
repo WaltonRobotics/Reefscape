@@ -274,11 +274,8 @@ public class WaltAutonFactory {
             .onTrue(
                 Commands.sequence(
                     scoreCmd(m_heights.get(heightCounter++)),
-                    Commands.parallel(
-                        allTheTrajs.get(0).cmd(),
-                        m_drivetrain.stopCmd(),
-                        Commands.print("Running Path: " + allTheTrajs.get(0).cmd()) //takes you to the HP
-                    )
+                    allTheTrajs.get(0).cmd(),
+                    m_drivetrain.stopCmd()
                 )
             );
         
@@ -314,11 +311,8 @@ public class WaltAutonFactory {
                     Commands.sequence(
                         Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                         scoreCmd(m_heights.get(heightCounter++)),
-                        Commands.parallel(
-                            nextTrajCmd,
-                            m_drivetrain.stopCmd(),
-                            Commands.print("Running Path: " + nextTrajCmd)
-                        )   
+                        nextTrajCmd,
+                        m_drivetrain.stopCmd()
                     )
                 );
             
