@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.Optional;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -9,6 +10,8 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -22,6 +25,9 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
@@ -37,9 +43,11 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.vision.VisionSim;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -58,7 +66,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private boolean m_hasAppliedOperatorPerspective = false;
 
     /* TODO: gotta tune */
-    private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
+    private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds()
+        .withDriveRequestType(DriveRequestType.Velocity)
+        .withSteerRequestType(SteerRequestType.Position);
     private final PIDController m_pathXController = new PIDController(10, 0, 0);
     private final PIDController m_pathYController = new PIDController(10, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
@@ -67,6 +77,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
+
+    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -87,6 +100,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic("actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
+
+    private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
+    private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
+    private final DoubleLogger log_destinationTheta = WaltLogger.logDouble("Swerve", "destination theta");
+    private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
+    private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
+
+    private final DoubleLogger log_autoAlignErrorX = WaltLogger.logDouble("Swerve", "auto align x error");
+    private final DoubleLogger log_autoAlignErrorY = WaltLogger.logDouble("Swerve", "auto align y error");
+    private final DoubleLogger log_autoAlignErrorTheta = WaltLogger.logDouble("Swerve", "auto align theta error");
+
+    private final DoubleLogger log_chassisSpeedVXError = WaltLogger.logDouble("Swerve", "vx speed error");
+    private final DoubleLogger log_chassisSpeedVYError = WaltLogger.logDouble("Swerve", "vy speed error");
+
+    private final StructPublisher<ChassisSpeeds> desiredChassisSpeeds = NetworkTableInstance.getDefault()
+        .getStructTopic("Swerve/DesiredSpeeds", ChassisSpeeds.struct).publish();
 
     private double lastGyroYawRads = 0;
     private double accumGyroYawRads = 0;
@@ -275,12 +304,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return run(() -> this.setControl(requestSupplier.get()));
     }
 
-     public void followPath(SwerveSample sample) {
+    private void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
-
         var pose = getState().Pose;
+        var samplePose = sample.getPose();
 
+        var speed = getState().Speeds;
         var targetSpeeds = sample.getChassisSpeeds();
+
         targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(
             pose.getX(), sample.x
         );
@@ -298,7 +329,72 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         );
 
         log_choreoActualRobotPose.accept(pose);
-        log_choreoDesiredRobotPose.accept(sample.getPose());
+        log_choreoDesiredRobotPose.accept(samplePose);
+
+        log_errorX.accept(samplePose.getX() - pose.getX());
+        log_errorY.accept(samplePose.getY() - pose.getY());
+
+        log_chassisSpeedVXError.accept(targetSpeeds.vxMetersPerSecond - speed.vxMetersPerSecond);
+        log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
+    }
+
+
+    public Command moveToPose(Pose2d destination) {
+        return Commands.run(
+            () -> {
+                Pose2d curPose = getState().Pose;
+
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destination.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
+
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+
+                log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
+                log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
+                log_autoAlignErrorTheta.accept(destination.getRotation().getRadians()-curPose.getRotation().getRadians());
+            }
+        );
+    }
+
+    /**
+     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
+     * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
+     * @param visionSim visionSim object to get simField from to do sim debugging
+     * @return Returns a command that loops until it gets near
+     */
+    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
+        if (destinationPoseOptional.isEmpty()) {
+            // System.out.println("Swerve moveToPose fail, destination unavailable");
+            return Commands.none();
+        }
+        Pose2d destinationPose = destinationPoseOptional.get();
+
+        log_destinationX.accept(destinationPose.getX());
+        log_destinationY.accept(destinationPose.getY());
+        log_destinationTheta.accept(destinationPose.getRotation().getRadians());
+
+        visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
+
+        return Commands.run(
+            () -> {
+                Pose2d curPose = getState().Pose;
+
+                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
+                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
+
+                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+
+                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
+                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
+                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
+
+                // log_autoAlignDesiredXSpeed.accept(xSpeed);
+                // log_autoAlignDesiredYSpeed.accept(ySpeed);
+                // log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
+            }
+        );
     }
 
     /**
@@ -322,6 +418,24 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return m_sysIdRoutineToApply.dynamic(direction);
     }
+
+    public Pose2d[] extractModulePoses(SwerveDriveState state) {
+        Translation2d[] moduleTranslations = {
+            new Translation2d(TunerConstants.kFrontLeftXPos.in(Meters), TunerConstants.kFrontLeftYPos.in(Meters)),
+            new Translation2d(TunerConstants.kFrontRightXPos.in(Meters), TunerConstants.kFrontRightYPos.in(Meters)),
+            new Translation2d(TunerConstants.kBackLeftXPos.in(Meters), TunerConstants.kBackLeftYPos.in(Meters)),
+            new Translation2d(TunerConstants.kBackRightXPos.in(Meters), TunerConstants.kBackRightYPos.in(Meters))
+        };
+        Pose2d[] modulePoses = new Pose2d[getModules().length];
+        for (int i = 0; i < getModules().length; i++) {
+            modulePoses[i] = 
+                state.Pose.transformBy(new Transform2d(
+                    moduleTranslations[i], state.ModulePositions[i].angle)
+                );
+        }
+        return modulePoses;
+    }
+
 
     public Command wheelRadiusCharacterization(double omegaDirection) {
 
@@ -412,10 +526,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         double[] wheelDistance = new double[swerveState.ModulePositions.length];
         double[] wheelRotations = new double[swerveState.ModulePositions.length];
+        double[] wheelSpeeds = new double[swerveState.ModuleStates.length];
+        double[] wheelSpeedTargets = new double[swerveState.ModuleTargets.length];
         for (int i = 0; i < swerveState.ModulePositions.length; i++) {
-            var state = swerveState.ModulePositions[i];
-            var inches = Units.metersToInches(state.distanceMeters); 
-            var rots =  state.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            var modPos = swerveState.ModulePositions[i];
+            var modState = swerveState.ModuleStates[i];
+            var modTarg = swerveState.ModuleTargets[i];
+
+            // position
+            var inches = Units.metersToInches(modPos.distanceMeters); 
+            var rots =  modPos.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
             wheelRotations[i] = rots;
             wheelDistance[i] = inches;
         }
@@ -437,5 +557,4 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
-
 }

@@ -4,32 +4,74 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.units.Measure;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
+import frc.robot.Constants.RobotK;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.vision.VisionSim;
 import frc.util.Elastic;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
     private AutoRoutine m_routine;
     private final Superstructure m_superstructure;
+    private final Elevator m_ele;
+    private final Swerve m_drivetrain;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
     private ArrayList<ReefLocs> m_scoreLocs;
     private ArrayList<EleHeight> m_heights; // needs to hv same size as m_scoreLocs
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
+    private boolean m_pushTime; 
 
     int heightCounter = 0;
-    private boolean m_alrScored = false;
+
+    public Timer autonTimer = new Timer();
+    private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer");
+
+    private static Command printLater(Supplier<String> stringSup) {
+		return Commands.defer(() -> {
+			return Commands.print(stringSup.get());
+		}, Set.of());
+	}
+
+    private Command logTimer(String epochName, Supplier<Timer> timerSup) {
+		return Commands.defer(() -> {
+			var timer = timerSup.get();
+            log_autonTimer.accept(autonTimer.get());
+			return printLater(() -> epochName + " at " + timer.get() + " s");
+		}, Set.of());
+	}
     
     private Elastic.Notification leaveStartZoneOnlySadness = 
         new Elastic.Notification(
@@ -45,25 +87,47 @@ public class WaltAutonFactory {
         );
 
     public WaltAutonFactory(
+        Elevator ele,
         AutoFactory autoFactory, 
         Superstructure superstructure,
+        Swerve drivetrain,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
-        ArrayList<HPStation> hpStations
+        ArrayList<HPStation> hpStations,
+        boolean pushTime
     ) {
         m_autoFactory = autoFactory;
-        m_routine = m_autoFactory.newRoutine("auton");
+        m_routine = m_autoFactory.newRoutine("auton"); 
         m_superstructure = superstructure;
+        m_ele = ele;
+        m_drivetrain = drivetrain;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
         m_heights = heights;
         m_hpStations = hpStations;
+        m_pushTime = pushTime;
     }
 
-    private boolean weAtLeastScoreOneChecker() {
-        if(m_scoreLocs.size() >= 1 && m_heights.size() >= 1) {
+    private boolean doNothing() {
+        if (m_scoreLocs.size() == 0 && m_heights.size() == 0 && m_hpStations.size() == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean areWeLeaving() {
+        if (m_scoreLocs.size() == 0 && m_heights.size() == 0 && m_hpStations.size() == 1) { // have a hp station to act as a flag for leaving or staying still
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean onlyPreload() {
+        if (m_scoreLocs.size() == 1 && m_heights.size() == 1 && m_hpStations.size() == 0) {
             return true;
         } else {
             return false;
@@ -82,39 +146,44 @@ public class WaltAutonFactory {
 
     private ArrayList<AutoTrajectory> trajMaker() {
         ArrayList<AutoTrajectory> trajsList = new ArrayList<>();
-        for (int i = 0; i < m_scoreLocs.size(); i++) {
-            String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
-            trajsList.add(m_routine.trajectory(rToH));
-            if (i < m_scoreLocs.size() - 1) {
-                String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
-                trajsList.add(m_routine.trajectory(hToR));
-                System.out.println(rToH);
+        try {
+            for (int i = 0; i < m_scoreLocs.size(); i++) {
+                String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+                trajsList.add(m_routine.trajectory(rToH));
+                if (i < m_scoreLocs.size() - 1) {
+                    String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
+                    trajsList.add(m_routine.trajectory(hToR));
+                    System.out.println(rToH);
+                }
             }
-        }
 
-        // for .5 autos.
-        if(m_hpStations.size() > m_scoreLocs.size()) {
-            trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
-                new Pair<ReefLocs, HPStation>(
-                    m_scoreLocs.get(m_scoreLocs.size() - 1), 
-                    m_hpStations.get(m_hpStations.size() - 1)
-                )
-            )));
-        }
+            // for .5 autos.
+            if(m_hpStations.size() > m_scoreLocs.size()) {
+                trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
+                    new Pair<ReefLocs, HPStation>(
+                        m_scoreLocs.get(m_scoreLocs.size() - 1), 
+                        m_hpStations.get(m_hpStations.size() - 1)
+                    )
+                )));
+            }
 
-        return trajsList;
+            return trajsList;
+        } catch (Exception e) {
+            return trajsList;
+        }
+       
     }
 
     private Command scoreCmd(EleHeight eleHeight) {
-        // return Commands.waitSeconds(5).alongWith(Commands.print("YAHOO in the score cmd"));
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
+            logTimer("CoralScored", () -> autonTimer),
             m_superstructure.autonScoreReq(),
-            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate()),
-            Commands.print("YAHOO in the score cmd with height " + eleHeight)
-            // Commands.waitSeconds(5)
+            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
         );
     }
+
+    
 
     public AutoRoutine leaveOnly() {
         AutoRoutine leaveAuto = m_autoFactory.newRoutine("leave only");
@@ -122,40 +191,21 @@ public class WaltAutonFactory {
         AutoTrajectory leave = m_routine.trajectory("One_Meter");
         leaveAuto.active().onTrue(
             Commands.sequence(
-                Commands.parallel(
-                    leave.resetOdometry(),
-                    Commands.print("whats up gang we're moving one meter rahhhhhh")
-                ),
-                leave.cmd(),
-                Commands.print("yo we're actually moving now RAHHHH MF")
+                Commands.runOnce(() -> autonTimer.restart()),
+                leave.resetOdometry(),
+                leave.cmd()
             )
         );
 
         return leaveAuto;
     }
 
-    public AutoRoutine scoreOneSlowly() {
-        AutoRoutine scoreOneSlowly = m_autoFactory.newRoutine("score one");
-        AutoTrajectory scoreOneSadnessTime = m_routine.trajectory("Start_Mid_G");
-        scoreOneSlowly.active().onTrue(
-            Commands.sequence(
-                Commands.print("starting score-one"),
-                scoreOneSadnessTime.resetOdometry(),
-                Commands.print("done resetting odometry, running path"),
-                scoreOneSadnessTime.cmd(),
-                Commands.print("done running path, scoring")
-            )
-        );
-
-        scoreOneSadnessTime.done().onTrue(
-            scoreCmd(EleHeight.L4)
-        );
-
-        return scoreOneSlowly;
-    }
-
     public AutoRoutine generateAuton() {
-        if(!weAtLeastScoreOneChecker()) {
+        if (doNothing()) {
+            return m_routine;
+        }
+
+        if (areWeLeaving()) {
             Elastic.sendNotification(leaveStartZoneOnlySadness);   
             return leaveOnly();
         }
@@ -167,14 +217,54 @@ public class WaltAutonFactory {
         var theTraj = StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0)));
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
+
+        if (onlyPreload()) {
+            if(m_pushTime) {
+                m_routine.active().onTrue(
+                    Commands.sequence(
+                        SimpleAutons.pushPartner(m_drivetrain),
+                        firstScoreTraj.cmd()
+                    )
+                );
+            } else {
+                m_routine.active().onTrue(
+                Commands.sequence(
+                        Commands.runOnce(() -> autonTimer.restart()),
+                        firstScoreTraj.resetOdometry(),
+                        firstScoreTraj.cmd()
+                    )
+                );
+            }
+
+            firstScoreTraj.done()
+            .onTrue(
+                Commands.sequence(
+                    scoreCmd(m_heights.get(heightCounter))
+                )
+            );
+
+            return m_routine;
+        }
+
+        // normal cycle logic down here
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
-        m_routine.active().onTrue(
+        if(m_pushTime) {
+            m_routine.active().onTrue(
+                Commands.sequence(
+                    SimpleAutons.pushPartner(m_drivetrain),
+                    firstScoreTraj.cmd()
+                )
+            );
+        } else {
+            m_routine.active().onTrue(
             Commands.sequence(
-                firstScoreTraj.resetOdometry(),
-                firstScoreTraj.cmd()
-            )
-        );
+                    Commands.runOnce(() -> autonTimer.restart()),
+                    firstScoreTraj.resetOdometry(),
+                    firstScoreTraj.cmd()
+                )
+            );
+        }
 
         firstScoreTraj.done()
             .onTrue(
@@ -190,7 +280,6 @@ public class WaltAutonFactory {
         
         int allTrajIdx = 0;
         while (allTrajIdx < allTheTrajs.size()) {
-            System.out.println("in the while loop");
             
             Command trajCmd = Commands.none();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
@@ -199,10 +288,7 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    Commands.print("b4 checking if bottom beam breaks"),
-                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    // Commands.waitSeconds(3),
-                    Commands.print("Bottom beam break has broken"),
+                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
                     trajCmd,
                     Commands.print("Running Path: " + trajCmd)
                 ));
@@ -210,7 +296,6 @@ public class WaltAutonFactory {
             allTrajIdx++;
             
             if (allTrajIdx > allTheTrajs.size() - 1) {
-                System.out.println("sad times");
                 break;
             }
 
@@ -222,6 +307,7 @@ public class WaltAutonFactory {
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(
                     Commands.sequence(
+                        Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                         scoreCmd(m_heights.get(heightCounter)),
                         Commands.parallel(
                             Commands.runOnce(() -> heightCounter++),

@@ -2,13 +2,19 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
+import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
@@ -28,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import static frc.robot.Constants.ElevatorK.*;
 
@@ -55,7 +62,7 @@ public class Elevator extends SubsystemBase {
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
-    private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-1);
+    private VoltageOut m_voltageCtrlReq = new VoltageOut(0);
 
     private boolean m_isCoast = false;
     private GenericEntry nte_coast = Shuffleboard.getTab(kLogTab)
@@ -87,6 +94,47 @@ public class Elevator extends SubsystemBase {
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
     private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
+
+    /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
+    private final SysIdRoutine m_sysIdRoutineLinear = new SysIdRoutine(
+        new SysIdRoutine.Config(
+            null,        // Use default ramp rate (1 V/s)
+            Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
+            null,        // Use default timeout (10 s)
+            // Log state with SignalLogger class
+            state -> SignalLogger.writeString("SysIdLinear_State", state.toString())
+        ),
+        new SysIdRoutine.Mechanism(
+            output -> m_frontMotor.setControl(m_voltageCtrlReq.withOutput(output)),
+            null,
+            this
+        )
+    );
+
+    /* The SysId routine to test */
+    private final SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineLinear;
+
+    /**
+     * Runs the SysId Quasistatic test in the given direction for the routine
+     * specified by {@link #m_sysIdRoutineToApply}.
+     *
+     * @param direction Direction of the SysId Quasistatic test
+     * @return Command to run
+     */
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return m_sysIdRoutineToApply.quasistatic(direction);
+    }
+
+    /**
+     * Runs the SysId Dynamic test in the given direction for the routine
+     * specified by {@link #m_sysIdRoutineToApply}.
+     *
+     * @param direction Direction of the SysId Dynamic test
+     * @return Command to run
+     */
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return m_sysIdRoutineToApply.dynamic(direction);
+    }
 
     public Elevator() {
         m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
@@ -150,9 +198,9 @@ public class Elevator extends SubsystemBase {
 
     public Command testVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
-            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
+            m_frontMotor.setControl(m_voltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
         }, () -> {
-            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            m_frontMotor.setControl(m_voltageCtrlReq.withOutput(0));
         }
         );
     }
@@ -161,7 +209,7 @@ public class Elevator extends SubsystemBase {
         Runnable init = () -> {
             System.out.println("Elevator Zero INIT");
             m_frontMotor.getConfigurator().apply(kSoftLimitSwitchDisabledConfig);
-            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(-1));
+            m_frontMotor.setControl(m_voltageCtrlReq.withOutput(-1));
         };
         Runnable execute = () -> {};
         Consumer<Boolean> onEnd = (Boolean interrupted) -> {
@@ -170,7 +218,7 @@ public class Elevator extends SubsystemBase {
                 return;
             }
             m_frontMotor.setPosition(0);
-            m_frontMotor.setControl(zeroingVoltageCtrlReq.withOutput(0));
+            m_frontMotor.setControl(m_voltageCtrlReq.withOutput(0));
             removeDefaultCommand();
             m_isHomed = true;
             m_frontMotor.getConfigurator().apply(kSoftwareLimitConfigs);
@@ -218,19 +266,21 @@ public class Elevator extends SubsystemBase {
         m_elevatorMech2d.setLength(m_elevatorSim.getPositionMeters());
     }
 
+    private static final double kInch = 0.169;
 
     //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
-        HOME(0.1),
+        HOME(0.3),
         L1(5.590325),
-        L2(5.653564 + 0.169),
-        L3(8.451660 + (0.169 / 2)),
+        L2(5.653564 + kInch),
+        L3(8.451660 + (kInch / 2)),
         L4(12.89),
-        CLIMB_UP(1.590325), // this height will move the robot up for climb
-        CLIMB_DOWN(5.090325), //this height will ove robot down for climb
-        HP(2.08); //human player station intake height
+        CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
+        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will ove robot down for climb
+        HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
+        
 
         private EleHeight(double rotations){
             this.rotations = rotations;

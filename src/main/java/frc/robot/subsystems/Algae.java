@@ -246,7 +246,7 @@ public class Algae extends SubsystemBase {
         return hasAlgaeDebouncer.calculate(m_intake.getStatorCurrent().getValueAsDouble() >= kHasAlgaeCurrent);
     }
 
-    private Command changeStateCmd(State newState) {
+    public Command changeStateCmd(State newState) {
         return Commands.runOnce(() -> {
             if (newState == m_state) {
                 return;
