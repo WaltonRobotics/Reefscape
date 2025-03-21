@@ -269,9 +269,8 @@ public class WaltAutonFactory {
         firstScoreTraj.done()
             .onTrue(
                 Commands.sequence(
-                    scoreCmd(m_heights.get(heightCounter)),
+                    scoreCmd(m_heights.get(heightCounter++)),
                     Commands.parallel(
-                        Commands.runOnce(() -> heightCounter++),
                         allTheTrajs.get(0).cmd(),
                         Commands.print("Running Path: " + allTheTrajs.get(0).cmd()) //takes you to the HP
                     )
