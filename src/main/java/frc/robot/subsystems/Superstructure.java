@@ -244,29 +244,9 @@ public class Superstructure {
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
     // stuff will prolly get added as i need them
     private void configureSimTransitions() {
-        (stateTrg_intaking.and(() -> Robot.isSimulation())).debounce(0.5)
-            .onTrue(simIntook());
-        (stateTrg_scoreReady.and(() -> Robot.isSimulation())).debounce(0.5)
-            .onTrue(simScored());
-        // (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
-        //     .onTrue(simScored());
-
-        simTransTrg_intook
-            .onTrue(
-                Commands.sequence(
-                    changeStateCmd(State.INTOOK),
-                    Commands.runOnce(() -> m_simIntook = false)
-                )
-            );
-
-        simTransTrg_scored
-            .onTrue(
-                Commands.sequence(
-                    changeStateCmd(State.SCORING),
-                    Commands.waitSeconds(.5),
-                    changeStateCmd(State.SCORED),
-                    Commands.runOnce(() -> m_simScored = false)
-                ));
+        // ((stateTrg_intaking.and(() -> Robot.isSimulation()).and()).debounce(0.05))
+        //     .onTrue(changeStateCmd(State.INTOOK));
+        // (stateTrg_intook.and(trg_autonL1Req).and(() -> Robot.isSimulation()))
     }
 
     private void configureStateActions() {

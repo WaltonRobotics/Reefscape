@@ -211,7 +211,8 @@ public class WaltAutonFactory {
 
         return Commands.parallel(
             runAutoTrajCmd(firstPath),
-            immediateEleMoveCmd
+            immediateEleMoveCmd,
+            Commands.print("first scoring path cmd done")
         );
     }
 
@@ -262,9 +263,10 @@ public class WaltAutonFactory {
         // normal cycle logic down here
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
         var postFirstCmd = Commands.print("No additional cycles, auton done!");
+        Optional<AutoTrajectory> firstLoopCycleTrajOpt = Optional.empty();
         if (allTheTrajs.size() > 0) {
-            var firstLoopCycleTraj = allTheTrajs.get(0);
-            postFirstCmd = firstLoopCycleTraj.cmd();
+            firstLoopCycleTrajOpt = Optional.of(allTheTrajs.get(0));
+            postFirstCmd = runAutoTrajCmd(firstLoopCycleTrajOpt.get());
         }
 
         firstScoreTraj.done()
@@ -274,10 +276,17 @@ public class WaltAutonFactory {
             )
         );
 
+        if (allTheTrajs.size() == 0) {
+            return m_routine;
+        }
+
+        AutoTrajectory firstLoopCycleTraj = firstLoopCycleTrajOpt.get();
+
         // increment height counter after first score
         heightCounter++;
 
         int allTrajIdx = 0;
+        AutoTrajectory lastTraj = firstLoopCycleTraj;
         while (allTrajIdx < allTheTrajs.size()) {
             Optional<AutoTrajectory> theTrajOpt = Optional.empty();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
@@ -285,12 +294,17 @@ public class WaltAutonFactory {
             }
 
             if (theTrajOpt.isPresent()) {
-                var theTraj = theTrajOpt.get();
-                allTheTrajs.get(allTrajIdx).done().and(m_superstructure.getTopBeamBreak().debounce(0.08))
-                    .onTrue(runAutoTrajCmd(theTraj));
+                var theScoringTraj = theTrajOpt.get();
+                lastTraj.done().and(m_superstructure.trg_hasCoral)
+                    .onTrue(
+                        Commands.parallel(
+                            runAutoTrajCmd(theScoringTraj),
+                            Commands.print("running path back to scoring")
+                        ));
 
                 // increment for next path to be the HP path
                 allTrajIdx++;
+                lastTraj = theScoringTraj;
             } else {
                 break;
             }
@@ -299,23 +313,24 @@ public class WaltAutonFactory {
                 break;
             }
 
-            Optional<AutoTrajectory> nextTrajOpt = Optional.empty();
+            Optional<AutoTrajectory> sourceTrajOpt = Optional.empty();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
-                nextTrajOpt = Optional.of(allTheTrajs.get(allTrajIdx + 1));
+                sourceTrajOpt = Optional.of(allTheTrajs.get(allTrajIdx + 1));
             }
 
-            if (nextTrajOpt.isPresent()) {
-                var nextTraj = nextTrajOpt.get();
+            if (sourceTrajOpt.isPresent()) {
+                var sourceTraj = sourceTrajOpt.get();
                 var thisLocEleHeight = m_heights.get(heightCounter);
 
-                allTheTrajs.get(allTrajIdx).done().and(m_superstructure.getTopBeamBreak().debounce(0.08))
+                lastTraj.done().and(m_superstructure.getTopBeamBreak().debounce(0.08))
                     .onTrue(Commands.sequence(
                         optimalScoreCmd(thisLocEleHeight),
-                        runAutoTrajCmd(nextTraj))
+                        runAutoTrajCmd(sourceTraj))
                     );
 
                 allTrajIdx++;
                 heightCounter++;
+                lastTraj = sourceTraj;
             } else {
                 break;
             }
