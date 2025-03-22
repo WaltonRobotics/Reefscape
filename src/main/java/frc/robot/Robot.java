@@ -182,7 +182,8 @@ public class Robot extends TimedRobot {
       superstructure = new Superstructure(
       coral,
       finger,
-      elevator, 
+      elevator,
+      Optional.of(eleForwardsCam),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -199,7 +200,8 @@ public class Robot extends TimedRobot {
       superstructure = new Superstructure(
       coral,
       finger,
-      elevator, 
+      elevator,
+      Optional.empty(),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -224,8 +226,8 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-    configureBindings();
-    // configureTestBindings();
+    // configureBindings();
+    configureTestBindings();
   }
 
   private void configureTestBindings() {
