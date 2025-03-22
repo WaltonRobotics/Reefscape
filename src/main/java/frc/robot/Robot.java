@@ -226,8 +226,8 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-    // configureBindings();
-    configureTestBindings();
+    configureBindings();
+    // configureTestBindings();
   }
 
   private void configureTestBindings() {
