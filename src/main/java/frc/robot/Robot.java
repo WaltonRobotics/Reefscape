@@ -626,6 +626,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
+          superstructure.simHasCoralToggle(),
           chooserCommand          
       );
   }

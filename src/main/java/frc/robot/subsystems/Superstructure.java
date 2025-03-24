@@ -48,6 +48,7 @@ public class Superstructure {
 
     private boolean m_simIntook = false;
     private boolean m_simScored = false;
+    private boolean m_simHasCoral = false;
 
     /* state transitions */
     /* autoTrgs */
@@ -66,6 +67,8 @@ public class Superstructure {
     private final Trigger trg_teleopScoreReq;
     private final Trigger trg_algaeRemovalL2Req;
     private final Trigger trg_algaeRemovalL3Req;
+    /* simTrigs */
+    public final Trigger simTrg_hasCoral = new Trigger(() -> m_simHasCoral);
 
     /* teleopTrgs: overrides */
     private final Trigger trg_inOverride;
@@ -176,7 +179,7 @@ public class Superstructure {
         trg_algaeRemovalL2Req = algaeRemovalL2Req;
         trg_algaeRemovalL3Req = algaeRemovalL3Req;
         /* overrides */
-        trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor);
+        trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor).or(simTrg_hasCoral);
         trg_inOverride = inOverride;
 
         /* binded things */
@@ -551,6 +554,14 @@ public class Superstructure {
 
     public Command simScored() {
         return Commands.runOnce(() -> m_simScored = true);
+    }
+
+    public Command simHasCoralToggle() {
+        if(Robot.isSimulation()) {
+            return Commands.runOnce(() -> m_simHasCoral = !m_simHasCoral);
+        } else {
+            return Commands.none();
+        }
     }
 
     /* rumblin' */
