@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj.Timer;
 
 import static frc.robot.Constants.ElevatorK.*;
 
@@ -57,6 +58,7 @@ public class Elevator extends SubsystemBase {
     private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
 
     private double m_desiredHeight = 0; // needs to be logged
+    private double m_requestStartTime = -1.0; //temporary value i guess but in reality its just to make sure that runs correctly
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
@@ -94,6 +96,7 @@ public class Elevator extends SubsystemBase {
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
     private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
+    private final DoubleLogger log_eleTimings = WaltLogger.logDouble(kLogTab, "timeFromReqToHeight");
 
     /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
     private final SysIdRoutine m_sysIdRoutineLinear = new SysIdRoutine(
@@ -187,13 +190,29 @@ public class Elevator extends SubsystemBase {
     public Command toHeight(double rotations) {
         return runOnce(
             () -> {
+                m_requestStartTime = Timer.getFPGATimestamp();
                 m_desiredHeight = rotations;
                 // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
                 m_MMVRequest = m_MMVRequest.withPosition(rotations);
                 log_elevatorDesiredPosition.accept(rotations);
                 m_frontMotor.setControl(m_MMVRequest);
             }
-        ).until(() -> nearSetpoint());
+        ).until(() -> nearSetpoint())
+
+        /* LOGS THE TIME IT TOOK TO REACH HEIGHT FROM THE REQUEST */
+        .finallyDo(() -> {
+            double endTime = Timer.getFPGATimestamp();
+            double timeToHeight = endTime - m_requestStartTime;
+
+            //logging time it takes to get 
+            log_eleTimings.accept(timeToHeight);
+
+            /* PRINTS OUT HOW LONG IT TOOK (just for safekeeping?) also TODO: make a failsafe print statement if the ele gets interrupted or sumn */
+            System.out.println("ele reached height in" + timeToHeight + "seconds");
+
+            // resets value until next time that the request goes through
+            m_requestStartTime = -1.0;
+        });
     }
 
     public Command testVoltageControl(DoubleSupplier stick) {
