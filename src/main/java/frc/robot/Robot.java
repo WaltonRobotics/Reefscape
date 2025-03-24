@@ -383,13 +383,13 @@ public class Robot extends TimedRobot {
   }
 
   /* WaltAutonBuilder thingies */
-  private void configWaltAutonBuilder() {
-    WaltAutonBuilder.cyclesChooser.onChange(cyclesConsumer);
-    WaltAutonBuilder.startingPositionChooser.onChange(startingPositionConsumer);
-    WaltAutonBuilder.startingHeightChooser.onChange(startingHeightConsumer);
-    WaltAutonBuilder.firstScoringChooser.onChange(initialScoringPositionConsumer);
-    WaltAutonBuilder.firstToHPStationChooser.onChange(initialHPStationConsumer);
-  }
+  // private void configWaltAutonBuilder() {
+  //   WaltAutonBuilder.cyclesChooser.onChange(cyclesConsumer);
+  //   WaltAutonBuilder.startingPositionChooser.onChange(startingPositionConsumer);
+  //   WaltAutonBuilder.startingHeightChooser.onChange(startingHeightConsumer);
+  //   WaltAutonBuilder.firstScoringChooser.onChange(initialScoringPositionConsumer);
+  //   WaltAutonBuilder.firstToHPStationChooser.onChange(initialHPStationConsumer);
+  // }
 
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
@@ -405,8 +405,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit(){
-    WaltAutonBuilder.configureFirstCycle();
-    configWaltAutonBuilder();
+    // WaltAutonBuilder.configureFirstCycle();
+    // configWaltAutonBuilder();
     
     addPeriodic(() -> superstructure.periodic(), 0.01);
     robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
@@ -456,48 +456,48 @@ public class Robot extends TimedRobot {
 
       // ---- CUSTOM CYCLE AUTON
       // continues checking choosers for the correct values if the CUSTOM CYCLE READY button HAS NOT been pressed
-      if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
-        if (numCycleChange) {
-          WaltAutonBuilder.updateNumCycles();
-          WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
-          numCycleChange = false;
-        }
-        if (startingPositionChange) {
-          WaltAutonBuilder.updateStartingPosition();
-          WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
-          startingPositionChange = false;
-        }
-        if (initialHPStationChange) {
-          WaltAutonBuilder.updateInitalHPStation();
-          initialHPStationChange = false;
-        }
-        if (firstScoringPositionChange) {
-          WaltAutonBuilder.updateInitialScoringPosition();
-          firstScoringPositionChange = false;
-        }
-        if (startingHeightChange) {
-          WaltAutonBuilder.updateStartingHeight();
-          startingHeightChange = false;
-        }
-      }
+      // if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
+      //   if (numCycleChange) {
+      //     WaltAutonBuilder.updateNumCycles();
+      //     WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+      //     numCycleChange = false;
+      //   }
+      //   if (startingPositionChange) {
+      //     WaltAutonBuilder.updateStartingPosition();
+      //     WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+      //     startingPositionChange = false;
+      //   }
+      //   if (initialHPStationChange) {
+      //     WaltAutonBuilder.updateInitalHPStation();
+      //     initialHPStationChange = false;
+      //   }
+      //   if (firstScoringPositionChange) {
+      //     WaltAutonBuilder.updateInitialScoringPosition();
+      //     firstScoringPositionChange = false;
+      //   }
+      //   if (startingHeightChange) {
+      //     WaltAutonBuilder.updateStartingHeight();
+      //     startingHeightChange = false;
+      //   }
+      // }
 
-      if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
-        waltAutonFactory = Optional.of(new WaltAutonFactory(
-          elevator,
-          autoFactory, 
-          superstructure, 
-          drivetrain,
-          WaltAutonBuilder.startingPosition, 
-          WaltAutonBuilder.getCycleScoringLocs(), 
-          WaltAutonBuilder.getCycleEleHeights(), 
-          WaltAutonBuilder.getCycleHPStations(),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
-        ));
+      // if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
+      //   waltAutonFactory = Optional.of(new WaltAutonFactory(
+      //     elevator,
+      //     autoFactory, 
+      //     superstructure, 
+      //     drivetrain,
+      //     WaltAutonBuilder.startingPosition, 
+      //     WaltAutonBuilder.getCycleScoringLocs(), 
+      //     WaltAutonBuilder.getCycleEleHeights(), 
+      //     WaltAutonBuilder.getCycleHPStations(),
+      //     WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+      //   ));
 
-        autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
-        WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
-      }
+      //   autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
+      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
+      //   WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
+      // }
     
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
