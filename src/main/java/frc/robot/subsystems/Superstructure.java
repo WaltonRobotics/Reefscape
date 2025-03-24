@@ -4,6 +4,7 @@ import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.RobotK.*;
 
+import java.util.Optional;
 import java.util.function.DoubleConsumer;
 
 import com.ctre.phoenix6.Utils;
@@ -18,6 +19,7 @@ import static frc.robot.subsystems.Elevator.EleHeight.*;
 import frc.robot.Robot;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.vision.Vision;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -28,6 +30,7 @@ public class Superstructure {
     private final Coral m_coral;
     private final Finger m_finger;
     private final Elevator m_ele;
+    private final Optional<Vision> m_cam1;
 
     public final EventLoop stateEventLoop = new EventLoop();
     private State m_state = State.IDLE;
@@ -134,6 +137,7 @@ public class Superstructure {
         Coral coral,
         Finger finger,
         Elevator ele,
+        Optional<Vision> cam1,
         Trigger eleToHPReq,
         Trigger L1Req,
         Trigger L2Req,
@@ -150,6 +154,7 @@ public class Superstructure {
         m_coral = coral;
         m_finger = finger;
         m_ele = ele;
+        m_cam1 = cam1;
         
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
@@ -180,6 +185,14 @@ public class Superstructure {
         configureStateTransitions();
         configureSimTransitions();
         configureStateActions();
+    }
+
+    private Command takeCam1Snapshots() {
+        return Commands.runOnce(() -> {
+            if (m_cam1.isPresent()) {
+                m_cam1.get().takeBothSnapshots();
+            }
+        });
     }
     
     private void configureStateTransitions() {
@@ -214,7 +227,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
-        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.1))
+        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.2))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         
         (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
@@ -286,7 +299,7 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> HP),
-                    Commands.runOnce(() -> m_autonEleToHPReq = false)   
+                    Commands.runOnce(() -> m_autonEleToHPReq = false)
                 )
             );
 
@@ -311,7 +324,7 @@ public class Superstructure {
                             Commands.waitSeconds(0.05)
                         )
                     )
-                )
+                ).alongWith(takeCam1Snapshots())
             );
         
         stateTrg_intook
@@ -351,7 +364,7 @@ public class Superstructure {
 
         stateTrg_scoreReady
             .onTrue(
-                Commands.print("RUMBLE coming to a controller near you soon...")
+                Commands.print("RUMBLE coming to a controller near you soon...").alongWith(takeCam1Snapshots())
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
@@ -362,17 +375,18 @@ public class Superstructure {
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
                     m_coral.stopCoralMotorCmd(),
                     Commands.print("in scoring the state")
-                )
+                ).alongWith(takeCam1Snapshots())
             );
 
-        stateTrg_scored
-            .onTrue(
-                Commands.sequence(
-                    Commands.waitSeconds(0.2),
-                    Commands.print("RUMBLE coming to a controller near you soon...")
-                )
-                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
-            );
+        // CURRENTLY UNUSED
+        // stateTrg_scored
+        //     .onTrue(
+        //         Commands.sequence(
+        //             Commands.waitSeconds(0.2),
+        //             Commands.print("RUMBLE coming to a controller near you soon...")
+        //         )
+        //         // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+        //     );
 
         stateTrg_algaeRemovalL2
             .onTrue(

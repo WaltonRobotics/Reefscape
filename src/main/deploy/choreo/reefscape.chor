@@ -56,8 +56,8 @@
    "movingSpeed":{
     "dimension":"LinVel",
     "var":{
-     "exp":"2.2 m / s",
-     "val":2.2
+     "exp":"2.6 m / s",
+     "val":2.6
     }
    },
    "offset":{
@@ -72,6 +72,13 @@
     "var":{
      "exp":"1 m / s",
      "val":1.0
+    }
+   },
+   "startSpeed":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"2.2 m / s",
+     "val":2.2
     }
    }
   },
