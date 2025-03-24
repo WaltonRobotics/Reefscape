@@ -178,6 +178,7 @@ public class WaltAutonFactory {
         return Commands.sequence(
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
+            m_superstructure.simHasCoralToggle(),
             logTimer("CoralScored", () -> autonTimer),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
         );
@@ -231,7 +232,7 @@ public class WaltAutonFactory {
                 m_routine.active().onTrue(
                 Commands.sequence(
                         Commands.runOnce(() -> autonTimer.restart()),
-                        // firstScoreTraj.resetOdometry(),
+                        firstScoreTraj.resetOdometry(),
                         firstScoreTraj.cmd(),
                         m_drivetrain.stopCmd()
                     )
@@ -254,6 +255,7 @@ public class WaltAutonFactory {
         if(m_pushTime) {
             m_routine.active().onTrue(
                 Commands.sequence(
+
                     SimpleAutons.pushPartner(m_drivetrain),
                     firstScoreTraj.cmd(),
                     m_drivetrain.stopCmd()
@@ -263,7 +265,7 @@ public class WaltAutonFactory {
             m_routine.active().onTrue(
             Commands.sequence(
                     Commands.runOnce(() -> autonTimer.restart()),
-                    // firstScoreTraj.resetOdometry(),
+                    firstScoreTraj.resetOdometry(),
                     firstScoreTraj.cmd(),
                     m_drivetrain.stopCmd()
                 )
@@ -289,7 +291,9 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).done()
                 .onTrue(Commands.sequence(
-                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
+                    m_superstructure.simHasCoralToggle(),
+                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)
+                        .or(m_superstructure.simTrg_hasCoral)),
                     trajCmd,
                     m_drivetrain.stopCmd(),
                     Commands.print("Running Path: " + trajCmd)
