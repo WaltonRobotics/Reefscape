@@ -58,7 +58,7 @@ public class Elevator extends SubsystemBase {
     private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
 
     private double m_desiredHeight = 0; // needs to be logged
-    private double m_requestStartTime = -1.0; //temporary value i guess but in reality its just to make sure that runs correctly
+    private double m_requestStartTime = 0; //temporary value i guess but in reality its just to make sure that runs correctly
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
@@ -201,11 +201,10 @@ public class Elevator extends SubsystemBase {
 
         /* LOGS THE TIME IT TOOK TO REACH HEIGHT FROM THE REQUEST */
         .finallyDo(() -> {
-            double endTime = Timer.getFPGATimestamp();
-            double timeToHeight = endTime - m_requestStartTime;
+            double timeToHeight = Timer.getFPGATimestamp();
 
             //logging time it takes to get 
-            log_eleTimings.accept(timeToHeight);
+            log_eleTimings.accept(Timer.getFPGATimestamp() - m_requestStartTime);
 
             /* PRINTS OUT HOW LONG IT TOOK (just for safekeeping?) also TODO: make a failsafe print statement if the ele gets interrupted or sumn */
             System.out.println("ele reached height in" + timeToHeight + "seconds");
