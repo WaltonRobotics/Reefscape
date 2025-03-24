@@ -22,8 +22,8 @@
     {"x":{"exp":"HPRight.x", "val":1.4673705101013184}, "y":{"exp":"HPRight.y", "val":0.7045616507530212}, "heading":{"exp":"HPRight.heading", "val":0.9332802447333852}, "intervals":7, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.562485694885254 m", "val":1.562485694885254}, "y":{"exp":"0.8192969560623169 m", "val":0.8192969560623169}, "heading":{"exp":"HPRight.heading", "val":0.9332802447333852}, "intervals":57, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.841094017028809 m", "val":5.841094017028809}, "y":{"exp":"3.059731960296631 m", "val":3.059731960296631}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":34, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
-    {"x":{"exp":"5.9500041007995605 m", "val":5.9500041007995605}, "y":{"exp":"G.y", "val":3.775489447021484}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":8, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"G.x", "val":5.772265434265137}, "y":{"exp":"G.y", "val":3.775489447021484}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":8, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"5.9500041007995605 m", "val":5.9500041007995605}, "y":{"exp":"G.y", "val":3.775334358215332}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":8, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"G.x", "val":6.057407855987549}, "y":{"exp":"G.y", "val":3.775334358215332}, "heading":{"exp":"G.heading", "val":3.141592653589793}, "intervals":8, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
