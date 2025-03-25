@@ -48,11 +48,11 @@ public class WaltAutonBuilder {
     public static HPStation hpStation = HPStation.HP_LEFT;
 
     static {
-        SmartDashboard.putData("Number of Cycles", cyclesChooser);
-        SmartDashboard.putData("Starting Position Chooser", startingPositionChooser);   
-        SmartDashboard.putData("Starting Elevator Height Chooser", startingHeightChooser);
-        SmartDashboard.putData("First Scoring Chooser", firstScoringChooser);
-        SmartDashboard.putData("First HP Station", firstToHPStationChooser);
+        // SmartDashboard.putData("Number of Cycles", cyclesChooser);
+        // SmartDashboard.putData("Starting Position Chooser", startingPositionChooser);   
+        // SmartDashboard.putData("Starting Elevator Height Chooser", startingHeightChooser);
+        // SmartDashboard.putData("First Scoring Chooser", firstScoringChooser);
+        // SmartDashboard.putData("First HP Station", firstToHPStationChooser);
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
                 .add("Make", false)
