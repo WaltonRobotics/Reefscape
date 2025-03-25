@@ -633,6 +633,23 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    if (autonNotMade) {
+        // set the auton to rightside by default if nothing is picked and auton j starts
+        waltAutonFactory = Optional.of(
+            new WaltAutonFactory(
+                elevator,
+                autoFactory, 
+                superstructure, 
+                drivetrain,
+                StartingLocs.RIGHT, 
+                new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
+                new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
+                new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
+                WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+            )
+        );
+    }
+
     Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
     m_autonomousCommand = autonCmdBuilder(chosen);
 
