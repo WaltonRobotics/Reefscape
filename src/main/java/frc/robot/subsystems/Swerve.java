@@ -317,8 +317,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 () -> getState().Speeds, 
                 this::pathPlannerControl, 
                 new PPHolonomicDriveController(
-                    new PIDConstants(7.0, 0.0, 0.2), // Translation PID constants
-                    new PIDConstants(19.0, 0.0, 0.2)  // Rotation PID constants
+                    AutoAlignmentK.kTranslationPIDConstants, // Translation PID constants
+                    AutoAlignmentK.kRotationPIDConstants  // Rotation PID constants
                 ), 
                 AutoAlignmentK.kRobotConfig, 
                 () -> false, 

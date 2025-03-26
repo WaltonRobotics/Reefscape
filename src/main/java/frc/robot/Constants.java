@@ -24,7 +24,6 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -46,6 +45,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorPhaseValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathConstraints;
 
@@ -558,6 +558,8 @@ public class Constants {
             new ModuleConfig(1.905, TunerConstants.kSpeedAt12Volts.in(MetersPerSecond), 
                 1, DCMotor.getKrakenX60Foc(1), 100.0, 1), 
             Units.inchesToMeters(11.375) * 2);
+        public static final PIDConstants kTranslationPIDConstants = new PIDConstants(7.0, 0.0, 0.2);
+        public static final PIDConstants kRotationPIDConstants = new PIDConstants(10.0, 0.0, 0.2);
 
         public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
         public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
