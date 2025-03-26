@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
+import frc.robot.autons.TrajsAndLocs;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -143,6 +144,10 @@ public class Robot extends TimedRobot {
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
   private String autonName = "No Auton Made";
+
+  private ArrayList<ReefLocs> scoringLocs = new ArrayList<ReefLocs>();
+  private ArrayList<EleHeight> eleHeights = new ArrayList<EleHeight>();
+  private ArrayList<HPStation> hpStations = new ArrayList<HPStation>();
 
   /* WaltAutonBuilder trigs */
   // When the user selects a different option, this thing runs
@@ -403,6 +408,38 @@ public class Robot extends TimedRobot {
 		} 
 	}
 
+  /* RESETS THE AUTON LISTS */
+  private void resetAutonLists() {
+    scoringLocs = new ArrayList<ReefLocs>();
+    eleHeights = new ArrayList<EleHeight>();
+    hpStations = new ArrayList<HPStation>();
+  }
+
+  private String makeAutonName() {
+    String output = "";
+    int numScoringLocs = scoringLocs.size();
+    int numHPStations = hpStations.size();
+    int iterator = 0;
+
+    if (numScoringLocs == numHPStations) {
+      // if the auton ends at an HP Station
+      for (int i = 0; i < numScoringLocs - 1; i++) {
+        output += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
+        iterator++;
+      }
+      output += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString() + "-" + hpStations.get(iterator).toString();
+    } else {
+      // assumes there is one less HP station than scoring loc
+      for (int i = 0; i < numHPStations; i++) {
+        output += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
+        iterator++;
+      }
+      output += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString();
+    }
+
+    return output;
+  }
+
   @Override
   public void robotInit(){
     WaltAutonBuilder.configureFirstCycle();
@@ -446,7 +483,24 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    // set the auton to rightside by default if nothing is picked and auton j starts
+    waltAutonFactory = Optional.of(
+      new WaltAutonFactory(
+        elevator,
+        autoFactory, 
+        superstructure, 
+        drivetrain,
+        StartingLocs.RIGHT, 
+        new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
+        new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
+        new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
+        WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+      )
+    );
+
+    AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+  }
 
   @Override
   public void disabledPeriodic() {
@@ -454,50 +508,50 @@ public class Robot extends TimedRobot {
       // check if the AUTON READY button has been pressed
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
 
-      // ---- CUSTOM CYCLE AUTON
+      // ---- CUSTOM CYCLE AUTON (NO LONGER USING)
       // continues checking choosers for the correct values if the CUSTOM CYCLE READY button HAS NOT been pressed
-      if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
-        if (numCycleChange) {
-          WaltAutonBuilder.updateNumCycles();
-          WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
-          numCycleChange = false;
-        }
-        if (startingPositionChange) {
-          WaltAutonBuilder.updateStartingPosition();
-          WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
-          startingPositionChange = false;
-        }
-        if (initialHPStationChange) {
-          WaltAutonBuilder.updateInitalHPStation();
-          initialHPStationChange = false;
-        }
-        if (firstScoringPositionChange) {
-          WaltAutonBuilder.updateInitialScoringPosition();
-          firstScoringPositionChange = false;
-        }
-        if (startingHeightChange) {
-          WaltAutonBuilder.updateStartingHeight();
-          startingHeightChange = false;
-        }
-      }
+      // if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
+      //   if (numCycleChange) {
+      //     WaltAutonBuilder.updateNumCycles();
+      //     WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
+      //     numCycleChange = false;
+      //   }
+      //   if (startingPositionChange) {
+      //     WaltAutonBuilder.updateStartingPosition();
+      //     WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
+      //     startingPositionChange = false;
+      //   }
+      //   if (initialHPStationChange) {
+      //     WaltAutonBuilder.updateInitalHPStation();
+      //     initialHPStationChange = false;
+      //   }
+      //   if (firstScoringPositionChange) {
+      //     WaltAutonBuilder.updateInitialScoringPosition();
+      //     firstScoringPositionChange = false;
+      //   }
+      //   if (startingHeightChange) {
+      //     WaltAutonBuilder.updateStartingHeight();
+      //     startingHeightChange = false;
+      //   }
+      // }
 
-      if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
-        waltAutonFactory = Optional.of(new WaltAutonFactory(
-          elevator,
-          autoFactory, 
-          superstructure, 
-          drivetrain,
-          WaltAutonBuilder.startingPosition, 
-          WaltAutonBuilder.getCycleScoringLocs(), 
-          WaltAutonBuilder.getCycleEleHeights(), 
-          WaltAutonBuilder.getCycleHPStations(),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
-        ));
+      // if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
+      //   waltAutonFactory = Optional.of(new WaltAutonFactory(
+      //     elevator,
+      //     autoFactory, 
+      //     superstructure, 
+      //     drivetrain,
+      //     WaltAutonBuilder.startingPosition, 
+      //     WaltAutonBuilder.getCycleScoringLocs(), 
+      //     WaltAutonBuilder.getCycleEleHeights(), 
+      //     WaltAutonBuilder.getCycleHPStations(),
+      //     WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+      //   ));
 
-        autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
-        WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
-      }
+      //   autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
+      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
+      //   WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
+      // }
     
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
@@ -519,24 +573,52 @@ public class Robot extends TimedRobot {
       }
 
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
+        resetAutonLists();
+
+        scoringLocs.add(REEF_E);
+        scoringLocs.add(REEF_D);
+        scoringLocs.add(REEF_C);
+
+        eleHeights.add(EleHeight.L2);
+        eleHeights.add(EleHeight.L4);
+        eleHeights.add(EleHeight.L4);
+
+        hpStations.add(HPStation.HP_RIGHT);
+        hpStations.add(HPStation.HP_RIGHT);
+        hpStations.add(HPStation.HP_RIGHT);
+
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
           autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.RIGHT, 
-          new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
-          new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
-          new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
+          scoringLocs, 
+          eleHeights, 
+          hpStations,
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
+        autonName = "Right 3 Piece: " + makeAutonName();
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
         WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
       }
 
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
+        resetAutonLists();
+
+        scoringLocs.add(REEF_J);
+        scoringLocs.add(REEF_K);
+        scoringLocs.add(REEF_L);
+
+        eleHeights.add(EleHeight.L2);
+        eleHeights.add(EleHeight.L4);
+        eleHeights.add(EleHeight.L4);
+
+        hpStations.add(HPStation.HP_LEFT);
+        hpStations.add(HPStation.HP_LEFT);
+        hpStations.add(HPStation.HP_LEFT);
+
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
           autoFactory, 
@@ -549,7 +631,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        autonName = "Left 3 Piece: J-L2, K-L4, L-L4";
+        autonName = "Left 3 Piece: " + makeAutonName();
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
@@ -592,6 +674,7 @@ public class Robot extends TimedRobot {
 
       // ---- SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
+        AutonChooser.resetAutoChooser();  // to remove the default pathing
         AutonChooser.addPathsAndCmds(waltAutonFactory.get());
         autonNotMade = false;
         WaltAutonBuilder.nte_autonEntry.setBoolean(false);
@@ -619,7 +702,9 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledExit() {}
+  public void disabledExit() {
+    
+  }
 
   private Command autonCmdBuilder(Command chooserCommand) {
     return Commands.parallel(
@@ -633,23 +718,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    if (autonNotMade) {
-        // set the auton to rightside by default if nothing is picked and auton j starts
-        waltAutonFactory = Optional.of(
-            new WaltAutonFactory(
-                elevator,
-                autoFactory, 
-                superstructure, 
-                drivetrain,
-                StartingLocs.RIGHT, 
-                new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
-                new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
-                new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
-                WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
-            )
-        );
-    }
-
     Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
     m_autonomousCommand = autonCmdBuilder(chosen);
 
