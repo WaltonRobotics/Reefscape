@@ -48,11 +48,11 @@ public class WaltAutonBuilder {
     public static HPStation hpStation = HPStation.HP_LEFT;
 
     static {
-        SmartDashboard.putData("Number of Cycles", cyclesChooser);
-        SmartDashboard.putData("Starting Position Chooser", startingPositionChooser);   
-        SmartDashboard.putData("Starting Elevator Height Chooser", startingHeightChooser);
-        SmartDashboard.putData("First Scoring Chooser", firstScoringChooser);
-        SmartDashboard.putData("First HP Station", firstToHPStationChooser);
+        // SmartDashboard.putData("Number of Cycles", cyclesChooser);
+        // SmartDashboard.putData("Starting Position Chooser", startingPositionChooser);   
+        // SmartDashboard.putData("Starting Elevator Height Chooser", startingHeightChooser);
+        // SmartDashboard.putData("First Scoring Chooser", firstScoringChooser);
+        // SmartDashboard.putData("First HP Station", firstToHPStationChooser);
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
                 .add("Make", false)
@@ -69,10 +69,10 @@ public class WaltAutonBuilder {
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
-        nte_customAutonReady = Shuffleboard.getTab("AutonChooser")
-                .add("Custom Auton Ready", false)
-                .withWidget(BuiltInWidgets.kToggleSwitch)
-                .getEntry();
+        // nte_customAutonReady = Shuffleboard.getTab("AutonChooser")
+        //         .add("Custom Auton Ready", false)
+        //         .withWidget(BuiltInWidgets.kToggleSwitch)
+        //         .getEntry();
 
         nte_autonReadyToGo = Shuffleboard.getTab("AutonChooser")
                 .add("Auton Ready", false)
@@ -108,185 +108,185 @@ public class WaltAutonBuilder {
     }
 
     // adds the options
-    public static void configureFirstCycle() {
-        // add cycle options
-        cyclesChooser.addOption("Preload Only", NumCycles.PRELOAD_ONLY);
-        cyclesChooser.addOption("1 Cycle", NumCycles.CYCLE_1);
-        cyclesChooser.addOption("2 Cycle", NumCycles.CYCLE_2);
-        cyclesChooser.addOption("3 Cycle", NumCycles.CYCLE_3);
-        cyclesChooser.addOption("4 Cycle", NumCycles.CYCLE_4);
+    // public static void configureFirstCycle() {
+    //     // add cycle options
+    //     cyclesChooser.addOption("Preload Only", NumCycles.PRELOAD_ONLY);
+    //     cyclesChooser.addOption("1 Cycle", NumCycles.CYCLE_1);
+    //     cyclesChooser.addOption("2 Cycle", NumCycles.CYCLE_2);
+    //     cyclesChooser.addOption("3 Cycle", NumCycles.CYCLE_3);
+    //     cyclesChooser.addOption("4 Cycle", NumCycles.CYCLE_4);
 
-        // add Starting Position options
-        startingPositionChooser.addOption("Left", StartingLocs.LEFT);
-        startingPositionChooser.addOption("Middle Left", StartingLocs.MID_H);
-        startingPositionChooser.addOption("Middle Right", StartingLocs.MID_G);
-        startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
-        startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
-        startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
+    //     // add Starting Position options
+    //     startingPositionChooser.addOption("Left", StartingLocs.LEFT);
+    //     startingPositionChooser.addOption("Middle Left", StartingLocs.MID_H);
+    //     startingPositionChooser.addOption("Middle Right", StartingLocs.MID_G);
+    //     startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
+    //     startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
+    //     startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
 
-        // changing the starting position AFFECTS HERE - see disable periodic
-        if (startingPosition.equals(StartingLocs.LEFT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.SUPER_LEFT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperLeftStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.MID_G)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidGStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.MID_H)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidHStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.RIGHT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalRightStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperRightStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        }
+    //     // changing the starting position AFFECTS HERE - see disable periodic
+    //     if (startingPosition.equals(StartingLocs.LEFT)) {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     } else if (startingPosition.equals(StartingLocs.SUPER_LEFT)) {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperLeftStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     } else if (startingPosition.equals(StartingLocs.MID_G)) {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidGStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     } else if (startingPosition.equals(StartingLocs.MID_H)) {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidHStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     } else if (startingPosition.equals(StartingLocs.RIGHT)) {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalRightStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     } else {
+    //         for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperRightStartCycles) {
+    //             firstScoringChooser.addOption(loc.name(), loc);
+    //         }
+    //     }
 
-        // add Starting Height options
-        addEleOptions(startingHeightChooser);
+    //     // add Starting Height options
+    //     addEleOptions(startingHeightChooser);
 
-        // add HP station options
-        addHPOptions(firstToHPStationChooser);
-    }
+    //     // add HP station options
+    //     addHPOptions(firstToHPStationChooser);
+    // }
 
-    // ---- Cycles
-    // define cycle choosers
-    public static ArrayList<SendableChooser<EleHeight>> eleHeightChoosers = new ArrayList<SendableChooser<EleHeight>>();
-    public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
-    public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>();
+    // // ---- Cycles
+    // // define cycle choosers
+    // public static ArrayList<SendableChooser<EleHeight>> eleHeightChoosers = new ArrayList<SendableChooser<EleHeight>>();
+    // public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
+    // public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>();
 
-    // TODO: MAYBE add method that closes unnecessary sendable choosers (when numCycles Changes)
+    // // TODO: MAYBE add method that closes unnecessary sendable choosers (when numCycles Changes)
 
-    // adds choosers based on number of cycles selected
-    public static void configureCycles() {
-        System.out.println("adding choosers");
-        for (int i = 0; i < m_cycles.m_cycles; i++) {
-            eleHeightChoosers.add(new SendableChooser<EleHeight>());
-            hpToReefChoosers.add(new SendableChooser<ReefLocs>());
-            reefToHPChoosers.add(new SendableChooser<HPStation>());
+    // // adds choosers based on number of cycles selected
+    // public static void configureCycles() {
+    //     System.out.println("adding choosers");
+    //     for (int i = 0; i < m_cycles.m_cycles; i++) {
+    //         eleHeightChoosers.add(new SendableChooser<EleHeight>());
+    //         hpToReefChoosers.add(new SendableChooser<ReefLocs>());
+    //         reefToHPChoosers.add(new SendableChooser<HPStation>());
 
-            addEleOptions(eleHeightChoosers.get(i));
-            addReefOptions(hpToReefChoosers.get(i));
-            addHPOptions(reefToHPChoosers.get(i));
+    //         addEleOptions(eleHeightChoosers.get(i));
+    //         addReefOptions(hpToReefChoosers.get(i));
+    //         addHPOptions(reefToHPChoosers.get(i));
 
-            SmartDashboard.putData("HP To Reef Chooser - Cycle " + (i + 1), hpToReefChoosers.get(i));
-            SmartDashboard.putData("Elevator Height - Cycle " + (i + 1), eleHeightChoosers.get(i));   
-            SmartDashboard.putData("Reef to HP Chooser - Cycle " + (i + 1), reefToHPChoosers.get(i));
-        }
-    }
+    //         SmartDashboard.putData("HP To Reef Chooser - Cycle " + (i + 1), hpToReefChoosers.get(i));
+    //         SmartDashboard.putData("Elevator Height - Cycle " + (i + 1), eleHeightChoosers.get(i));   
+    //         SmartDashboard.putData("Reef to HP Chooser - Cycle " + (i + 1), reefToHPChoosers.get(i));
+    //     }
+    // }
 
-    // ---- add Options
-    // add elevator height options
-    private static void addEleOptions(SendableChooser<EleHeight> eleHeight) {
-        eleHeight.addOption("L1", EleHeight.L1);
-        eleHeight.addOption("L2", EleHeight.L2);
-        eleHeight.addOption("L3", EleHeight.L3);
-        eleHeight.addOption("L4", EleHeight.L4);
-    }
+    // // ---- add Options
+    // // add elevator height options
+    // private static void addEleOptions(SendableChooser<EleHeight> eleHeight) {
+    //     eleHeight.addOption("L1", EleHeight.L1);
+    //     eleHeight.addOption("L2", EleHeight.L2);
+    //     eleHeight.addOption("L3", EleHeight.L3);
+    //     eleHeight.addOption("L4", EleHeight.L4);
+    // }
 
-    // add reef options
-    private static void addReefOptions(SendableChooser<ReefLocs> reef) {
-        reef.addOption("A", ReefLocs.REEF_A);
-        reef.addOption("B", ReefLocs.REEF_B);
-        reef.addOption("C", ReefLocs.REEF_C);
-        reef.addOption("D", ReefLocs.REEF_D);
-        reef.addOption("E", ReefLocs.REEF_E);
-        reef.addOption("F", ReefLocs.REEF_F);
-        reef.addOption("G", ReefLocs.REEF_G);
-        reef.addOption("H", ReefLocs.REEF_H);
-        reef.addOption("I", ReefLocs.REEF_I);
-        reef.addOption("J", ReefLocs.REEF_J);
-        reef.addOption("K", ReefLocs.REEF_K);
-        reef.addOption("L", ReefLocs.REEF_L);
-    }
+    // // add reef options
+    // private static void addReefOptions(SendableChooser<ReefLocs> reef) {
+    //     reef.addOption("A", ReefLocs.REEF_A);
+    //     reef.addOption("B", ReefLocs.REEF_B);
+    //     reef.addOption("C", ReefLocs.REEF_C);
+    //     reef.addOption("D", ReefLocs.REEF_D);
+    //     reef.addOption("E", ReefLocs.REEF_E);
+    //     reef.addOption("F", ReefLocs.REEF_F);
+    //     reef.addOption("G", ReefLocs.REEF_G);
+    //     reef.addOption("H", ReefLocs.REEF_H);
+    //     reef.addOption("I", ReefLocs.REEF_I);
+    //     reef.addOption("J", ReefLocs.REEF_J);
+    //     reef.addOption("K", ReefLocs.REEF_K);
+    //     reef.addOption("L", ReefLocs.REEF_L);
+    // }
 
-    // add HP station options 
-    private static void addHPOptions(SendableChooser<HPStation> HP) {
-        HP.addOption("HP LEFT", HPStation.HP_LEFT);
-        HP.addOption("HP RIGHT", HPStation.HP_RIGHT);
-    }
+    // // add HP station options 
+    // private static void addHPOptions(SendableChooser<HPStation> HP) {
+    //     HP.addOption("HP LEFT", HPStation.HP_LEFT);
+    //     HP.addOption("HP RIGHT", HPStation.HP_RIGHT);
+    // }
 
-    // get Cycle Data of whats currently selected
-    public static ArrayList<ReefLocs> getCycleScoringLocs() {
-        ArrayList<ReefLocs> reefLocs = new ArrayList<ReefLocs>();
-        int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
-        if (cyclesChooser.getSelected() != null) {
-            cycleCount = cyclesChooser.getSelected().m_cycles;
-        }
+    // // get Cycle Data of whats currently selected
+    // public static ArrayList<ReefLocs> getCycleScoringLocs() {
+    //     ArrayList<ReefLocs> reefLocs = new ArrayList<ReefLocs>();
+    //     int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
+    //     if (cyclesChooser.getSelected() != null) {
+    //         cycleCount = cyclesChooser.getSelected().m_cycles;
+    //     }
 
-        // add preload
-        reefLocs.add(scoringPosition);
+    //     // add preload
+    //     reefLocs.add(scoringPosition);
 
-        for (int i = 0; i < cycleCount; i++) {
-            reefLocs.add(hpToReefChoosers.get(i).getSelected());
-        }
+    //     for (int i = 0; i < cycleCount; i++) {
+    //         reefLocs.add(hpToReefChoosers.get(i).getSelected());
+    //     }
 
-        return reefLocs;
-    }
+    //     return reefLocs;
+    // }
 
-    public static ArrayList<EleHeight> getCycleEleHeights() {
-        ArrayList<EleHeight> eleHeights = new ArrayList<EleHeight>();
-        int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
-        if (cyclesChooser.getSelected() != null) {
-            cycleCount = cyclesChooser.getSelected().m_cycles;
-        }
+    // public static ArrayList<EleHeight> getCycleEleHeights() {
+    //     ArrayList<EleHeight> eleHeights = new ArrayList<EleHeight>();
+    //     int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
+    //     if (cyclesChooser.getSelected() != null) {
+    //         cycleCount = cyclesChooser.getSelected().m_cycles;
+    //     }
 
-        // add preload
-        eleHeights.add(startingHeight);
+    //     // add preload
+    //     eleHeights.add(startingHeight);
 
-        for (int i = 0; i < cycleCount; i++) {
-            eleHeights.add(eleHeightChoosers.get(i).getSelected());
-        }
+    //     for (int i = 0; i < cycleCount; i++) {
+    //         eleHeights.add(eleHeightChoosers.get(i).getSelected());
+    //     }
 
-        return eleHeights;
-    }
+    //     return eleHeights;
+    // }
 
-    public static ArrayList<HPStation> getCycleHPStations() {
-        ArrayList<HPStation> hpStations = new ArrayList<HPStation>();
-        int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
-        if (cyclesChooser.getSelected() != null) {
-            cycleCount = cyclesChooser.getSelected().m_cycles;
-        }
+    // public static ArrayList<HPStation> getCycleHPStations() {
+    //     ArrayList<HPStation> hpStations = new ArrayList<HPStation>();
+    //     int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
+    //     if (cyclesChooser.getSelected() != null) {
+    //         cycleCount = cyclesChooser.getSelected().m_cycles;
+    //     }
 
-        // add preload
-        hpStations.add(hpStation);
+    //     // add preload
+    //     hpStations.add(hpStation);
 
-        for (int i = 0; i < cycleCount; i++) {
-            hpStations.add(reefToHPChoosers.get(i).getSelected());
-        }
+    //     for (int i = 0; i < cycleCount; i++) {
+    //         hpStations.add(reefToHPChoosers.get(i).getSelected());
+    //     }
 
-        return hpStations;
-    }
+    //     return hpStations;
+    // }
 
-    // updaters - called when a change in selection is detected by the listener
-    public static void updateNumCycles() {
-        m_cycles = cyclesChooser.getSelected();
-    }
+    // // updaters - called when a change in selection is detected by the listener
+    // public static void updateNumCycles() {
+    //     m_cycles = cyclesChooser.getSelected();
+    // }
 
-    public static void updateStartingHeight() {
-        startingHeight = startingHeightChooser.getSelected();
-    }
+    // public static void updateStartingHeight() {
+    //     startingHeight = startingHeightChooser.getSelected();
+    // }
 
-    public static void updateStartingPosition() {
-        startingPosition = startingPositionChooser.getSelected();
-    }
+    // public static void updateStartingPosition() {
+    //     startingPosition = startingPositionChooser.getSelected();
+    // }
 
-    public static void updateInitialScoringPosition() {
-        scoringPosition = firstScoringChooser.getSelected();
-    }
+    // public static void updateInitialScoringPosition() {
+    //     scoringPosition = firstScoringChooser.getSelected();
+    // }
 
-    public static void updateInitalHPStation() {
-        hpStation = firstToHPStationChooser.getSelected();
-    }
+    // public static void updateInitalHPStation() {
+    //     hpStation = firstToHPStationChooser.getSelected();
+    // }
 
     public enum NumCycles {
         PRELOAD_ONLY(0),
