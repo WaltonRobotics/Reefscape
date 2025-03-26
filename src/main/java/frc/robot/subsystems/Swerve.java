@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -12,6 +11,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -74,9 +74,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private boolean m_hasAppliedOperatorPerspective = false;
 
     /* TODO: gotta tune */
-    private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
-    private final PIDController m_pathXController = new PIDController(10, 0, 0);
-    private final PIDController m_pathYController = new PIDController(10, 0, 0);
+    private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds()
+        .withDriveRequestType(DriveRequestType.Velocity)
+        .withSteerRequestType(SteerRequestType.Position);
+    private final PIDController m_pathXController = new PIDController(7.7, 0, 0);
+    private final PIDController m_pathYController = new PIDController(7.7, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
     /* Swerve requests to apply during SysId characterization */
@@ -84,9 +86,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric driveFieldOriented = new SwerveRequest.FieldCentric()
+    private final SwerveRequest.FieldCentric swreq_drive = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
     private final SwerveRequest.RobotCentric driveRobotCentric = new SwerveRequest.RobotCentric();
+
+    private final SwerveRequest.SwerveDriveBrake swreq_brake = new SwerveRequest.SwerveDriveBrake();
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -350,7 +354,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             .withRotationalRate(chassisSpeeds.omegaRadiansPerSecond));
     }
 
-    public void followPath(SwerveSample sample) {
+    public Command stopCmd() {
+        return runOnce(() -> setControl(swreq_brake));
+    }
+
+    private void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
         var pose = getState().Pose;
         var samplePose = sample.getPose();
@@ -393,7 +401,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
 
-                setControl(driveFieldOriented.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
@@ -469,7 +477,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
-                setControl(driveFieldOriented.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());

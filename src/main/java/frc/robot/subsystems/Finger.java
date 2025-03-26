@@ -57,8 +57,8 @@ public class Finger extends SubsystemBase {
         return runOnce(this::fingerOut);
     }
 
-    public Command fingerClimbDownCmd() {
-        return runOnce(() -> setFingerPos(-0.85));
+    public Command fingerPrepareForClimbCmd() {
+        return runOnce(() -> setFingerPos(kClimbRotations)); // idk if the climb rots r right. we gotta test this
     }
 
     public void fingerIn() {

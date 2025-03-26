@@ -4,6 +4,7 @@ import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.RobotK.*;
 
+import java.util.Optional;
 import java.util.function.DoubleConsumer;
 
 import com.ctre.phoenix6.Utils;
@@ -18,15 +19,18 @@ import static frc.robot.subsystems.Elevator.EleHeight.*;
 import frc.robot.Robot;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.vision.Vision;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.util.WaltLogger.IntLogger;
 import frc.util.WaltLogger.StringLogger;
 
 public class Superstructure {
     private final Coral m_coral;
     private final Finger m_finger;
     private final Elevator m_ele;
+    private final Optional<Vision> m_cam1;
 
     public final EventLoop stateEventLoop = new EventLoop();
     private State m_state = State.IDLE;
@@ -44,6 +48,7 @@ public class Superstructure {
 
     private boolean m_simIntook = false;
     private boolean m_simScored = false;
+    private boolean m_simHasCoral = false;
 
     /* state transitions */
     /* autoTrgs */
@@ -62,6 +67,10 @@ public class Superstructure {
     private final Trigger trg_teleopScoreReq;
     private final Trigger trg_algaeRemovalL2Req;
     private final Trigger trg_algaeRemovalL3Req;
+    private final Trigger trg_climbPrepReq;
+    private final Trigger trg_climbingReq;
+    /* simTrigs */
+    public final Trigger simTrg_hasCoral = new Trigger(() -> m_simHasCoral);
 
     /* teleopTrgs: overrides */
     private final Trigger trg_inOverride;
@@ -109,9 +118,7 @@ public class Superstructure {
 
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
-    private BooleanLogger log_toIdleOverride = WaltLogger.logBoolean(kLogTab, "to idle override");
-
-    private BooleanLogger log_eleToHPReq = WaltLogger.logBoolean(kLogTab, "ele to HP req");
+   
     private BooleanLogger log_eleAtSetpt = WaltLogger.logBoolean(kLogTab, "ele at setpoint");
     private BooleanLogger log_topSensor = WaltLogger.logBoolean(kLogTab, "top beam break");
     private BooleanLogger log_botSensor = WaltLogger.logBoolean(kLogTab, "bot beam break");
@@ -122,15 +129,25 @@ public class Superstructure {
     private BooleanLogger log_algaeRemovalButton = WaltLogger.logBoolean(kLogTab, "algae removal button");
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
 
+    private BooleanLogger log_eleToClimb = WaltLogger.logBoolean(kLogTab, "climb prep");
+    private BooleanLogger log_climbReady = WaltLogger.logBoolean(kLogTab, "ready to climb");
+    private BooleanLogger log_climbing = WaltLogger.logBoolean(kLogTab, "climbing");
+    private BooleanLogger log_climbed = WaltLogger.logBoolean(kLogTab, "climbed");
+
     private BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "has coral");
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
     private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
 
+    /* logs: pieces */
+    private IntLogger log_coralScored = WaltLogger.logInt(kLogTab, "coral scored");
+    private int coralScored = 0;
+
     public Superstructure(
         Coral coral,
         Finger finger,
         Elevator ele,
+        Optional<Vision> cam1,
         Trigger eleToHPReq,
         Trigger L1Req,
         Trigger L2Req,
@@ -139,6 +156,8 @@ public class Superstructure {
         Trigger scoreReq,
         Trigger algaeRemovalL2Req,
         Trigger algaeRemovalL3Req,
+        Trigger climbPrepReq,
+        Trigger climbingNowReq,
         Trigger inOverride,
         Trigger simTopBeamBreak,
         Trigger simBotBeamBreak,
@@ -147,11 +166,17 @@ public class Superstructure {
         m_coral = coral;
         m_finger = finger;
         m_ele = ele;
+        m_cam1 = cam1;
         
         /* state change trigs */
         transTrg_eleNearSetpt = new Trigger(() -> m_ele.nearSetpoint());
-        transTrg_topSensor = new Trigger(m_coral.trg_topBeamBreak).or(trg_isSimulation.and(simTopBeamBreak));
-        transTrg_botSensor = new Trigger(m_coral.trg_botBeamBreak).or(trg_isSimulation.and(simBotBeamBreak));
+        if (!Robot.isSimulation()) {
+            transTrg_topSensor = m_coral.trg_topBeamBreak;
+            transTrg_botSensor = m_coral.trg_botBeamBreak;
+        } else {
+            transTrg_topSensor = simTopBeamBreak;
+            transTrg_botSensor = simBotBeamBreak;
+        }
 
         /* teleop trigs */
         trg_teleopEleToHPReq = eleToHPReq;
@@ -162,8 +187,10 @@ public class Superstructure {
         trg_teleopScoreReq = scoreReq;
         trg_algaeRemovalL2Req = algaeRemovalL2Req;
         trg_algaeRemovalL3Req = algaeRemovalL3Req;
+        trg_climbPrepReq = climbPrepReq;
+        trg_climbingReq = climbingNowReq;
         /* overrides */
-        trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor);
+        trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor).or(simTrg_hasCoral);
         trg_inOverride = inOverride;
 
         /* binded things */
@@ -172,6 +199,14 @@ public class Superstructure {
         configureStateTransitions();
         configureSimTransitions();
         configureStateActions();
+    }
+
+    private Command takeCam1Snapshots() {
+        return Commands.runOnce(() -> {
+            if (m_cam1.isPresent()) {
+                m_cam1.get().takeBothSnapshots();
+            }
+        });
     }
     
     private void configureStateTransitions() {
@@ -193,6 +228,14 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
+        (stateTrg_idle.and(trg_climbPrepReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.ELE_TO_CLIMB));
+        (stateTrg_eleToClimb.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+            .onTrue(changeStateCmd(State.CLIMB_READY));
+        (stateTrg_climbReady.and(trg_inOverride.negate()).and(trg_climbingReq).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.CLIMBING));
+        (stateTrg_climbing.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+            .onTrue(changeStateCmd(State.CLIMBED));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
@@ -206,7 +249,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
-        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.1))
+        (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.2))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         
         (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
@@ -278,7 +321,7 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> HP),
-                    Commands.runOnce(() -> m_autonEleToHPReq = false)   
+                    Commands.runOnce(() -> m_autonEleToHPReq = false)
                 )
             );
 
@@ -303,7 +346,7 @@ public class Superstructure {
                             Commands.waitSeconds(0.05)
                         )
                     )
-                )
+                ).alongWith(takeCam1Snapshots())
             );
         
         stateTrg_intook
@@ -343,7 +386,7 @@ public class Superstructure {
 
         stateTrg_scoreReady
             .onTrue(
-                Commands.print("RUMBLE coming to a controller near you soon...")
+                Commands.print("RUMBLE coming to a controller near you soon...").alongWith(takeCam1Snapshots())
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
@@ -354,16 +397,7 @@ public class Superstructure {
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
                     m_coral.stopCoralMotorCmd(),
                     Commands.print("in scoring the state")
-                )
-            );
-
-        stateTrg_scored
-            .onTrue(
-                Commands.sequence(
-                    Commands.waitSeconds(0.2),
-                    Commands.print("RUMBLE coming to a controller near you soon...")
-                )
-                // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                ).alongWith(takeCam1Snapshots())
             );
 
         stateTrg_algaeRemovalL2
@@ -382,17 +416,21 @@ public class Superstructure {
                 )
             );
 
-        // stateTrg_eleToClimb
-        //     .onTrue();
+        stateTrg_eleToClimb
+            .onTrue(
+                Commands.parallel(
+                    m_ele.toHeightCoral(() -> CLIMB_UP),
+                    m_finger.fingerPrepareForClimbCmd()
+                )
+            );
 
-        // stateTrg_climbReady
-        //     .onTrue(null);
-
-        // stateTrg_climbing
-        //     .onTrue(null);
-
-        // stateTrg_climbed
-        //     .onTrue(null);
+        stateTrg_climbing
+            .onTrue(
+                Commands.sequence(
+                    m_finger.fingerOutCmd(), // TODO: figure timings
+                    m_ele.climbTime()
+                )
+            );
     }
 
     /* state change methods */
@@ -401,10 +439,19 @@ public class Superstructure {
             if (newState == m_state) {
                 return;
             }
+            if(m_state == State.CLIMBING || m_state == State.CLIMBED) {
+                if(newState != State.CLIMBED) {
+                    m_ele.resetConfigsAfterClimb();
+                }
+            }
             System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
             m_state = newState;
             log_stateIdx.accept(m_state.idx);
             log_stateName.accept(m_state.name);
+            if (newState == State.SCORED) {
+                coralScored++;
+                log_coralScored.accept(coralScored);
+            }
         });
     }
 
@@ -527,6 +574,14 @@ public class Superstructure {
         return Commands.runOnce(() -> m_simScored = true);
     }
 
+    public Command simHasCoralToggle() {
+        if(Robot.isSimulation()) {
+            return Commands.runOnce(() -> m_simHasCoral = !m_simHasCoral);
+        } else {
+            return Commands.none();
+        }
+    }
+
     /* rumblin' */
     private Command driverRumble(double intensity, double secs) {
         return Commands.startEnd(
@@ -547,6 +602,13 @@ public class Superstructure {
 
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
+
+        log_eleToL1Req.accept(trg_teleopL1Req);
+        log_eleToL2Req.accept(trg_teleopL2Req);
+        log_eleToL3Req.accept(trg_teleopL3Req);
+        log_eleToL4Req.accept(trg_teleopL4Req);
+
+        log_algaeRemovalButton.accept(trg_algaeRemovalL2Req.or(trg_algaeRemovalL3Req));
     }
 
     public void logStateChangeReqs() {
@@ -571,7 +633,7 @@ public class Superstructure {
         logStateChangeReqs();
         logState();
 
-        if(Utils.isSimulation()) {
+        if(Robot.isSimulation()) {
             logSimThings();
         }
     }

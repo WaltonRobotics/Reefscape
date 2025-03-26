@@ -89,6 +89,20 @@ public class Vision {
         }
     }
 
+    public void takeOutputSnapshot() {
+        m_camera.takeOutputSnapshot();
+    }
+
+    public void takeInputSnapshot() {
+        m_camera.takeInputSnapshot();
+    }
+
+    public void takeBothSnapshots() {
+        takeInputSnapshot();
+        takeOutputSnapshot();
+        System.out.println(m_cameraName + ": BothSnapshot");
+    }
+
     /**
      * <p>Calculates slightly future pose using constants and combines it with current pose to account somewhat for velocity.
      * <p>See {@link #getMostRealisticScorePose(SwerveDriveState, boolean)}

@@ -9,6 +9,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -37,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import static frc.robot.Constants.ElevatorK.*;
+import static frc.robot.subsystems.Elevator.EleHeight.HOME;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -55,6 +57,7 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
     private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
     private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
+    private PositionVoltage m_climbRequest = new PositionVoltage(0).withEnableFOC(true);
 
     private double m_desiredHeight = 0; // needs to be logged
     private boolean m_isHomed = false;
@@ -145,7 +148,6 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putData("Elevator Sim", m_mech2d);
 
         setDefaultCommand(currentSenseHoming());
-
     }
 
     private void setCoast(boolean coast) {
@@ -194,6 +196,30 @@ public class Elevator extends SubsystemBase {
                 m_frontMotor.setControl(m_MMVRequest);
             }
         ).until(() -> nearSetpoint());
+    }
+
+    public Command climbTime() {
+        return runOnce(
+            () -> {
+                m_frontMotor.getConfigurator().apply(kFrontClimbTalonFXConfig);
+                m_rearMotor.getConfigurator().apply(kRearClimbTalonFXConfig);
+                m_desiredHeight = HOME.rotations;
+                // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
+                m_climbRequest = m_climbRequest.withPosition(m_desiredHeight);
+                log_elevatorDesiredPosition.accept(m_desiredHeight);
+                m_frontMotor.setControl(m_climbRequest);
+            }
+        ).until(() -> nearSetpoint());
+    }
+
+    // when will this be used? idrk
+    public Command resetConfigsAfterClimb() {
+        return runOnce(
+            () -> {
+                m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
+                m_rearMotor.getConfigurator().apply(kRearTalonFXConfig);
+            }
+        );
     }
 
     public Command testVoltageControl(DoubleSupplier stick) {
@@ -268,15 +294,13 @@ public class Elevator extends SubsystemBase {
 
     private static final double kInch = 0.169;
 
-    //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.3),
         L1(5.590325),
         L2(5.653564 + kInch),
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
-        CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
-        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will ove robot down for climb
+        CLIMB_UP(2.08 - (kInch * 5)), // good value
         HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
