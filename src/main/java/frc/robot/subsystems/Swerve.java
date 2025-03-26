@@ -439,55 +439,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         path.preventFlipping = true;
 
         return AutoBuilder.followPath(path).repeatedly().until(nearPose(destinationPose, 0.01, 2));
-
-        // also we can try this for a little less control, unsure of computation speed
-        // return AutoBuilder.pathfindToPose(destinationPose, AutoAlignmentK.pathConstraints);
-    }
-
-    /**
-     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
-     * @param visionSim visionSim object to get simField from to do sim debugging
-     * @return Returns a command that loops until it gets near
-     */
-    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, SwerveDriveState swerveDriveState, VisionSim visionSim) {
-        if (destinationPoseOptional.isEmpty()) {
-            // System.out.println("Swerve moveToPose fail, destination unavailable");
-            return Commands.none();
-        }
-        Pose2d destinationPose = destinationPoseOptional.get();
-
-        log_destinationX.accept(destinationPose.getX());
-        log_destinationY.accept(destinationPose.getY());
-        log_destinationTheta.accept(destinationPose.getRotation().getRadians());
-
-        visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
-        // inside method
-        // pull out the translation from our initial pose to the target
-        Translation2d translation = destinationPose.getTranslation().minus(swerveDriveState.Pose.getTranslation());
-        // pull out distance and heading to the target
-        double distance = translation.getNorm();
-        Rotation2d heading = translation.getAngle();
-
-        return Commands.run(
-            () -> {
-                Pose2d curPose = getState().Pose;
-
-                double xSpeed = AutoAlignmentK.m_autoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-
-                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
-
-                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
-                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
-                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
-
-                // log_autoAlignDesiredXSpeed.accept(xSpeed);
-                // log_autoAlignDesiredYSpeed.accept(ySpeed);
-                // log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
-            }
-        );
     }
 
     /**

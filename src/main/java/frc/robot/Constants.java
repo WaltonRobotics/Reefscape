@@ -585,9 +585,6 @@ public class Constants {
             m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static final double kSideToSideTolerance = 0.002; // meters
-        public static final double kFieldRotationTolerance = 1; // degrees
-
         // TODO: these will really need tuning
         public static final double kMaxVelocity = 3; // m/s
         public static final double kMaxAccel = 4; // m/s^2
