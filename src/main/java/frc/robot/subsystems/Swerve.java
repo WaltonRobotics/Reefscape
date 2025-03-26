@@ -422,12 +422,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         field2d.getObject("destination pose").setPose(destinationPose);
         
         List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose.plus(new Transform2d(-0.05, 0, Rotation2d.kZero)), destinationPose);
-        // TODO: be wary of pathConstraints being made and reused
-        // also room for optimization in doing a little more with approach angle - you could reasonably try and get it as close to direction of motion as possible
+        // you could reasonably do a little optimization with approach angles
         PathPlannerPath path = new PathPlannerPath(waypoints, 
             AutoAlignmentK.pathConstraints, 
             null, 
-            new GoalEndState(0.1, destinationPose.getRotation()));
+            new GoalEndState(0, destinationPose.getRotation()));
         // this should already be handled in config, but better safe than sorry
         path.preventFlipping = true;
 
