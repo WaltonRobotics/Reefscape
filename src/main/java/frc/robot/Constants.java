@@ -267,6 +267,11 @@ public class Constants {
              .withStatorCurrentLimitEnable(true)
              .withSupplyCurrentLimit(75)
              .withSupplyCurrentLimitEnable(true);
+        private static final CurrentLimitsConfigs kClimbCurrentLimitConfigs = new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(150)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(100)
+            .withSupplyCurrentLimitEnable(true);
          private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
              .withSensorToMechanismRatio(kGearRatio);
          private static final Slot0Configs kSlot0Configs = new Slot0Configs()
@@ -302,7 +307,18 @@ public class Constants {
          public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
              .withCurrentLimits(kCurrentLimitConfigs)
              .withMotorOutput(kMotorOutputConfigs);
+        
+        public static final TalonFXConfiguration kFrontClimbTalonFXConfig = new TalonFXConfiguration()
+             .withCurrentLimits(kClimbCurrentLimitConfigs)
+             .withFeedback(kFeedbackConfigs)
+             .withMotionMagic(kMotionMagicConfigs)
+             .withSlot0(kSlot0Configs)
+             .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
+             .withMotorOutput(kMotorOutputConfigs);
  
+        public static final TalonFXConfiguration kRearClimbTalonFXConfig = new TalonFXConfiguration()
+             .withCurrentLimits(kClimbCurrentLimitConfigs)
+             .withMotorOutput(kMotorOutputConfigs);
      }
  
      public class RobotK {

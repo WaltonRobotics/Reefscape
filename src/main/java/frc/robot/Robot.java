@@ -121,6 +121,9 @@ public class Robot extends TimedRobot {
   private final Trigger trg_shootReq = manipulator.rightTrigger();
   private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
+  private final Trigger trg_climbPrep = manipulator.y().and(manipulator.povUp());
+  private final Trigger trg_climbLockingIn = manipulator.y().and(manipulator.povDown());
+
   // simulation
   private final Trigger trg_simBotBeamBreak = manipulator.leftStick();
   private final Trigger trg_simTopBeamBreak = manipulator.rightStick();
@@ -192,6 +195,8 @@ public class Robot extends TimedRobot {
       trg_teleopScoreReq,
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
+      trg_climbPrep,
+      trg_climbLockingIn,
       trg_inOverride,
       new Trigger(() -> false),
       new Trigger(() -> false),
@@ -210,6 +215,8 @@ public class Robot extends TimedRobot {
       trg_teleopScoreReq,
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
+      trg_climbPrep,
+      trg_climbLockingIn,
       trg_inOverride,
       trg_simTopBeamBreak,
       trg_simBotBeamBreak,
@@ -366,16 +373,7 @@ public class Robot extends TimedRobot {
           elevator.toHeightAlgae(() -> AlgaeHeight.L3),
           superstructure.baseAlgaeRemoval()
         )
-      );
-
-    manipulator.y().and(manipulator.povUp())
-    .onTrue(Commands.parallel(
-      elevator.toHeight(EleHeight.CLIMB_UP.rotations),
-      finger.fingerClimbDownCmd()
-    ));
-
-    manipulator.y().and(manipulator.povDown())
-      .onTrue(elevator.toHeight(EleHeight.CLIMB_DOWN.rotations));
+      );    
 
     manipulator.y()
       .onTrue(algae.changeStateCmd(State.HOME));
