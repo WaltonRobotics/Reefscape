@@ -553,9 +553,10 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
+        // TODO: check these values
         public static final RobotConfig kRobotConfig = new RobotConfig(68, 6, 
             new ModuleConfig(1.905, TunerConstants.kSpeedAt12Volts.in(MetersPerSecond), 
-                1, DCMotor.getKrakenX60Foc(1), 50.0, 1), 
+                1, DCMotor.getKrakenX60Foc(1), 100.0, 1), 
             Units.inchesToMeters(11.375) * 2);
 
         public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
@@ -571,7 +572,7 @@ public class Constants {
 
         // TODO: these will really need tuning
         public static final double kMaxVelocity = 3; // m/s
-        public static final double kMaxAccel = 5; // m/s^2
+        public static final double kMaxAccel = 4; // m/s^2
 
         public static final double kThetaMaxVelocity = 360; // deg/s
         public static final double kThetaMaxAccel = 360; // deg/s^2

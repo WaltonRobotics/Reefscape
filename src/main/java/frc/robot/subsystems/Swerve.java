@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -316,8 +317,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 () -> getState().Speeds, 
                 this::pathPlannerControl, 
                 new PPHolonomicDriveController(
-                    new PIDConstants(7.0, 0.0, 0.0), // Translation PID constants
-                    new PIDConstants(7.0, 0.0, 0.0)  // Rotation PID constants
+                    new PIDConstants(7.0, 0.0, 0.2), // Translation PID constants
+                    new PIDConstants(19.0, 0.0, 0.2)  // Rotation PID constants
                 ), 
                 AutoAlignmentK.kRobotConfig, 
                 () -> false, 
@@ -410,6 +411,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @return
      */
     public Command pathplannerAutoAlign(Optional<Pose2d> destinationPoseOptional, Field2d field2d) {
+        System.out.println("proper run");
         if (destinationPoseOptional.isEmpty()) {
             return Commands.none();
         }
@@ -417,20 +419,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             System.out.println("pathPlannerAutoAlign fail due to unconfigured AutoBuilder");
             return Commands.none();
         }
+        System.out.println("get past error handling");
         Pose2d destinationPose = destinationPoseOptional.get();
         field2d.getObject("destination pose").setPose(destinationPose);
         
-        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose);
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose.plus(new Transform2d(-0.05, 0, Rotation2d.kZero)), destinationPose);
         // TODO: be wary of pathConstraints being made and reused
         // also room for optimization in doing a little more with approach angle - you could reasonably try and get it as close to direction of motion as possible
         PathPlannerPath path = new PathPlannerPath(waypoints, 
             AutoAlignmentK.pathConstraints, 
             null, 
-            new GoalEndState(0, destinationPose.getRotation()));
+            new GoalEndState(0.1, destinationPose.getRotation()));
         // this should already be handled in config, but better safe than sorry
         path.preventFlipping = true;
 
-        return AutoBuilder.followPath(path);
+        return AutoBuilder.followPath(path).repeatedly().until(nearPose(destinationPose, 0.01, 2));
 
         // also we can try this for a little less control, unsure of computation speed
         // return AutoBuilder.pathfindToPose(destinationPose, AutoAlignmentK.pathConstraints);
@@ -521,6 +524,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return modulePoses;
     }
 
+    private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
+        return () -> {
+            Pose2d drivetrainPose = getState().Pose;
+            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
+            return distance <= toleranceMeters && dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees() < toleranceDegrees;
+        };
+    }
 
     public Command wheelRadiusCharacterization(double omegaDirection) {
 

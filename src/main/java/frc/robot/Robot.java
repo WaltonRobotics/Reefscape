@@ -329,14 +329,10 @@ public class Robot extends TimedRobot {
           visionSim.getSimDebugField());
 
       trg_leftTeleopAutoAlign.whileTrue(
-        Commands.repeatingSequence(
           new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
-        )
       );
       trg_rightTeleopAutoAlign.whileTrue(
-        Commands.repeatingSequence(
-          new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
-        )
+        new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
       );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
