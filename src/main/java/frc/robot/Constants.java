@@ -592,8 +592,8 @@ public class Constants {
         public static final double kMaxVelocity = 3; // m/s
         public static final double kMaxAccel = 4; // m/s^2
 
-        public static final double kThetaMaxVelocity = 360; // deg/s
-        public static final double kThetaMaxAccel = 360; // deg/s^2
+        public static final double kThetaMaxVelocity = 2 * Math.PI; // rad/s
+        public static final double kThetaMaxAccel = 2 * Math.PI; // rad/s^2
         public static final PathConstraints pathConstraints = new PathConstraints(kMaxVelocity, kMaxAccel, kThetaMaxVelocity, kThetaMaxAccel);
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
