@@ -131,8 +131,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private double[] startWheelPositions = new double[4];
     private double currentEffectiveWheelRadius = 0;
 
-    private boolean m_pathPlannerConfigured = false;
-   
     /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
     private final SysIdRoutine m_sysIdRoutineTranslation = new SysIdRoutine(
         new SysIdRoutine.Config(
@@ -278,7 +276,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * Added to each constructor at the end, will run whenever the drivetrain is constructed.
      */
     public void init() {
-        m_pathPlannerConfigured = configPathPlannerAutoAlign();
+        configPathPlannerAutoAlign();
     }
 
     /**
