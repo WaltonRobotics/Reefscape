@@ -533,7 +533,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return () -> {
             Pose2d drivetrainPose = getState().Pose;
             double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMeters && dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees() < toleranceDegrees;
+            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
         };
     }
 
