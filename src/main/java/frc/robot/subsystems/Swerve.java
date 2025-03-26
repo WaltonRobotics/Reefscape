@@ -89,7 +89,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private final SwerveRequest.FieldCentric swreq_drive = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-    private final SwerveRequest.RobotCentric driveRobotCentric = new SwerveRequest.RobotCentric();
+    private final SwerveRequest.RobotCentric swreq_driveRobotOriented = new SwerveRequest.RobotCentric();
 
     private final SwerveRequest.SwerveDriveBrake swreq_brake = new SwerveRequest.SwerveDriveBrake();
 
@@ -351,7 +351,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     private void pathPlannerControl(ChassisSpeeds chassisSpeeds) {
-        setControl(driveRobotCentric.withVelocityX(chassisSpeeds.vxMetersPerSecond).withVelocityY(chassisSpeeds.vyMetersPerSecond)
+        setControl(swreq_driveRobotOriented.withVelocityX(chassisSpeeds.vxMetersPerSecond).withVelocityY(chassisSpeeds.vyMetersPerSecond)
             .withRotationalRate(chassisSpeeds.omegaRadiansPerSecond));
     }
 
@@ -418,7 +418,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @return
      */
     public Command pathplannerAutoAlign(Optional<Pose2d> destinationPoseOptional, Field2d field2d) {
-        System.out.println("proper run");
         if (destinationPoseOptional.isEmpty()) {
             return Commands.none();
         }
@@ -426,12 +425,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             System.out.println("pathPlannerAutoAlign fail due to unconfigured AutoBuilder");
             return Commands.none();
         }
-        System.out.println("get past error handling");
         Pose2d destinationPose = destinationPoseOptional.get();
         field2d.getObject("destination pose").setPose(destinationPose);
-        
+        // you could do so optimization with the placement of the second point probably
+        // unfortunately though we do need to just guess at where to put it and then just create a function for that
+        // TODO: remember to test if starting position can just go in as second point
         List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose.plus(new Transform2d(-0.05, 0, Rotation2d.kZero)), destinationPose);
-        // you could reasonably do a little optimization with approach angles
         PathPlannerPath path = new PathPlannerPath(waypoints, 
             AutoAlignmentK.pathConstraints, 
             null, 
