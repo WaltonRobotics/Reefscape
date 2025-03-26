@@ -317,10 +317,11 @@ public class Robot extends TimedRobot {
       driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
       driver.rightBumper().onTrue(
-        Commands.parallel(
-          algae.toIdleCmd(),
-          superstructure.forceIdle()
-        )
+        superstructure.forceIdle()
+      );
+
+      driver.leftBumper().onTrue(
+        algae.toIdleCmd()
       );
 
       Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
