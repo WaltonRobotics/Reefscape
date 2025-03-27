@@ -210,8 +210,9 @@ public class Elevator extends SubsystemBase {
             System.out.println("ele reached height in" + timeToHeight + "seconds");
 
             // resets value until next time that the request goes through
-            m_requestStartTime = -1.0;
-        });
+            m_requestStartTime = 0;
+        }
+        );
     }
 
     public Command testVoltageControl(DoubleSupplier stick) {
@@ -294,7 +295,7 @@ public class Elevator extends SubsystemBase {
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
         CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
-        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will ove robot down for climb
+        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will move robot down for climb
         HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
