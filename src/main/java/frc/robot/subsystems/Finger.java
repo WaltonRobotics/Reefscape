@@ -2,12 +2,22 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.units.AngleUnit;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
+import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Constants.FingerK.*;
 
 import java.util.function.BooleanSupplier;
@@ -34,6 +44,7 @@ public class Finger extends SubsystemBase {
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
 
     private BooleanLogger log_fingerOut = WaltLogger.logBoolean(kLogTab, "finger out");
+    private DoubleLogger log_fingerPosition = WaltLogger.logDouble(kLogTab, "finger position");
     
     private boolean m_isHomed = false;
 
@@ -71,6 +82,10 @@ public class Finger extends SubsystemBase {
         return runOnce(this::fingerIn);
     }
 
+    public Angle getFingerPos() {
+        return m_motor.getPosition().getValue();
+    }
+
     public Command testFingerVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_motor.setControl(m_voltOutReq.withOutput(-(stick.getAsDouble()) * 6));
@@ -105,5 +120,10 @@ public class Finger extends SubsystemBase {
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+
+    @Override
+    public void periodic() {
+        log_fingerPosition.accept(getFingerPos().in(Degrees));
     }
 }
