@@ -134,42 +134,9 @@ public class Robot extends TimedRobot {
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
 
   /* WaltAutonBuilder vars */
-  private boolean numCycleChange = false;
-  private boolean startingPositionChange = false;
-  private boolean firstScoringPositionChange = false;
-  private boolean startingHeightChange = false;
-  private boolean initialHPStationChange = false;
-
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
   private String autonName = "No Auton Made";
-
-  /* WaltAutonBuilder trigs */
-  // When the user selects a different option, this thing runs
-  private final Consumer<NumCycles> cyclesConsumer = numCycles -> {
-    WaltAutonBuilder.m_cycles = numCycles;
-    numCycleChange = true;
-  };
-
-  private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
-    WaltAutonBuilder.startingPosition = startingPosition;
-    startingPositionChange = true;
-  };
-
-  private final Consumer<EleHeight> startingHeightConsumer = startingHeight -> {
-    WaltAutonBuilder.startingHeight = startingHeight;
-    startingHeightChange = true;
-  };
-
-  private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
-    WaltAutonBuilder.scoringPosition = scoringPosition;
-    firstScoringPositionChange = true;
-  };
-
-  private final Consumer<HPStation> initialHPStationConsumer = hpStation -> {
-    WaltAutonBuilder.hpStation = hpStation;
-    initialHPStationChange = true;
-  };
 
   private final Field2d robotField = visionSim.getSimDebugField();
   private final Timer lastGotTagMsmtTimer = new Timer();
@@ -382,15 +349,6 @@ public class Robot extends TimedRobot {
 
   }
 
-  /* WaltAutonBuilder thingies */
-  // private void configWaltAutonBuilder() {
-  //   WaltAutonBuilder.cyclesChooser.onChange(cyclesConsumer);
-  //   WaltAutonBuilder.startingPositionChooser.onChange(startingPositionConsumer);
-  //   WaltAutonBuilder.startingHeightChooser.onChange(startingHeightConsumer);
-  //   WaltAutonBuilder.firstScoringChooser.onChange(initialScoringPositionConsumer);
-  //   WaltAutonBuilder.firstToHPStationChooser.onChange(initialHPStationConsumer);
-  // }
-
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
@@ -453,51 +411,6 @@ public class Robot extends TimedRobot {
     if (autonNotMade) {
       // check if the AUTON READY button has been pressed
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
-
-      // ---- CUSTOM CYCLE AUTON
-      // continues checking choosers for the correct values if the CUSTOM CYCLE READY button HAS NOT been pressed
-      // if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
-      //   if (numCycleChange) {
-      //     WaltAutonBuilder.updateNumCycles();
-      //     WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
-      //     numCycleChange = false;
-      //   }
-      //   if (startingPositionChange) {
-      //     WaltAutonBuilder.updateStartingPosition();
-      //     WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
-      //     startingPositionChange = false;
-      //   }
-      //   if (initialHPStationChange) {
-      //     WaltAutonBuilder.updateInitalHPStation();
-      //     initialHPStationChange = false;
-      //   }
-      //   if (firstScoringPositionChange) {
-      //     WaltAutonBuilder.updateInitialScoringPosition();
-      //     firstScoringPositionChange = false;
-      //   }
-      //   if (startingHeightChange) {
-      //     WaltAutonBuilder.updateStartingHeight();
-      //     startingHeightChange = false;
-      //   }
-      // }
-
-      // if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
-      //   waltAutonFactory = Optional.of(new WaltAutonFactory(
-      //     elevator,
-      //     autoFactory, 
-      //     superstructure, 
-      //     drivetrain,
-      //     WaltAutonBuilder.startingPosition, 
-      //     WaltAutonBuilder.getCycleScoringLocs(), 
-      //     WaltAutonBuilder.getCycleEleHeights(), 
-      //     WaltAutonBuilder.getCycleHPStations(),
-      //     WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
-      //   ));
-
-      //   autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
-      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
-      //   WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
-      // }
     
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
