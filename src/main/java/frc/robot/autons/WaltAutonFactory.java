@@ -176,6 +176,7 @@ public class WaltAutonFactory {
 
     private Command scoreCmd(EleHeight eleHeight) {
         return Commands.sequence(
+            m_ele.externalWaitUntilHomed(),
             m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
             m_superstructure.simHasCoralToggle(),
@@ -255,7 +256,6 @@ public class WaltAutonFactory {
         if(m_pushTime) {
             m_routine.active().onTrue(
                 Commands.sequence(
-
                     SimpleAutons.pushPartner(m_drivetrain),
                     firstScoreTraj.cmd(),
                     m_drivetrain.stopCmd()
