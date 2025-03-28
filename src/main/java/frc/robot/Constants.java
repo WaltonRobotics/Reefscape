@@ -150,8 +150,8 @@ public class Constants {
          // coral things
          public static final String kLogTab = "CoralSubsys";
          public static final int kCoralMotorCANID = 30; 
-         public static final int kTopBeamBreakChannel = 0;
-         public static final int kBotBeamBreakChannel = 1;
+         public static final int kTopBeamBreakChannel = 1;
+         public static final int kBotBeamBreakChannel = 0;
  
          // TODO: ask alexandra and hrehaan what these are for (???)
          // public static final double kGearRatio = 1; //for arm spinup and coral intake

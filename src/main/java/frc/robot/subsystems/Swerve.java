@@ -379,8 +379,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
         setControl(
             m_pathApplyFieldSpeeds.withSpeeds(targetSpeeds)
-                .withWheelForceFeedforwardsX(sample.moduleForcesX())
-                .withWheelForceFeedforwardsY(sample.moduleForcesY())
+                // .withWheelForceFeedforwardsX(sample.moduleForcesX())
+                // .withWheelForceFeedforwardsY(sample.moduleForcesY())
         );
 
         log_choreoActualRobotPose.accept(pose);
