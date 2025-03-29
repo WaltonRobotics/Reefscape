@@ -147,19 +147,13 @@ public abstract class TrajsAndLocs {
 
         static {
             // fill in maps here
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_H), "Start_Left_H");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_I), "Start_Left_I");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_J), "Start_Left_J");
 
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_LEFT, ReefLocs.REEF_K), "Start_Left_K");
 
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_E), "Start_Mid_E");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_F), "Start_Mid_F");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_G), "Start_Mid_G");
-
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_H), "Start_Mid_H");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_I), "Start_Mid_I");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_J), "Start_Mid_J");
 
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_RIGHT, ReefLocs.REEF_D), "Start_Right_D");
 
@@ -169,9 +163,6 @@ public abstract class TrajsAndLocs {
 
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT), "A_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_LEFT), "B_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_LEFT), "G_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_LEFT), "H_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_I, HPStation.HP_LEFT), "I_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_J, HPStation.HP_LEFT), "J_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_K, HPStation.HP_LEFT), "K_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_L, HPStation.HP_LEFT), "L_Left");
@@ -182,14 +173,9 @@ public abstract class TrajsAndLocs {
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_D, HPStation.HP_RIGHT), "D_Right");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_E, HPStation.HP_RIGHT), "E_Right");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_F, HPStation.HP_RIGHT), "F_Right");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_RIGHT), "G_Right");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_RIGHT), "H_Right");
 
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_A), "Left_A");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_B), "Left_B");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_G), "Left_G");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_H), "Left_H");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_I), "Left_I");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_J), "Left_J");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_K), "Left_K");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_L), "Left_L");
@@ -199,9 +185,6 @@ public abstract class TrajsAndLocs {
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_C), "Right_C");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_D), "Right_D");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_E), "Right_E");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_F), "Right_F");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_G), "Right_G");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_H), "Right_H");
 
             PushingTrajs.put(StartingLocs.LEFT, "Pushing_Left");
             PushingTrajs.put(StartingLocs.RIGHT, "Pushing_Right");
