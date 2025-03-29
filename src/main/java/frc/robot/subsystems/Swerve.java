@@ -105,9 +105,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
         .getStructTopic("autoAlignDestinationPose", Pose2d.struct).publish();
 
-    private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
-    private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
-    private final DoubleLogger log_destinationTheta = WaltLogger.logDouble("Swerve", "destination theta");
     private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
     private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
 
@@ -372,10 +369,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @return Returns a command that loops until it gets near
      */
     public Command moveToPose(Pose2d destinationPose, Field2d field) {
-        log_destinationX.accept(destinationPose.getX());
-        log_destinationY.accept(destinationPose.getY());
-        log_destinationTheta.accept(destinationPose.getRotation().getRadians());
-
         field.getObject("destinationPose").setPose(destinationPose);
         log_autoAlignDestinationPose.accept(destinationPose);
 
