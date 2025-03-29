@@ -337,7 +337,7 @@ public class Robot extends TimedRobot {
         return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
           .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
       };
-      
+
       Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
         Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
         if (scorePoseOptional.isEmpty()) {
@@ -349,14 +349,10 @@ public class Robot extends TimedRobot {
       };
 
       trg_leftTeleopAutoAlign.whileTrue(
-        Commands.repeatingSequence(
-          new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
-        )
+        new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
       );
       trg_rightTeleopAutoAlign.whileTrue(
-        Commands.repeatingSequence(
-          new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
-        )
+        new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
       );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      
