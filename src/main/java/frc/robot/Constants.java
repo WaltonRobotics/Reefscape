@@ -171,7 +171,7 @@ public class Constants {
          public static final double kMaxAngleRotations = 0;
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
-         public static final double kClimbRotations = -0.88;
+         public static final double kClimbRotations = -0.9;
          public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
@@ -270,7 +270,7 @@ public class Constants {
              .withSupplyCurrentLimit(75)
              .withSupplyCurrentLimitEnable(true);
         private static final CurrentLimitsConfigs kClimbCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(150)
+            .withStatorCurrentLimit(200)
             .withStatorCurrentLimitEnable(true)
             .withSupplyCurrentLimit(100)
             .withSupplyCurrentLimitEnable(true);
