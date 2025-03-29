@@ -199,6 +199,7 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
       trg_climbPrep,
+      manipulator.start(),
       trg_climbLockingIn,
       trg_inOverride,
       new Trigger(() -> false),
@@ -219,6 +220,7 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
       trg_climbPrep,
+      manipulator.start(),
       trg_climbLockingIn,
       trg_inOverride,
       trg_simTopBeamBreak,
@@ -244,7 +246,8 @@ public class Robot extends TimedRobot {
   private Command resetEverythingCheck() {
     if(superstructure.m_state == Superstructure.State.ELE_TO_CLIMB || 
        superstructure.m_state == Superstructure.State.CLIMB_READY ||
-       superstructure.m_state == Superstructure.State.CLIMBING) {
+       superstructure.m_state == Superstructure.State.CLIMBING_PT1 ||
+       superstructure.m_state == Superstructure.State.CLIMBING_PT2) {
       return Commands.none();
     } else {
       return Commands.parallel(
