@@ -68,6 +68,7 @@ public class Superstructure {
     private final Trigger trg_algaeRemovalL2Req;
     private final Trigger trg_algaeRemovalL3Req;
     private final Trigger trg_climbPrepReq;
+    private final Trigger trg_climbFingerEngageReq;
     private final Trigger trg_climbingReq;
     /* simTrigs */
     public final Trigger simTrg_hasCoral = new Trigger(() -> m_simHasCoral);
@@ -101,7 +102,8 @@ public class Superstructure {
 
     public final Trigger stateTrg_eleToClimb = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_CLIMB);
     public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
-    public final Trigger stateTrg_climbing = new Trigger(stateEventLoop, () -> m_state == State.CLIMBING);
+    public final Trigger stateTrg_climbing1 = new Trigger(stateEventLoop, () -> m_state == State.CLIMBING_PT1);
+    public final Trigger stateTrg_climbing2 = new Trigger (stateEventLoop, () -> m_state == State.CLIMBING_PT2);
     public final Trigger stateTrg_climbed = new Trigger(stateEventLoop, () -> m_state == State.CLIMBED);
 
     /* sm odds & ends */
@@ -157,6 +159,7 @@ public class Superstructure {
         Trigger algaeRemovalL2Req,
         Trigger algaeRemovalL3Req,
         Trigger climbPrepReq,
+        Trigger climbFingerEngageReq,
         Trigger climbingNowReq,
         Trigger inOverride,
         Trigger simTopBeamBreak,
@@ -188,6 +191,7 @@ public class Superstructure {
         trg_algaeRemovalL2Req = algaeRemovalL2Req;
         trg_algaeRemovalL3Req = algaeRemovalL3Req;
         trg_climbPrepReq = climbPrepReq;
+        trg_climbFingerEngageReq = climbFingerEngageReq;
         trg_climbingReq = climbingNowReq;
         /* overrides */
         trg_hasCoral = transTrg_botSensor.or(transTrg_topSensor).or(simTrg_hasCoral);
@@ -232,9 +236,11 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_CLIMB));
         (stateTrg_eleToClimb.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.CLIMB_READY));
-        (stateTrg_climbReady.and(trg_inOverride.negate()).and(trg_climbingReq).and(RobotModeTriggers.teleop()))
-            .onTrue(changeStateCmd(State.CLIMBING));
-        (stateTrg_climbing.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+        (stateTrg_climbReady.and(trg_inOverride.negate()).and(trg_climbFingerEngageReq).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.CLIMBING_PT1));
+        (stateTrg_climbing1.and(trg_inOverride.negate()).and(trg_climbingReq).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.CLIMBING_PT2));
+        (stateTrg_climbing2.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.CLIMBED));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
@@ -424,12 +430,15 @@ public class Superstructure {
                 )
             );
 
-        stateTrg_climbing
+        stateTrg_climbing1
             .onTrue(
                 Commands.sequence(
-                    m_finger.fingerOutCmd(), // TODO: figure timings
-                    m_ele.climbTime()
+                    m_finger.fingerOutCmd() // TODO: figure timings
                 )
+            );
+        stateTrg_climbing2
+            .onTrue(
+                m_ele.climbTime()
             );
     }
 
@@ -439,7 +448,7 @@ public class Superstructure {
             if (newState == m_state) {
                 return;
             }
-            if(m_state == State.CLIMBING || m_state == State.CLIMBED) {
+            if(m_state == State.CLIMBING_PT1 || m_state == State.CLIMBING_PT2 || m_state == State.CLIMBED) {
                 if(newState != State.CLIMBED) {
                     m_ele.resetConfigsAfterClimb();
                 }
@@ -459,7 +468,8 @@ public class Superstructure {
         if(
             m_state == State.ELE_TO_CLIMB ||
             m_state == State.CLIMB_READY ||
-            m_state == State.CLIMBING
+            m_state == State.CLIMBING_PT1 ||
+            m_state == State.CLIMBING_PT2
         ) {
             return Commands.none();
         } else {
@@ -665,7 +675,8 @@ public class Superstructure {
 
         ELE_TO_CLIMB(10, "ele to climb"),
         CLIMB_READY(11, "climb ready"),
-        CLIMBING(12, "climbing"),
+        CLIMBING_PT1(12.1, "climbing finger"),
+        CLIMBING_PT2(12.2, "climbing ele"),
         CLIMBED(13, "climbed");
 
         public final double idx;
