@@ -22,8 +22,8 @@
     {"x":{"exp":"HPRight.x", "val":1.4673705101013184}, "y":{"exp":"HPRight.y", "val":0.7045616507530212}, "heading":{"exp":"HPRight.heading", "val":0.9332802447333852}, "intervals":8, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"1.5936028957366943 m", "val":1.5936028957366943}, "y":{"exp":"0.8504140973091125 m", "val":0.8504140973091125}, "heading":{"exp":"HPRight.heading", "val":0.9332802447333852}, "intervals":58, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
     {"x":{"exp":"5.88776969909668 m", "val":5.88776969909668}, "y":{"exp":"3.1219661235809326 m", "val":3.1219661235809326}, "heading":{"exp":"0 deg", "val":0.0}, "intervals":37, "split":false, "fixTranslation":true, "fixHeading":false, "overrideIntervals":false},
-    {"x":{"exp":"5.934445381164551 m", "val":5.934445381164551}, "y":{"exp":"H.y", "val":4.108271598815918}, "heading":{"exp":"H.heading", "val":3.141592653589793}, "intervals":7, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"H.x", "val":6.055924892425537}, "y":{"exp":"H.y", "val":4.108271598815918}, "heading":{"exp":"H.heading", "val":3.141592653589793}, "intervals":7, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"5.934445381164551 m", "val":5.934445381164551}, "y":{"exp":"H.y", "val":4.1074}, "heading":{"exp":"H.heading", "val":3.141592653589793}, "intervals":7, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
+    {"x":{"exp":"H.x", "val":5.772265434265137}, "y":{"exp":"H.y", "val":4.1074}, "heading":{"exp":"H.heading", "val":3.141592653589793}, "intervals":7, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
