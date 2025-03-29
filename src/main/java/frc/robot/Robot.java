@@ -23,6 +23,8 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -325,14 +327,24 @@ public class Robot extends TimedRobot {
         )
       );
 
-      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> 
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false),
-          visionSim);
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () ->
-        drivetrain.moveToPose(
-          Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true),
-          visionSim);
+      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
+        Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false);
+        if (scorePoseOptional.isEmpty()) {
+          return Commands.none();
+        }
+        Pose2d scorePose = scorePoseOptional.get();
+        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(-Units.inchesToMeters(3), 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+          .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
+      };
+      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
+        Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
+        if (scorePoseOptional.isEmpty()) {
+          return Commands.none();
+        }
+        Pose2d scorePose = scorePoseOptional.get();
+        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(-Units.inchesToMeters(3), 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+          .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
+      };
 
       trg_leftTeleopAutoAlign.whileTrue(
         Commands.repeatingSequence(
