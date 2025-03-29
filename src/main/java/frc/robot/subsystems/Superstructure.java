@@ -33,7 +33,7 @@ public class Superstructure {
     private final Optional<Vision> m_cam1;
 
     public final EventLoop stateEventLoop = new EventLoop();
-    private State m_state = State.IDLE;
+    public State m_state = State.IDLE;
 
     private final Trigger trg_isSimulation = new Trigger(Robot::isSimulation);
 
@@ -456,7 +456,15 @@ public class Superstructure {
     }
 
     public Command forceIdle() {
-        return (changeStateCmd(State.IDLE));
+        if(
+            m_state == State.ELE_TO_CLIMB ||
+            m_state == State.CLIMB_READY ||
+            m_state == State.CLIMBING
+        ) {
+            return Commands.none();
+        } else {
+            return (changeStateCmd(State.IDLE));
+        }
     }
 
     public Command forcetoHP() {
@@ -638,7 +646,7 @@ public class Superstructure {
         }
     }
 
-    public enum State {
+    public static enum State {
         IDLE(0, "idle"),
         ELE_TO_HP(1, "ele to intake"),
         INTAKING(2, "intaking"),
