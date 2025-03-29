@@ -386,7 +386,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
                 log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
             }
-        ).until(nearPose(destinationPose, AutoAlignmentK.kTranslationTolerance, AutoAlignmentK.kFieldRotationTolerance));
+        ).until(nearPose(destinationPose, AutoAlignmentK.kTranslationTolerance, AutoAlignmentK.kFieldRotationTolerance))
+        .andThen(Commands.print("auto align finish"));
     }
 
     private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {

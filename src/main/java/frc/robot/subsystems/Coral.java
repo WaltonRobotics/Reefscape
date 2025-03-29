@@ -24,6 +24,7 @@ public class Coral extends SubsystemBase {
 
     private final double m_slowIntakeSpeed = 3;
     private final double m_scoreSpeed = 4.5;
+    private final double m_fingerSpeed = 4.7;
 
     // true when beam break broken
     public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
@@ -88,7 +89,7 @@ public class Coral extends SubsystemBase {
     }
 
     public void runWheelsAlgaeRemoval() {
-        setCoralMotorAction(-m_scoreSpeed);
+        setCoralMotorAction(-m_fingerSpeed);
     }
 
     @Override
