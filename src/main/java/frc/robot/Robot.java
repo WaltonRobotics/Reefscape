@@ -246,8 +246,7 @@ public class Robot extends TimedRobot {
   private Command resetEverythingCheck() {
     if(superstructure.m_state == Superstructure.State.ELE_TO_CLIMB || 
        superstructure.m_state == Superstructure.State.CLIMB_READY ||
-       superstructure.m_state == Superstructure.State.CLIMBING_PT1 ||
-       superstructure.m_state == Superstructure.State.CLIMBING_PT2) {
+       superstructure.m_state == Superstructure.State.CLIMBING) {
       return Commands.none();
     } else {
       return Commands.parallel(
