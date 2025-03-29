@@ -240,6 +240,20 @@ public class Robot extends TimedRobot {
     // configureTestBindings();
   }
 
+  // checks for finger in unsafe place
+  private Command resetEverythingCheck() {
+    if(superstructure.m_state == Superstructure.State.ELE_TO_CLIMB || 
+       superstructure.m_state == Superstructure.State.CLIMB_READY ||
+       superstructure.m_state == Superstructure.State.CLIMBING) {
+      return Commands.none();
+    } else {
+      return Commands.parallel(
+        algae.toIdleCmd(),
+        superstructure.forceIdle()
+      );
+    }
+  }
+
   private void configureTestBindings() {
 
     drivetrain.setDefaultCommand(
@@ -323,8 +337,7 @@ public class Robot extends TimedRobot {
 
       driver.rightBumper().onTrue(
         Commands.parallel(
-          algae.toIdleCmd(),
-          superstructure.forceIdle()
+          resetEverythingCheck()
         )
       );
 
