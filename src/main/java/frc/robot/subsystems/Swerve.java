@@ -430,7 +430,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         // you could do so optimization with the placement of the second point probably
         // unfortunately though we do need to just guess at where to put it and then just create a function for that
         // TODO: remember to test if starting position can just go in as second point
-        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(destinationPose.plus(new Transform2d(-0.05, 0, Rotation2d.kZero)), destinationPose);
+        SwerveDriveState initialState = getState();
+        ChassisSpeeds fieldRelativeChassisSpeeds = getFieldRelativeChassisSpeeds(initialState);
+        Pose2d initialPose = new Pose2d(initialState.Pose.getTranslation(), 
+            new Rotation2d(fieldRelativeChassisSpeeds.vyMetersPerSecond, fieldRelativeChassisSpeeds.vxMetersPerSecond));
+        field2d.getObject("intermediate pose").setPose(initialPose.plus(new Transform2d(0.05, 0, Rotation2d.kZero)));
+        List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(initialPose.plus(new Transform2d(0.05, 0, Rotation2d.kZero)), destinationPose);
         PathPlannerPath path = new PathPlannerPath(waypoints, 
             AutoAlignmentK.pathConstraints, 
             null, 
@@ -478,6 +483,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 );
         }
         return modulePoses;
+    }
+
+    private ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
+        Pose2d pose = swerveDriveState.Pose;
+        ChassisSpeeds robotRelChassisSpeeds = swerveDriveState.Speeds;
+
+        return new ChassisSpeeds(
+                robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getCos()
+                        - robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getCos()
+                        + robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.omegaRadiansPerSecond);
     }
 
     private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
