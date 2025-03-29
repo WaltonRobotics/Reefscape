@@ -168,7 +168,7 @@ public class Constants {
  
          public static final double kMaxAngleRotations = 0;
          public static final double kMinAngleRotations = -1;
-         public static final double kParallelToGroundRotations = -0.7;
+         public static final double kParallelToGroundRotations = -0.76;
          public static final double kClimbRotations = -0.88;
          public static final double kDefaultPos = -0.04; 
  
