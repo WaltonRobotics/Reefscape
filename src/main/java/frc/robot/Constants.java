@@ -168,7 +168,7 @@ public class Constants {
  
          public static final double kMaxAngleRotations = 0;
          public static final double kMinAngleRotations = -1;
-         public static final double kParallelToGroundRotations = -0.7;
+         public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.88;
          public static final double kDefaultPos = -0.04; 
  
@@ -573,8 +573,10 @@ public class Constants {
             m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static final double kSideToSideTolerance = 0.002; // meters
+        public static final double kTranslationTolerance = 0.002; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
+
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
         public static final double kXMaxVelocity = 3; // m/s

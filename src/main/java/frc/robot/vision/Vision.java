@@ -22,8 +22,6 @@ import frc.robot.Constants.FieldK;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
-import java.lang.StackWalker.Option;
-import java.rmi.StubNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +36,6 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import static edu.wpi.first.units.Units.Rotation;
 import static frc.robot.Constants.FieldK.kTagLayout;
 
 public class Vision {

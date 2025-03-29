@@ -2,7 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -37,13 +37,13 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import frc.robot.vision.VisionSim;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -102,10 +102,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic("actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
+    StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
+        .getStructTopic("autoAlignDestinationPose", Pose2d.struct).publish();
 
-    private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
-    private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
-    private final DoubleLogger log_destinationTheta = WaltLogger.logDouble("Swerve", "destination theta");
     private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
     private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
 
@@ -365,22 +364,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPoseOptional Give it a destination to go to, do nothing if empty
+     * @param destinationPose Give it a destination to go to
      * @param visionSim visionSim object to get simField from to do sim debugging
      * @return Returns a command that loops until it gets near
      */
-    public Command moveToPose(Optional<Pose2d> destinationPoseOptional, VisionSim visionSim) {
-        if (destinationPoseOptional.isEmpty()) {
-            // System.out.println("Swerve moveToPose fail, destination unavailable");
-            return Commands.none();
-        }
-        Pose2d destinationPose = destinationPoseOptional.get();
-
-        log_destinationX.accept(destinationPose.getX());
-        log_destinationY.accept(destinationPose.getY());
-        log_destinationTheta.accept(destinationPose.getRotation().getRadians());
-
-        visionSim.getSimDebugField().getObject("destinationPose").setPose(destinationPose);
+    public Command moveToPose(Pose2d destinationPose, Field2d field) {
+        field.getObject("destinationPose").setPose(destinationPose);
+        log_autoAlignDestinationPose.accept(destinationPose);
 
         return Commands.run(
             () -> {
@@ -395,12 +385,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
                 log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
-
-                // log_autoAlignDesiredXSpeed.accept(xSpeed);
-                // log_autoAlignDesiredYSpeed.accept(ySpeed);
-                // log_autoAlignDesiredThetaSpeed.accept(thetaSpeed);
             }
-        );
+        ).until(nearPose(destinationPose, AutoAlignmentK.kTranslationTolerance, AutoAlignmentK.kFieldRotationTolerance))
+        .andThen(Commands.print("auto align finish"));
+    }
+
+    private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
+        return () -> {
+            Pose2d drivetrainPose = getState().Pose;
+            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
+            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
+        };
     }
 
     /**
