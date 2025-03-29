@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
@@ -333,16 +334,17 @@ public class Robot extends TimedRobot {
           return Commands.none();
         }
         Pose2d scorePose = scorePoseOptional.get();
-        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(-Units.inchesToMeters(3), 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
           .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
       };
+      
       Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
         Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
         if (scorePoseOptional.isEmpty()) {
           return Commands.none();
         }
         Pose2d scorePose = scorePoseOptional.get();
-        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(-Units.inchesToMeters(3), 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
           .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
       };
 

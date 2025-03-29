@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -45,7 +44,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import frc.robot.vision.VisionSim;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -104,6 +102,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic("actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic("desiredRobotPose", Pose2d.struct).publish();
+    StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
+        .getStructTopic("autoAlignDestinationPose", Pose2d.struct).publish();
 
     private final DoubleLogger log_destinationX = WaltLogger.logDouble("Swerve", "destination x");
     private final DoubleLogger log_destinationY = WaltLogger.logDouble("Swerve", "destination y");
@@ -377,6 +377,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_destinationTheta.accept(destinationPose.getRotation().getRadians());
 
         field.getObject("destinationPose").setPose(destinationPose);
+        log_autoAlignDestinationPose.accept(destinationPose);
 
         return Commands.run(
             () -> {
