@@ -576,7 +576,7 @@ public class Constants {
         public static final double kTranslationTolerance = 0.002; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
-        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
         public static final double kXMaxVelocity = 3; // m/s
