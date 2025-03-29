@@ -15,6 +15,7 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
@@ -234,6 +235,8 @@ public class Constants {
          public static final double kV = 0.58403;
          public static final double kA = 0;
          public static final double kG = 0.57989; 
+
+         private static final double kPClimb = 50;
  
          public static final Mass kCarriageMassKg = Pounds.of(5);
          public static final Distance kMinimumHeight = Feet.of(0);
@@ -267,10 +270,10 @@ public class Constants {
              .withStatorCurrentLimitEnable(true)
              .withSupplyCurrentLimit(75)
              .withSupplyCurrentLimitEnable(true);
-        private static final CurrentLimitsConfigs kClimbCurrentLimitConfigs = new CurrentLimitsConfigs()
-            .withStatorCurrentLimit(200)
+        public static final CurrentLimitsConfigs kClimbCurrentLimitConfigs = new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(175)
             .withStatorCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(100)
+            .withSupplyCurrentLimit(55)
             .withSupplyCurrentLimitEnable(true);
          private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
              .withSensorToMechanismRatio(kGearRatio);
@@ -281,6 +284,13 @@ public class Constants {
              .withKP(kP)
              .withKI(kI) 
              .withKG(kG);
+         private static final Slot1Configs kSlot1Configs = new Slot1Configs()
+            .withKS(kS) 
+            .withKV(kV) 
+            .withGravityType(GravityTypeValue.Elevator_Static)
+            .withKP(kPClimb)
+            .withKI(kI) 
+            .withKG(kG);
          private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
              .withNeutralMode(NeutralModeValue.Brake)
              .withInverted(InvertedValue.CounterClockwise_Positive);
@@ -301,23 +311,12 @@ public class Constants {
              .withFeedback(kFeedbackConfigs)
              .withMotionMagic(kMotionMagicConfigs)
              .withSlot0(kSlot0Configs)
+             .withSlot1(kSlot1Configs)
              .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
              .withMotorOutput(kMotorOutputConfigs);
  
          public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
              .withCurrentLimits(kCurrentLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
-        
-        public static final TalonFXConfiguration kFrontClimbTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kClimbCurrentLimitConfigs)
-             .withFeedback(kFeedbackConfigs)
-             .withMotionMagic(kMotionMagicConfigs)
-             .withSlot0(kSlot0Configs)
-             .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
- 
-        public static final TalonFXConfiguration kRearClimbTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kClimbCurrentLimitConfigs)
              .withMotorOutput(kMotorOutputConfigs);
      }
  
