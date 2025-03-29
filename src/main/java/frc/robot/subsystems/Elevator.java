@@ -61,7 +61,8 @@ public class Elevator extends SubsystemBase {
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
-    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
+    private BooleanSupplier m_homingCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
+    private BooleanSupplier m_climbCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 110.0;
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut m_voltageCtrlReq = new VoltageOut(0);
 
@@ -220,12 +221,12 @@ public class Elevator extends SubsystemBase {
             Commands.runOnce(() -> {
                 m_climbMMVReq = m_climbMMVReq
                     .withPosition(m_desiredHeight)
-                    .withVelocity(2)
+                    .withVelocity(2.5)
                     .withAcceleration(5)
                     .withSlot(0);
                 m_frontMotor.setControl(m_climbMMVReq);
             }),
-            Commands.waitSeconds(3), // todo: make faster/waitUntil some position/current??
+            Commands.waitUntil(notMoving(m_climbCurrSpike)).withTimeout(3),
             Commands.runOnce(() -> {
                 m_climbRequest = m_climbRequest.withPosition(m_desiredHeight).withSlot(1);
                 m_frontMotor.setControl(m_climbRequest);
@@ -252,6 +253,12 @@ public class Elevator extends SubsystemBase {
         );
     }
 
+    private BooleanSupplier notMoving(BooleanSupplier currentSpikeSupplier) {
+        return () ->
+            m_currentDebouncer.calculate(currentSpikeSupplier.getAsBoolean()) && 
+            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
+    }
+
     public Command currentSenseHoming() {
         Runnable init = () -> {
             System.out.println("Elevator Zero INIT");
@@ -272,11 +279,7 @@ public class Elevator extends SubsystemBase {
             System.out.println("Zeroed Elevator!!!");
         };
 
-        BooleanSupplier isFinished = () ->
-            m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
-            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
-
-        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+        return new FunctionalCommand(init, execute, onEnd, notMoving(m_homingCurrSpike), this);
     }
 
     public Command externalWaitUntilHomed() {
@@ -323,7 +326,7 @@ public class Elevator extends SubsystemBase {
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
         CLIMB_UP(2.08 - (kInch * 2.5)), // good value
-        CLIMB_BUMP(CLIMB_UP.rotations + kInch),
+        CLIMB_BUMP(CLIMB_UP.rotations + (kInch * 1.5)),
         CLIMB_DOWN(0.0),
         HP(2.08 - kInch - 0.18); //human player station intake height
 
