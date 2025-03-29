@@ -300,7 +300,7 @@ public class Elevator extends SubsystemBase {
         L2(5.653564 + kInch),
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
-        CLIMB_UP(2.08 - (kInch * 3)), // good value
+        CLIMB_UP(2.08 - (kInch * 2.5)), // good value
         HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
