@@ -4,39 +4,11 @@
  "type":"Swerve",
  "variables":{
   "expressions":{
-   "HYVal":{
+   "offset":{
     "dimension":"Number",
     "var":{
-     "exp":"4.19",
-     "val":4.19
-    }
-   },
-   "StartLineXVal":{
-    "dimension":"Number",
-    "var":{
-     "exp":"7.169135570526123",
-     "val":7.169135570526123
-    }
-   },
-   "degOffset":{
-    "dimension":"Number",
-    "var":{
-     "exp":"90",
-     "val":90.0
-    }
-   },
-   "maxAccel":{
-    "dimension":"LinAcc",
-    "var":{
-     "exp":"4 m / s ^ 2",
-     "val":4.0
-    }
-   },
-   "movingSpeed":{
-    "dimension":"LinVel",
-    "var":{
-     "exp":"2.6 m / s",
-     "val":2.6
+     "exp":"0.0826",
+     "val":0.0826
     }
    },
    "PushingDistance":{
@@ -46,11 +18,18 @@
      "val":7.260873794555664
     }
    },
-   "offset":{
+   "degOffset":{
     "dimension":"Number",
     "var":{
-     "exp":"0.0826",
-     "val":0.0826
+     "exp":"90",
+     "val":90.0
+    }
+   },
+   "StartLineXVal":{
+    "dimension":"Number",
+    "var":{
+     "exp":"7.169135570526123",
+     "val":7.169135570526123
     }
    },
    "GYVal":{
@@ -60,18 +39,39 @@
      "val":3.858089447021485
     }
    },
-   "startSpeed":{
-    "dimension":"LinVel",
-    "var":{
-     "exp":"2.2 m / s",
-     "val":2.2
-    }
-   },
    "reefSpeed":{
     "dimension":"LinVel",
     "var":{
-     "exp":"1 m / s",
-     "val":1.0
+     "exp":"1.75 m / s",
+     "val":1.75
+    }
+   },
+   "movingSpeed":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"2.6 m / s",
+     "val":2.6
+    }
+   },
+   "HYVal":{
+    "dimension":"Number",
+    "var":{
+     "exp":"4.19",
+     "val":4.19
+    }
+   },
+   "maxAccel":{
+    "dimension":"LinAcc",
+    "var":{
+     "exp":"4 m / s ^ 2",
+     "val":4.0
+    }
+   },
+   "startSpeed":{
+    "dimension":"LinVel",
+    "var":{
+     "exp":"3 m / s",
+     "val":3.0
     }
    },
    "coralSpeed":{
@@ -83,6 +83,104 @@
    }
   },
   "poses":{
+   "L":{
+    "x":{
+     "exp":"3.708150863647461 m + (offset * cos(-60 deg + degOffset deg)) m",
+     "val":3.779684562000055
+    },
+    "y":{
+     "exp":"5.052041053771973 m + (offset * sin(-60 deg + degOffset deg)) m",
+     "val":5.093341053771972
+    },
+    "heading":{
+     "exp":"-60 deg",
+     "val":-1.0471975511965976
+    }
+   },
+   "I_Short":{
+    "x":{
+     "exp":"5.479026794433594 m",
+     "val":5.479026794433594
+    },
+    "y":{
+     "exp":"5.240184307098389 m",
+     "val":5.240184307098389
+    },
+    "heading":{
+     "exp":"I.heading",
+     "val":-2.0943951023931953
+    }
+   },
+   "B":{
+    "x":{
+     "exp":"3.1920857429504395 m + (offset * cos(0 deg + degOffset deg)) m",
+     "val":3.1920857429504395
+    },
+    "y":{
+     "exp":"GYVal m + (offset * sin(0 deg + degOffset deg)) m",
+     "val":3.9406894470214846
+    },
+    "heading":{
+     "exp":"0 deg",
+     "val":0.0
+    }
+   },
+   "H":{
+    "x":{
+     "exp":"5.772265434265137 m + (offset * cos(180 deg + degOffset deg)) m",
+     "val":5.772265434265137
+    },
+    "y":{
+     "exp":"HYVal m + (offset * sin(180 deg + degOffset deg)) m",
+     "val":4.1074
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "E":{
+    "x":{
+     "exp":"4.991955280303955 m + (offset * cos(120 deg + degOffset deg)) m",
+     "val":4.92042158195136
+    },
+    "y":{
+     "exp":"2.8231382369995117 m + (offset * sin(120 deg + degOffset deg)) m",
+     "val":2.7818382369995116
+    },
+    "heading":{
+     "exp":"120 deg",
+     "val":2.0943951023931953
+    }
+   },
+   "G_Short":{
+    "x":{
+     "exp":"6.052803993225098 m",
+     "val":6.052803993225098
+    },
+    "y":{
+     "exp":"G.y",
+     "val":3.775489447021484
+    },
+    "heading":{
+     "exp":"G.heading",
+     "val":3.141592653589793
+    }
+   },
+   "J":{
+    "x":{
+     "exp":"4.99741792678833 m + (offset * cos(-120 deg + degOffset deg)) m",
+     "val":5.068951625140925
+    },
+    "y":{
+     "exp":"5.226856708526611 m + (offset * sin(-120 deg + degOffset deg)) m",
+     "val":5.185556708526612
+    },
+    "heading":{
+     "exp":"-120 deg",
+     "val":-2.0943951023931953
+    }
+   },
    "D":{
     "x":{
      "exp":"3.9885246753692627 m + (offset * cos(60 deg + degOffset deg)) m",
@@ -97,18 +195,32 @@
      "val":1.0471975511965976
     }
    },
-   "J_Short":{
+   "C":{
     "x":{
-     "exp":"5.205379486083984 m",
-     "val":5.205379486083984
+     "exp":"3.6992833614349365 m + (offset * cos(60 deg + degOffset deg)) m",
+     "val":3.627749663082342
     },
     "y":{
-     "exp":"5.425558090209961 m",
-     "val":5.425558090209961
+     "exp":"2.987058401107788 m + (offset * sin(60 deg + degOffset deg)) m",
+     "val":3.028358401107788
     },
     "heading":{
-     "exp":"J.heading",
-     "val":-2.0943951023931953
+     "exp":"60 deg",
+     "val":1.0471975511965976
+    }
+   },
+   "StartSuperLeft":{
+    "x":{
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
+    },
+    "y":{
+     "exp":"6.917787075042725 m",
+     "val":6.917787075042725
+    },
+    "heading":{
+     "exp":"-90 deg",
+     "val":-1.5707963267948966
     }
    },
    "K":{
@@ -125,17 +237,129 @@
      "val":-1.0471975511965976
     }
    },
-   "G_Short":{
+   "HPLeft":{
     "x":{
-     "exp":"6.052803993225098 m",
-     "val":6.052803993225098
+     "exp":"1.4632495641708374 m",
+     "val":1.4632495641708374
     },
     "y":{
-     "exp":"G.y",
-     "val":3.775489447021484
+     "exp":"7.323543548583984 m",
+     "val":7.323543548583984
     },
     "heading":{
-     "exp":"G.heading",
+     "exp":"-0.9332802447333852 rad",
+     "val":-0.9332802447333852
+    }
+   },
+   "StartStraightRight":{
+    "x":{
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
+    },
+    "y":{
+     "exp":"1.8764067888259888 m",
+     "val":1.8764067888259888
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "StartMidH":{
+    "x":{
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
+    },
+    "y":{
+     "exp":"HYVal m",
+     "val":4.19
+    },
+    "heading":{
+     "exp":"180 deg",
+     "val":3.141592653589793
+    }
+   },
+   "B_Short":{
+    "x":{
+     "exp":"2.936753749847412 m",
+     "val":2.936753749847412
+    },
+    "y":{
+     "exp":"B.y",
+     "val":3.9406894470214846
+    },
+    "heading":{
+     "exp":"B.heading",
+     "val":0.0
+    }
+   },
+   "C_Short":{
+    "x":{
+     "exp":"3.5017032623291016 m",
+     "val":3.5017032623291016
+    },
+    "y":{
+     "exp":"2.812666416168213 m",
+     "val":2.812666416168213
+    },
+    "heading":{
+     "exp":"C.heading",
+     "val":1.0471975511965976
+    }
+   },
+   "StartSuperRight":{
+    "x":{
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
+    },
+    "y":{
+     "exp":"1.1446685791015625 m",
+     "val":1.1446685791015625
+    },
+    "heading":{
+     "exp":"90 deg",
+     "val":1.5707963267948966
+    }
+   },
+   "J_Short":{
+    "x":{
+     "exp":"5.205379486083984 m",
+     "val":5.205379486083984
+    },
+    "y":{
+     "exp":"5.425558090209961 m",
+     "val":5.425558090209961
+    },
+    "heading":{
+     "exp":"J.heading",
+     "val":-2.0943951023931953
+    }
+   },
+   "A_Short":{
+    "x":{
+     "exp":"2.9455809593200684 m",
+     "val":2.9455809593200684
+    },
+    "y":{
+     "exp":"4.269176959991455 m",
+     "val":4.269176959991455
+    },
+    "heading":{
+     "exp":"A.heading",
+     "val":0.0
+    }
+   },
+   "H_Short":{
+    "x":{
+     "exp":"6.035149097442627 m",
+     "val":6.035149097442627
+    },
+    "y":{
+     "exp":"H.y",
+     "val":4.1074
+    },
+    "heading":{
+     "exp":"H.heading",
      "val":3.141592653589793
     }
    },
@@ -153,98 +377,28 @@
      "val":-1.0471975511965976
     }
    },
-   "J":{
+   "HPRight":{
     "x":{
-     "exp":"4.99741792678833 m + (offset * cos(-120 deg + degOffset deg)) m",
-     "val":5.068951625140925
+     "exp":"1.4673705101013184 m",
+     "val":1.4673705101013184
     },
     "y":{
-     "exp":"5.226856708526611 m + (offset * sin(-120 deg + degOffset deg)) m",
-     "val":5.185556708526612
+     "exp":"0.7045616507530212 m",
+     "val":0.7045616507530212
     },
     "heading":{
-     "exp":"-120 deg",
-     "val":-2.0943951023931953
+     "exp":"0.9332802447333852 rad",
+     "val":0.9332802447333852
     }
    },
-   "L":{
+   "StartMidG":{
     "x":{
-     "exp":"3.708150863647461 m + (offset * cos(-60 deg + degOffset deg)) m",
-     "val":3.779684562000055
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
     },
     "y":{
-     "exp":"5.052041053771973 m + (offset * sin(-60 deg + degOffset deg)) m",
-     "val":5.093341053771972
-    },
-    "heading":{
-     "exp":"-60 deg",
-     "val":-1.0471975511965976
-    }
-   },
-   "H":{
-    "x":{
-     "exp":"5.772265434265137 m + (offset * cos(180 deg + degOffset deg)) m",
-     "val":5.772265434265137
-    },
-    "y":{
-     "exp":"HYVal m + (offset * sin(180 deg + degOffset deg)) m",
-     "val":4.1074
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "B":{
-    "x":{
-     "exp":"3.1920857429504395 m + (offset * cos(0 deg + degOffset deg)) m",
-     "val":3.1920857429504395
-    },
-    "y":{
-     "exp":"GYVal m + (offset * sin(0 deg + degOffset deg)) m",
-     "val":3.9406894470214846
-    },
-    "heading":{
-     "exp":"0 deg",
-     "val":0.0
-    }
-   },
-   "F":{
-    "x":{
-     "exp":"5.276031017303467 m + (offset * cos(120 deg + degOffset deg)) m",
-     "val":5.204497318950872
-    },
-    "y":{
-     "exp":"2.9924910068511963 m + (offset * sin(120 deg + degOffset deg)) m",
-     "val":2.951191006851196
-    },
-    "heading":{
-     "exp":"120 deg",
-     "val":2.0943951023931953
-    }
-   },
-   "I":{
-    "x":{
-     "exp":"5.276031017303467 m + (offset * cos(-120 deg + degOffset deg)) m",
-     "val":5.347564715656062
-    },
-    "y":{
-     "exp":"5.062966823577881 m + (offset * sin(-120 deg + degOffset deg)) m",
-     "val":5.021666823577881
-    },
-    "heading":{
-     "exp":"-120 deg",
-     "val":-2.0943951023931953
-    }
-   },
-   "G":{
-    "x":{
-     "exp":"5.772265434265137 m + (offset * cos(180 deg + degOffset deg)) m",
-     "val":5.772265434265137
-    },
-    "y":{
-     "exp":"GYVal m + (offset * sin(180 deg + degOffset deg)) m",
-     "val":3.775489447021484
+     "exp":"GYVal m",
+     "val":3.858089447021485
     },
     "heading":{
      "exp":"180 deg",
@@ -265,34 +419,6 @@
      "val":2.0943951023931953
     }
    },
-   "StartMidG":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"GYVal m",
-     "val":3.858089447021485
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "HPRight":{
-    "x":{
-     "exp":"1.4673705101013184 m",
-     "val":1.4673705101013184
-    },
-    "y":{
-     "exp":"0.7045616507530212 m",
-     "val":0.7045616507530212
-    },
-    "heading":{
-     "exp":"0.9332802447333852 rad",
-     "val":0.9332802447333852
-    }
-   },
    "A":{
     "x":{
      "exp":"3.1920857429504395 m + (offset * cos(0 deg + degOffset deg)) m",
@@ -307,14 +433,70 @@
      "val":0.0
     }
    },
-   "E":{
+   "F_Short":{
     "x":{
-     "exp":"4.991955280303955 m + (offset * cos(120 deg + degOffset deg)) m",
-     "val":4.92042158195136
+     "exp":"5.337789058685303 m",
+     "val":5.337789058685303
     },
     "y":{
-     "exp":"2.8231382369995117 m + (offset * sin(120 deg + degOffset deg)) m",
-     "val":2.7818382369995116
+     "exp":"2.724392890930176 m",
+     "val":2.724392890930176
+    },
+    "heading":{
+     "exp":"E.heading",
+     "val":2.0943951023931953
+    }
+   },
+   "StartLeft":{
+    "x":{
+     "exp":"StartLineXVal m",
+     "val":7.169135570526123
+    },
+    "y":{
+     "exp":"6.1655120849609375 m",
+     "val":6.1655120849609375
+    },
+    "heading":{
+     "exp":"270 deg",
+     "val":4.71238898038469
+    }
+   },
+   "D_Short":{
+    "x":{
+     "exp":"3.7841780185699463 m",
+     "val":3.7841780185699463
+    },
+    "y":{
+     "exp":"2.644947052001953 m",
+     "val":2.644947052001953
+    },
+    "heading":{
+     "exp":"D.heading",
+     "val":1.0471975511965976
+    }
+   },
+   "I":{
+    "x":{
+     "exp":"5.276031017303467 m + (offset * cos(-120 deg + degOffset deg)) m",
+     "val":5.347564715656062
+    },
+    "y":{
+     "exp":"5.062966823577881 m + (offset * sin(-120 deg + degOffset deg)) m",
+     "val":5.021666823577881
+    },
+    "heading":{
+     "exp":"-120 deg",
+     "val":-2.0943951023931953
+    }
+   },
+   "F":{
+    "x":{
+     "exp":"5.276031017303467 m + (offset * cos(120 deg + degOffset deg)) m",
+     "val":5.204497318950872
+    },
+    "y":{
+     "exp":"2.9924910068511963 m + (offset * sin(120 deg + degOffset deg)) m",
+     "val":2.951191006851196
     },
     "heading":{
      "exp":"120 deg",
@@ -335,90 +517,6 @@
      "val":-1.0471975511965976
     }
    },
-   "StartMidH":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"HYVal m",
-     "val":4.19
-    },
-    "heading":{
-     "exp":"180 deg",
-     "val":3.141592653589793
-    }
-   },
-   "A_Short":{
-    "x":{
-     "exp":"2.9455809593200684 m",
-     "val":2.9455809593200684
-    },
-    "y":{
-     "exp":"4.269176959991455 m",
-     "val":4.269176959991455
-    },
-    "heading":{
-     "exp":"A.heading",
-     "val":0.0
-    }
-   },
-   "D_Short":{
-    "x":{
-     "exp":"3.7841780185699463 m",
-     "val":3.7841780185699463
-    },
-    "y":{
-     "exp":"2.644947052001953 m",
-     "val":2.644947052001953
-    },
-    "heading":{
-     "exp":"D.heading",
-     "val":1.0471975511965976
-    }
-   },
-   "B_Short":{
-    "x":{
-     "exp":"2.936753749847412 m",
-     "val":2.936753749847412
-    },
-    "y":{
-     "exp":"B.y",
-     "val":3.9406894470214846
-    },
-    "heading":{
-     "exp":"B.heading",
-     "val":0.0
-    }
-   },
-   "I_Short":{
-    "x":{
-     "exp":"5.479026794433594 m",
-     "val":5.479026794433594
-    },
-    "y":{
-     "exp":"5.240184307098389 m",
-     "val":5.240184307098389
-    },
-    "heading":{
-     "exp":"I.heading",
-     "val":-2.0943951023931953
-    }
-   },
-   "F_Short":{
-    "x":{
-     "exp":"5.337789058685303 m",
-     "val":5.337789058685303
-    },
-    "y":{
-     "exp":"2.724392890930176 m",
-     "val":2.724392890930176
-    },
-    "heading":{
-     "exp":"E.heading",
-     "val":2.0943951023931953
-    }
-   },
    "E_Short":{
     "x":{
      "exp":"5.064141750335693 m",
@@ -433,116 +531,18 @@
      "val":2.0943951023931953
     }
    },
-   "C":{
+   "G":{
     "x":{
-     "exp":"3.6992833614349365 m + (offset * cos(60 deg + degOffset deg)) m",
-     "val":3.627749663082342
+     "exp":"5.772265434265137 m + (offset * cos(180 deg + degOffset deg)) m",
+     "val":5.772265434265137
     },
     "y":{
-     "exp":"2.987058401107788 m + (offset * sin(60 deg + degOffset deg)) m",
-     "val":3.028358401107788
-    },
-    "heading":{
-     "exp":"60 deg",
-     "val":1.0471975511965976
-    }
-   },
-   "HPLeft":{
-    "x":{
-     "exp":"1.4632495641708374 m",
-     "val":1.4632495641708374
-    },
-    "y":{
-     "exp":"7.323543548583984 m",
-     "val":7.323543548583984
-    },
-    "heading":{
-     "exp":"-0.9332802447333852 rad",
-     "val":-0.9332802447333852
-    }
-   },
-   "H_Short":{
-    "x":{
-     "exp":"6.035149097442627 m",
-     "val":6.035149097442627
-    },
-    "y":{
-     "exp":"H.y",
-     "val":4.1074
-    },
-    "heading":{
-     "exp":"H.heading",
-     "val":3.141592653589793
-    }
-   },
-   "StartStraightRight":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"1.8764067888259888 m",
-     "val":1.8764067888259888
+     "exp":"GYVal m + (offset * sin(180 deg + degOffset deg)) m",
+     "val":3.775489447021484
     },
     "heading":{
      "exp":"180 deg",
      "val":3.141592653589793
-    }
-   },
-   "StartLeft":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"6.1655120849609375 m",
-     "val":6.1655120849609375
-    },
-    "heading":{
-     "exp":"270 deg",
-     "val":4.71238898038469
-    }
-   },
-   "StartSuperRight":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"1.1446685791015625 m",
-     "val":1.1446685791015625
-    },
-    "heading":{
-     "exp":"90 deg",
-     "val":1.5707963267948966
-    }
-   },
-   "C_Short":{
-    "x":{
-     "exp":"3.5017032623291016 m",
-     "val":3.5017032623291016
-    },
-    "y":{
-     "exp":"2.812666416168213 m",
-     "val":2.812666416168213
-    },
-    "heading":{
-     "exp":"C.heading",
-     "val":1.0471975511965976
-    }
-   },
-   "StartSuperLeft":{
-    "x":{
-     "exp":"StartLineXVal m",
-     "val":7.169135570526123
-    },
-    "y":{
-     "exp":"6.917787075042725 m",
-     "val":6.917787075042725
-    },
-    "heading":{
-     "exp":"-90 deg",
-     "val":-1.5707963267948966
     }
    }
   }
