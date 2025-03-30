@@ -20,6 +20,7 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import choreo.Choreo;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -38,7 +39,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.AutoAlignmentK;
-import frc.robot.Constants.FieldK;
+import static frc.robot.Constants.FieldK.*;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
@@ -236,8 +237,8 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-    configureBindings();
-    // configureTestBindings();
+    // configureBindings();
+    configureTestBindings();
   }
 
   private void configureTestBindings() {
@@ -285,6 +286,11 @@ public class Robot extends TimedRobot {
       driver.leftBumper().whileTrue(drivetrain.applyRequest(() ->
           point.withModuleDirection(new Rotation2d(0, 0))
       ));
+
+      driver.a().whileTrue(waltAutonFactory.get().swervePIDTuningSeq(
+        Choreo.loadTrajectory("Start_Right_E").get(), 
+        Reef.reefLocationToIdealRobotPoseMap.get(REEF_E),
+        robotField));
 
     // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
@@ -417,18 +423,18 @@ public class Robot extends TimedRobot {
     configWaltAutonBuilder();
     
     addPeriodic(() -> superstructure.periodic(), 0.01);
-    robotField.getObject("reefARobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    robotField.getObject("reefBRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    robotField.getObject("reefCRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    robotField.getObject("reefDRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    robotField.getObject("reefERobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    robotField.getObject("reefFRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    robotField.getObject("reefGRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    robotField.getObject("reefHRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    robotField.getObject("reefIRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    robotField.getObject("reefJRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    robotField.getObject("reefKRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    robotField.getObject("reefLRobotLocation").setPose(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+    robotField.getObject("reefARobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
+    robotField.getObject("reefBRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
+    robotField.getObject("reefCRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
+    robotField.getObject("reefDRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
+    robotField.getObject("reefERobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
+    robotField.getObject("reefFRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
+    robotField.getObject("reefGRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
+    robotField.getObject("reefHRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
+    robotField.getObject("reefIRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
+    robotField.getObject("reefJRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
+    robotField.getObject("reefKRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
+    robotField.getObject("reefLRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
   }
 
   @Override

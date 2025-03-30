@@ -3,6 +3,7 @@ package frc.robot.autons;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -10,6 +11,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -324,5 +326,15 @@ public class WaltAutonFactory {
         }
 
         return m_routine;
+    }
+
+    // for teleop tuning pid purposes
+    public Command swervePIDTuningSeq(Trajectory traj, Pose2d scorePose, Field2d field2d) {
+        AutoTrajectory autoTraj = m_routine.trajectory(traj);
+        return Commands.sequence(
+            m_drivetrain.moveToPose(autoTraj.getInitialPose().get(), field2d),
+            autoTraj.cmd(),
+            m_drivetrain.moveToPose(scorePose, field2d)
+        );
     }
 }
