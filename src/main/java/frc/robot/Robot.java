@@ -478,7 +478,7 @@ public class Robot extends TimedRobot {
   }
 
   private String makeAutonName() {
-    String output = "";
+    String name = "";
     int numScoringLocs = scoringLocs.size();
     int numHPStations = hpStations.size();
     int iterator = 0;
@@ -486,20 +486,20 @@ public class Robot extends TimedRobot {
     if (numScoringLocs == numHPStations) {
       // if the auton ends at an HP Station
       for (int i = 0; i < numScoringLocs - 1; i++) {
-        output += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
+        name += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
         iterator++;
       }
-      output += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString() + "-" + hpStations.get(iterator).toString();
+      name += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString() + "-" + hpStations.get(iterator).toString();
     } else {
       // assumes there is one less HP station than scoring loc
       for (int i = 0; i < numHPStations; i++) {
-        output += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
+        name += scoringLocs.get(i).toString() + "-" + eleHeights.get(i).toString() + "-" + hpStations.get(i).toString() + ", ";
         iterator++;
       }
-      output += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString();
+      name += scoringLocs.get(iterator).toString() + "-" + eleHeights.get(iterator).toString();
     }
 
-    return output;
+    return name;
   }
 
   @Override
@@ -562,51 +562,6 @@ public class Robot extends TimedRobot {
       // check if the AUTON READY button has been pressed
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
 
-      // ---- CUSTOM CYCLE AUTON (NO LONGER USING)
-      // continues checking choosers for the correct values if the CUSTOM CYCLE READY button HAS NOT been pressed
-      // if (!(WaltAutonBuilder.nte_customAutonReady.getBoolean(false))) {
-      //   if (numCycleChange) {
-      //     WaltAutonBuilder.updateNumCycles();
-      //     WaltAutonBuilder.configureCycles(); // dont need to call configureFirstCycle since the num of cycles chosen doesn't affect the preload cycle
-      //     numCycleChange = false;
-      //   }
-      //   if (startingPositionChange) {
-      //     WaltAutonBuilder.updateStartingPosition();
-      //     WaltAutonBuilder.configureFirstCycle(); // changing the initial position affects the options given for scoring locs
-      //     startingPositionChange = false;
-      //   }
-      //   if (initialHPStationChange) {
-      //     WaltAutonBuilder.updateInitalHPStation();
-      //     initialHPStationChange = false;
-      //   }
-      //   if (firstScoringPositionChange) {
-      //     WaltAutonBuilder.updateInitialScoringPosition();
-      //     firstScoringPositionChange = false;
-      //   }
-      //   if (startingHeightChange) {
-      //     WaltAutonBuilder.updateStartingHeight();
-      //     startingHeightChange = false;
-      //   }
-      // }
-
-      // if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
-      //   waltAutonFactory = Optional.of(new WaltAutonFactory(
-      //     elevator,
-      //     autoFactory, 
-      //     superstructure, 
-      //     drivetrain,
-      //     WaltAutonBuilder.startingPosition, 
-      //     WaltAutonBuilder.getCycleScoringLocs(), 
-      //     WaltAutonBuilder.getCycleEleHeights(), 
-      //     WaltAutonBuilder.getCycleHPStations(),
-      //     WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
-      //   ));
-
-      //   autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
-      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Custom Auton Path created"));
-      //   WaltAutonBuilder.nte_customAutonReady.setBoolean(false);
-      // }
-    
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
