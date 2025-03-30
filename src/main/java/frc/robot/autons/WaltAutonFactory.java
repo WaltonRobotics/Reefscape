@@ -3,31 +3,16 @@ package frc.robot.autons;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Rotations;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-
-import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.Constants.RobotK;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -37,7 +22,6 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.robot.vision.VisionSim;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -87,6 +71,18 @@ public class WaltAutonFactory {
             "Can't run full path", 
             "ArrayList sizes didnt match up for reef, height, and HP. Will run as much of the path as possible"
         );
+
+    public WaltAutonFactory(
+        Elevator ele,
+        AutoFactory autoFactory,
+        Superstructure superstructure,
+        Swerve drivetrain
+    ) {
+        m_autoFactory = autoFactory;
+        m_drivetrain = drivetrain;
+        m_ele = ele;
+        m_superstructure = superstructure;
+    }
 
     public WaltAutonFactory(
         Elevator ele,
@@ -226,7 +222,7 @@ public class WaltAutonFactory {
             if(m_pushTime) {
                 m_routine.active().onTrue(
                     Commands.sequence(
-                        SimpleAutons.pushPartner(m_drivetrain),
+                        // SimpleAutons.pushPartner(m_drivetrain),
                         firstScoreTraj.cmd(),
                         m_drivetrain.stopCmd()
                     )
@@ -258,7 +254,7 @@ public class WaltAutonFactory {
         if(m_pushTime) {
             m_routine.active().onTrue(
                 Commands.sequence(
-                    SimpleAutons.pushPartner(m_drivetrain),
+                    // SimpleAutons.pushPartner(m_drivetrain),
                     firstScoreTraj.cmd(),
                     m_drivetrain.stopCmd()
                 )
@@ -326,15 +322,5 @@ public class WaltAutonFactory {
         }
 
         return m_routine;
-    }
-
-    // for teleop tuning pid purposes
-    public Command swervePIDTuningSeq(Trajectory traj, Pose2d scorePose, Field2d field2d) {
-        AutoTrajectory autoTraj = m_routine.trajectory(traj);
-        return Commands.sequence(
-            m_drivetrain.moveToPose(autoTraj.getInitialPose().get(), field2d),
-            autoTraj.cmd(),
-            m_drivetrain.moveToPose(scorePose, field2d)
-        );
     }
 }

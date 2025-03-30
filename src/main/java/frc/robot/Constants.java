@@ -564,16 +564,21 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
+
+        public static double kXKP = 7;
+        public static double kYKP = 7;
+        public static double kThetaKP = 10;
         
-        public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
-        public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
-        public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
+        private static final TrapezoidProfile.Constraints kAutoAlignConstraints = new TrapezoidProfile.Constraints(3, 12);
+        public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
+        public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0);
+        public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0.1);
         // we need to do this so the PIDController works properly
         static {
-            m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+            kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static final double kTranslationTolerance = 0.002; // meters
+        public static final double kTranslationTolerance = 0.005; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);

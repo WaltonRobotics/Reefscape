@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -16,16 +17,14 @@ import org.photonvision.EstimatedRobotPose;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import choreo.Choreo;
-import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -39,7 +38,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.AutoAlignmentK;
-import static frc.robot.Constants.FieldK.*;
+import frc.robot.Constants.FieldK.Reef;
+
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
@@ -97,9 +97,6 @@ public class Robot extends TimedRobot {
 
   // this should be updated with all of our cameras
   private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
-
-  private final AutoFactory autoFactory = drivetrain.createAutoFactory();
-  private Optional<WaltAutonFactory> waltAutonFactory = Optional.empty();
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -182,7 +179,10 @@ public class Robot extends TimedRobot {
   private final Timer lastGotTagMsmtTimer = new Timer();
   private final BooleanLogger log_visionSeenPastSecond = new BooleanLogger("Robot", "VisionSeenLastSec");
 
+  private Optional<WaltAutonFactory> waltAutonFactory = Optional.empty();
+
   public Robot() {
+    SignalLogger.start();
     DriverStation.silenceJoystickConnectionWarning(true);
     if (Robot.isReal()) {
       lastGotTagMsmtTimer.start();
@@ -234,12 +234,38 @@ public class Robot extends TimedRobot {
       this::manipRumble
     );
 
+    waltAutonFactory = Optional.of(new WaltAutonFactory(elevator, drivetrain.autoFactory, superstructure, drivetrain));
+
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
     // configureBindings();
     configureTestBindings();
   }
+
+  Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
+    Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false);
+    if (scorePoseOptional.isEmpty()) {
+      return Commands.none();
+    }
+    Pose2d scorePose = scorePoseOptional.get();
+    return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+      .andThen(Commands.print("intermediate pose"))
+      .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()))
+      .andThen(Commands.print("auto align truly finish"));
+  };
+
+  Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
+    Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
+    if (scorePoseOptional.isEmpty()) {
+      return Commands.none();
+    }
+    Pose2d scorePose = scorePoseOptional.get();
+    return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
+      .andThen(Commands.print("intermediate pose"))
+      .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()))
+      .andThen(Commands.print("auto align truly finish"));
+  };
 
   private void configureTestBindings() {
 
@@ -287,10 +313,19 @@ public class Robot extends TimedRobot {
           point.withModuleDirection(new Rotation2d(0, 0))
       ));
 
-      driver.a().whileTrue(waltAutonFactory.get().swervePIDTuningSeq(
-        Choreo.loadTrajectory("Start_Right_E").get(), 
-        Reef.reefLocationToIdealRobotPoseMap.get(REEF_E),
-        robotField));
+      driver.y().whileTrue(
+        drivetrain.swervePIDTuningSeq(
+          Reef.reefLocationToIdealRobotPoseMap.get(REEF_E),
+          robotField
+          )
+        );
+
+      trg_leftTeleopAutoAlign.whileTrue(
+        new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+      );
+      trg_rightTeleopAutoAlign.whileTrue(
+        new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+      );
 
     // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
@@ -333,26 +368,6 @@ public class Robot extends TimedRobot {
           superstructure.forceIdle()
         )
       );
-
-      Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
-        Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false);
-        if (scorePoseOptional.isEmpty()) {
-          return Commands.none();
-        }
-        Pose2d scorePose = scorePoseOptional.get();
-        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
-          .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
-      };
-
-      Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
-        Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
-        if (scorePoseOptional.isEmpty()) {
-          return Commands.none();
-        }
-        Pose2d scorePose = scorePoseOptional.get();
-        return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
-          .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()));
-      };
 
       trg_leftTeleopAutoAlign.whileTrue(
         new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
@@ -498,7 +513,7 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_customAutonReady.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           WaltAutonBuilder.startingPosition, 
@@ -517,7 +532,7 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.SUPER_LEFT, 
@@ -535,7 +550,7 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.RIGHT, 
@@ -553,7 +568,7 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.LEFT, 
@@ -571,7 +586,7 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.MID_G, 
@@ -590,7 +605,7 @@ public class Robot extends TimedRobot {
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
         waltAutonFactory = Optional.of(new WaltAutonFactory(
           elevator,
-          autoFactory, 
+          drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
           StartingLocs.SUPER_LEFT, 
@@ -672,14 +687,6 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-
-    // if(!elevator.getIsHomed()) {
-    //   elevator.currentSenseHoming().schedule();
-    // }
-
-    // if(!algae.getIsHomed()) {
-    //   algae.currentSenseHoming().schedule();
-    // }
   }
 
   @Override
