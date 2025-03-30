@@ -19,6 +19,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.trajectory.SwerveSample;
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
+import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
