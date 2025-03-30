@@ -8,16 +8,15 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
-
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import frc.robot.Constants.RobotK;
+import frc.robot.autons.TrajsAndLocs.*;
 import frc.robot.autons.TrajsAndLocs.HPStation;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
+import frc.robot.autons.TrajsAndLocs.StartingLoc;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
@@ -33,9 +32,9 @@ public class WaltAutonFactory {
     private final Elevator m_ele;
     private final Swerve m_drivetrain;
 
-    private StartingLocs m_startLoc;
+    private StartingLoc m_startLoc;
     // all need to have at least 1 thing in them
-    private ArrayList<ReefLocs> m_scoreLocs;
+    private ArrayList<ReefLoc> m_scoreLocs;
     private ArrayList<EleHeight> m_heights; // needs to hv same size as m_scoreLocs
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
     private boolean m_pushTime; 
@@ -89,8 +88,8 @@ public class WaltAutonFactory {
         AutoFactory autoFactory, 
         Superstructure superstructure,
         Swerve drivetrain,
-        StartingLocs startLoc,
-        ArrayList<ReefLocs> scoreLocs,
+        StartingLoc startLoc,
+        ArrayList<ReefLoc> scoreLocs,
         ArrayList<EleHeight> heights,
         ArrayList<HPStation> hpStations,
         boolean pushTime
@@ -142,14 +141,14 @@ public class WaltAutonFactory {
         }
     }
 
-    private ArrayList<AutoTrajectory> trajMaker() {
+    private ArrayList<AutoTrajectory> trajMaker(boolean isShort) {
         ArrayList<AutoTrajectory> trajsList = new ArrayList<>();
         try {
             for (int i = 0; i < m_scoreLocs.size(); i++) {
-                String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+                String rToH = TrajsAndLocs.getToHPTrajName(m_scoreLocs.get(i), m_hpStations.get(i), isShort);
                 trajsList.add(m_routine.trajectory(rToH));
                 if (i < m_scoreLocs.size() - 1) {
-                    String hToR = HPToReefTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
+                    String hToR = TrajsAndLocs.getToReefTrajName(m_hpStations.get(i), m_scoreLocs.get(i + 1), isShort);
                     trajsList.add(m_routine.trajectory(hToR));
                     System.out.println(rToH);
                 }
@@ -157,12 +156,13 @@ public class WaltAutonFactory {
 
             // for .5 autos.
             if(m_hpStations.size() > m_scoreLocs.size()) {
-                trajsList.add(m_routine.trajectory(ReefToHPTrajs.get(
-                    new Pair<ReefLocs, HPStation>(
+                trajsList.add(m_routine.trajectory(
+                    TrajsAndLocs.getToHPTrajName(
                         m_scoreLocs.get(m_scoreLocs.size() - 1), 
-                        m_hpStations.get(m_hpStations.size() - 1)
+                        m_hpStations.get(m_hpStations.size() - 1), 
+                        isShort
                     )
-                )));
+                ));
             }
 
             return trajsList;
@@ -199,7 +199,7 @@ public class WaltAutonFactory {
         return leaveAuto;
     }
 
-    public AutoRoutine generateAuton() {
+    public AutoRoutine generateAuton(boolean isShort) {
         if (doNothing()) {
             return m_routine;
         }
@@ -213,7 +213,7 @@ public class WaltAutonFactory {
             System.out.println("!!!!!!! BROKE !!!!!!!");
         }
 
-        var theTraj = StartToReefTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0)));
+        var theTraj = TrajsAndLocs.getStartingTrajName(m_startLoc, m_scoreLocs.get(0), isShort);
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
 
@@ -238,7 +238,7 @@ public class WaltAutonFactory {
         }
 
         // normal cycle logic down here
-        ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
+        ArrayList<AutoTrajectory> allTheTrajs = trajMaker(isShort);
 
         m_routine.active().onTrue(
             Commands.sequence(

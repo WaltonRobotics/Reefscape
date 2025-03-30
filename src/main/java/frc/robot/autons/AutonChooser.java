@@ -10,8 +10,8 @@ public class AutonChooser {
         autoChooser = new AutoChooser();
     }
 
-    public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
-        autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
+    public static void addPathsAndCmds(WaltAutonFactory autonFactory, boolean isShort) {
+        autoChooser.addRoutine("auton", () -> autonFactory.generateAuton(isShort));
         autoChooser.addRoutine("leave-only", () -> autonFactory.leaveOnly());
         autoChooser.select("auton");
 

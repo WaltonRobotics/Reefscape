@@ -8,10 +8,9 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.autons.TrajsAndLocs.HPReefPair;
 import frc.robot.autons.TrajsAndLocs.HPStation;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
+import frc.robot.autons.TrajsAndLocs.StartingLoc;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.subsystems.Superstructure;
@@ -36,15 +35,15 @@ public class WaltAutonBuilder {
     // Define Initial Choosers
     public static SendableChooser<NumCycles> cyclesChooser = new SendableChooser<NumCycles>();
     public static SendableChooser<EleHeight> startingHeightChooser = new SendableChooser<EleHeight>();
-    public static SendableChooser<StartingLocs> startingPositionChooser = new SendableChooser<StartingLocs>();
-    public static SendableChooser<ReefLocs> firstScoringChooser = new SendableChooser<ReefLocs>();
+    public static SendableChooser<StartingLoc> startingPositionChooser = new SendableChooser<StartingLoc>();
+    public static SendableChooser<ReefLoc> firstScoringChooser = new SendableChooser<ReefLoc>();
     public static SendableChooser<HPStation> firstToHPStationChooser = new SendableChooser<HPStation>();
 
     // default, initial values
     public static NumCycles m_cycles = NumCycles.CYCLE_1;
     public static EleHeight startingHeight = EleHeight.L4;
-    public static StartingLocs startingPosition = StartingLocs.RIGHT;
-    public static ReefLocs scoringPosition = ReefLocs.REEF_A;
+    public static StartingLoc startingPosition = StartingLoc.RIGHT;
+    public static ReefLoc scoringPosition = ReefLoc.REEF_A;
     public static HPStation hpStation = HPStation.HP_LEFT;
 
     static {
@@ -117,39 +116,40 @@ public class WaltAutonBuilder {
         cyclesChooser.addOption("4 Cycle", NumCycles.CYCLE_4);
 
         // add Starting Position options
-        startingPositionChooser.addOption("Left", StartingLocs.LEFT);
-        startingPositionChooser.addOption("Middle Left", StartingLocs.MID_H);
-        startingPositionChooser.addOption("Middle Right", StartingLocs.MID_G);
-        startingPositionChooser.addOption("Right", StartingLocs.RIGHT);
-        startingPositionChooser.addOption("Super Left", StartingLocs.SUPER_LEFT);
-        startingPositionChooser.addOption("Super Right", StartingLocs.SUPER_RIGHT);
+        startingPositionChooser.addOption("Left", StartingLoc.LEFT);
+        startingPositionChooser.addOption("Middle Left", StartingLoc.MID_H);
+        startingPositionChooser.addOption("Middle Right", StartingLoc.MID_G);
+        startingPositionChooser.addOption("Right", StartingLoc.RIGHT);
+        startingPositionChooser.addOption("Super Left", StartingLoc.SUPER_LEFT);
+        startingPositionChooser.addOption("Super Right", StartingLoc.SUPER_RIGHT);
 
+        // !!! NOW UNUSED !!!
         // changing the starting position AFFECTS HERE - see disable periodic
-        if (startingPosition.equals(StartingLocs.LEFT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalLeftStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.SUPER_LEFT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperLeftStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.MID_G)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidGStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.MID_H)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalMidHStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else if (startingPosition.equals(StartingLocs.RIGHT)) {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalRightStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        } else {
-            for (ReefLocs loc : TrajsAndLocs.ReefLocs.OptimalSuperRightStartCycles) {
-                firstScoringChooser.addOption(loc.name(), loc);
-            }
-        }
+        // if (startingPosition.equals(StartingLoc.LEFT)) {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalLeftStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // } else if (startingPosition.equals(StartingLoc.SUPER_LEFT)) {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalSuperLeftStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // } else if (startingPosition.equals(StartingLoc.MID_G)) {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalMidGStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // } else if (startingPosition.equals(StartingLoc.MID_H)) {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalMidHStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // } else if (startingPosition.equals(StartingLoc.RIGHT)) {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalRightStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // } else {
+        //     for (ReefLoc loc : TrajsAndLocs.ReefLoc.OptimalSuperRightStartCycles) {
+        //         firstScoringChooser.addOption(loc.name(), loc);
+        //     }
+        // }
 
         // add Starting Height options
         addEleOptions(startingHeightChooser);
@@ -161,7 +161,7 @@ public class WaltAutonBuilder {
     // ---- Cycles
     // define cycle choosers
     public static ArrayList<SendableChooser<EleHeight>> eleHeightChoosers = new ArrayList<SendableChooser<EleHeight>>();
-    public static ArrayList<SendableChooser<ReefLocs>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLocs>>();
+    public static ArrayList<SendableChooser<ReefLoc>> hpToReefChoosers = new ArrayList<SendableChooser<ReefLoc>>();
     public static ArrayList<SendableChooser<HPStation>> reefToHPChoosers = new ArrayList<SendableChooser<HPStation>>();
 
     // TODO: MAYBE add method that closes unnecessary sendable choosers (when numCycles Changes)
@@ -171,7 +171,7 @@ public class WaltAutonBuilder {
         System.out.println("adding choosers");
         for (int i = 0; i < m_cycles.m_cycles; i++) {
             eleHeightChoosers.add(new SendableChooser<EleHeight>());
-            hpToReefChoosers.add(new SendableChooser<ReefLocs>());
+            hpToReefChoosers.add(new SendableChooser<ReefLoc>());
             reefToHPChoosers.add(new SendableChooser<HPStation>());
 
             addEleOptions(eleHeightChoosers.get(i));
@@ -194,19 +194,19 @@ public class WaltAutonBuilder {
     }
 
     // add reef options
-    private static void addReefOptions(SendableChooser<ReefLocs> reef) {
-        reef.addOption("A", ReefLocs.REEF_A);
-        reef.addOption("B", ReefLocs.REEF_B);
-        reef.addOption("C", ReefLocs.REEF_C);
-        reef.addOption("D", ReefLocs.REEF_D);
-        reef.addOption("E", ReefLocs.REEF_E);
-        reef.addOption("F", ReefLocs.REEF_F);
-        reef.addOption("G", ReefLocs.REEF_G);
-        reef.addOption("H", ReefLocs.REEF_H);
-        reef.addOption("I", ReefLocs.REEF_I);
-        reef.addOption("J", ReefLocs.REEF_J);
-        reef.addOption("K", ReefLocs.REEF_K);
-        reef.addOption("L", ReefLocs.REEF_L);
+    private static void addReefOptions(SendableChooser<ReefLoc> reef) {
+        reef.addOption("A", ReefLoc.REEF_A);
+        reef.addOption("B", ReefLoc.REEF_B);
+        reef.addOption("C", ReefLoc.REEF_C);
+        reef.addOption("D", ReefLoc.REEF_D);
+        reef.addOption("E", ReefLoc.REEF_E);
+        reef.addOption("F", ReefLoc.REEF_F);
+        reef.addOption("G", ReefLoc.REEF_G);
+        reef.addOption("H", ReefLoc.REEF_H);
+        reef.addOption("I", ReefLoc.REEF_I);
+        reef.addOption("J", ReefLoc.REEF_J);
+        reef.addOption("K", ReefLoc.REEF_K);
+        reef.addOption("L", ReefLoc.REEF_L);
     }
 
     // add HP station options 
@@ -216,8 +216,8 @@ public class WaltAutonBuilder {
     }
 
     // get Cycle Data of whats currently selected
-    public static ArrayList<ReefLocs> getCycleScoringLocs() {
-        ArrayList<ReefLocs> reefLocs = new ArrayList<ReefLocs>();
+    public static ArrayList<ReefLoc> getCycleScoringLocs() {
+        ArrayList<ReefLoc> reefLocs = new ArrayList<ReefLoc>();
         int cycleCount = 0; // exists to handle the for loop if cyclesChooser.getselected() == null which happens RIGHT when the code starts
         if (cyclesChooser.getSelected() != null) {
             cycleCount = cyclesChooser.getSelected().m_cycles;
