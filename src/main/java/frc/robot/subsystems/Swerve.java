@@ -457,11 +457,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPose Give it a destination to go to
+     * @return Returns a command that loops until it gets near
+     */
+    public Command moveToPose(Pose2d destinationPose) {
+        return moveToPose(destinationPose, null);
+    }
+
+    /**
+     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
+     * @param destinationPose Give it a destination to go to
      * @param visionSim visionSim object to get simField from to do sim debugging
      * @return Returns a command that loops until it gets near
      */
     public Command moveToPose(Pose2d destinationPose, Field2d field) {
-        field.getObject("destinationPose").setPose(destinationPose);
+        if (field != null) {
+            field.getObject("destinationPose").setPose(destinationPose);
+        }
         log_autoAlignDestinationPose.accept(destinationPose);
 
         return Commands.run(
