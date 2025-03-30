@@ -238,7 +238,10 @@ public class Constants {
          public static final double kA = 0;
          public static final double kG = 0.57989; 
 
-         private static final double kPClimb = 50;
+         private static final double kPClimb = 100;
+         private static final double kSClimb = 0.5;
+         private static final double kVClimb = 0.9;
+
  
          public static final Mass kCarriageMassKg = Pounds.of(5);
          public static final Distance kMinimumHeight = Feet.of(0);
@@ -287,12 +290,10 @@ public class Constants {
              .withKI(kI) 
              .withKG(kG);
          private static final Slot1Configs kSlot1Configs = new Slot1Configs()
-            .withKS(kS) 
-            .withKV(kV) 
+            .withKS(kSClimb) 
+            .withKV(kVClimb) 
             .withGravityType(GravityTypeValue.Elevator_Static)
-            .withKP(kPClimb)
-            .withKI(kI) 
-            .withKG(kG);
+            .withKP(kPClimb);
          private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
              .withNeutralMode(NeutralModeValue.Brake)
              .withInverted(InvertedValue.CounterClockwise_Positive);
