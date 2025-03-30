@@ -125,6 +125,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
   private final Trigger trg_climbPrep = manipulator.y().and(manipulator.povUp());
+  private final Trigger trg_climbBump = manipulator.start();
   private final Trigger trg_climbLockingIn = manipulator.y().and(manipulator.povDown());
 
   // simulation
@@ -220,7 +221,7 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
       trg_climbPrep,
-      manipulator.start(),
+      trg_climbBump,
       trg_climbLockingIn,
       trg_inOverride,
       trg_simTopBeamBreak,
