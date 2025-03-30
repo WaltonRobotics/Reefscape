@@ -25,14 +25,18 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -100,6 +104,15 @@ public class Robot extends TimedRobot {
   private final AutoFactory autoFactory = drivetrain.createAutoFactory();
   private Optional<WaltAutonFactory> waltAutonFactory = Optional.empty();
 
+  //toggle buttons for turning on and off test bindings
+  private static GenericEntry nte_testButtons;
+  static {
+    nte_testButtons = Shuffleboard.getTab("Test Bindings")
+        .add("Test Bindings - 1: test bindings, 2: real bindings", 0)
+        .withWidget(BuiltInWidgets.kToggleButton)
+        .getEntry();
+  }
+  
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
 
@@ -235,8 +248,7 @@ public class Robot extends TimedRobot {
 
     drivetrain.registerTelemetry(logger::telemeterize);
 
-
-    configureBindings();
+    // configureBindings();
     // configureTestBindings();
   }
 
@@ -458,6 +470,13 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    //if nte_testButtons is true, use test bindings; otherwise use normal bindings
+    if (nte_testButtons.getInteger(0) == 1){
+      configureTestBindings();
+    } else if (nte_testButtons.getInteger(0) == 2){
+      configureBindings();
+    }
+
     if (autonNotMade) {
       // check if the AUTON READY button has been pressed
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
