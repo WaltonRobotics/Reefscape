@@ -192,7 +192,6 @@ public class WaltAutonFactory {
         leaveAuto.active().onTrue(
             Commands.sequence(
                 Commands.runOnce(() -> autonTimer.restart()),
-                // leave.resetOdometry(),
                 leave.cmd()
             )
         );
@@ -218,25 +217,15 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
 
-        if (onlyPreload()) {
-            if(m_pushTime) {
-                m_routine.active().onTrue(
-                    Commands.sequence(
-                        // SimpleAutons.pushPartner(m_drivetrain),
-                        firstScoreTraj.cmd(),
-                        m_drivetrain.stopCmd()
-                    )
-                );
-            } else {
-                m_routine.active().onTrue(
-                Commands.sequence(
-                        Commands.runOnce(() -> autonTimer.restart()),
-                        firstScoreTraj.resetOdometry(),
-                        firstScoreTraj.cmd(),
-                        m_drivetrain.stopCmd()
-                    )
-                );
-            }
+        if (onlyPreload()) { 
+            m_routine.active().onTrue(
+            Commands.sequence(
+                    Commands.runOnce(() -> autonTimer.restart()),
+                    firstScoreTraj.cmd(),
+                    // todo: autoAlign Here
+                    m_drivetrain.stopCmd()
+                )
+            );
 
             firstScoreTraj.done()
             .onTrue(
@@ -251,26 +240,16 @@ public class WaltAutonFactory {
         // normal cycle logic down here
         ArrayList<AutoTrajectory> allTheTrajs = trajMaker();
 
-        if(m_pushTime) {
-            m_routine.active().onTrue(
-                Commands.sequence(
-                    // SimpleAutons.pushPartner(m_drivetrain),
-                    firstScoreTraj.cmd(),
-                    m_drivetrain.stopCmd()
-                )
-            );
-        } else {
-            m_routine.active().onTrue(
+        m_routine.active().onTrue(
             Commands.sequence(
-                    Commands.runOnce(() -> autonTimer.restart()),
-                    firstScoreTraj.resetOdometry(),
-                    firstScoreTraj.cmd(),
-                    m_drivetrain.stopCmd()
-                )
-            );
-        }
+                Commands.runOnce(() -> autonTimer.restart()),
+                firstScoreTraj.cmd(),
+                // todo: autoAlign Here
+                m_drivetrain.stopCmd()
+            )
+        );
 
-        firstScoreTraj.done()
+        firstScoreTraj.done() // go to HP
             .onTrue(
                 Commands.sequence(
                     scoreCmd(m_heights.get(heightCounter++)),
@@ -287,14 +266,14 @@ public class WaltAutonFactory {
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
-            allTheTrajs.get(allTrajIdx).done()
+            allTheTrajs.get(allTrajIdx).done() // go to Reef
                 .onTrue(Commands.sequence(
                     m_superstructure.simHasCoralToggle(),
                     Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)
                         .or(m_superstructure.simTrg_hasCoral)),
                     trajCmd,
-                    m_drivetrain.stopCmd(),
-                    Commands.print("Running Path: " + trajCmd)
+                    // todo: autoAlign Here
+                    m_drivetrain.stopCmd()
                 ));
 
             allTrajIdx++;
@@ -308,7 +287,7 @@ public class WaltAutonFactory {
                 nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).cmd();
             }
 
-            allTheTrajs.get(allTrajIdx).done()
+            allTheTrajs.get(allTrajIdx).done() // go to HP
                 .onTrue(
                     Commands.sequence(
                         Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
