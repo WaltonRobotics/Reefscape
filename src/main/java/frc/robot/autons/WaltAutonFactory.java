@@ -57,11 +57,11 @@ public class WaltAutonFactory {
 	}
 
     private Command logTimer(String epochName, Supplier<Timer> timerSup) {
-		return Commands.defer(() -> {
-			var timer = timerSup.get();
+        return printLater(() -> {
+            var timer = timerSup.get();
             log_autonTimer.accept(autonTimer.get());
-			return printLater(() -> epochName + " at " + timer.get() + " s");
-		}, Set.of());
+            return epochName + " at " + timer.get() + " s";
+        });
 	}
     
     private Elastic.Notification leaveStartZoneOnlySadness = 
@@ -271,13 +271,13 @@ public class WaltAutonFactory {
             }
 
             Command autoAlign = Commands.none();
-            var runningTraj = allTheTrajs.get(allTrajIdx).getFirst();
+            AutoTrajectory runningTraj = allTheTrajs.get(allTrajIdx).getFirst();
             Trigger afterPathTrg = runningTraj.done();
             var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
             if (reefLocOpt.isPresent()) {
                 autoAlign = autoAlignCommand(() -> reefLocOpt.get());
                 double trajTime = runningTraj.getRawTrajectory().getTotalTime();
-                afterPathTrg = runningTraj.atTime(trajTime * 0.85);
+                afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.075);
             }
 
             var pathDoneCmd = Commands.sequence(
