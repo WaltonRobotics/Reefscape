@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -148,7 +149,7 @@ public class WaltAutonFactory {
             for (int i = 0; i < m_scoreLocs.size(); i++) {
                 String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
                 trajsList.add(
-                    new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(rToH), null));
+                    new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(rToH), Optional.empty()));
                 if (i < m_scoreLocs.size() - 1) {
                     var reefLoc = m_scoreLocs.get(i + 1);
                     String hToR = HPToReefShortTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), reefLoc));
@@ -166,7 +167,7 @@ public class WaltAutonFactory {
                             m_scoreLocs.get(m_scoreLocs.size() - 1), 
                             m_hpStations.get(m_hpStations.size() - 1)
                         ))
-                ), null));
+                ), Optional.empty()));
             }
 
             return trajsList;
@@ -219,6 +220,15 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
 
+        Command firstCmd = firstScoreTraj.cmd();
+        if (RobotBase.isSimulation()) {
+            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+        }
+
+        m_routine.active().onTrue(
+            firstCmd
+        );
+
         // normal cycle logic down here
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> allTheTrajs = trajMaker();
 
@@ -258,11 +268,19 @@ public class WaltAutonFactory {
                 nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
             }
 
+            Command autoAlign = Commands.none();
+            var alignPoseOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
+            if (alignPoseOpt.isPresent()) {
+                autoAlign = m_drivetrain.moveToPose(
+                    Reef.reefLocationToIdealRobotPoseMap.get(alignPoseOpt.get()))
+                    .withTimeout(1);
+            }
+
+
             allTheTrajs.get(allTrajIdx).getFirst().done()
                 .onTrue(
                     Commands.sequence(
-                        m_drivetrain.moveToPose(
-                            Reef.reefLocationToIdealRobotPoseMap.get(allTheTrajs.get(allTrajIdx).getSecond())),
+                        autoAlign,
                         Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                         scoreCmd(m_heights.get(heightCounter++)),
                         nextTrajCmd,
