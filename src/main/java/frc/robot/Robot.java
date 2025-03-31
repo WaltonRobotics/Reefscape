@@ -237,15 +237,13 @@ public class Robot extends TimedRobot {
       this::manipRumble
     );
 
-    waltAutonFactory = Optional.of(new WaltAutonFactory(
-      elevator,
-      drivetrain.autoFactory, 
-      superstructure, 
-      drivetrain,
-      StartingLocs.RIGHT, 
-      new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
-      new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
-      new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT))
+    // default auton
+    waltAutonFactory = Optional.of(
+      autonFactoryFactory(
+        StartingLocs.RIGHT, 
+        new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
+        new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
+        new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT))
     ));
     // TODO: change back to:
     // Optional.of(new WaltAutonFactory(elevator, drivetrain.autoFactory, superstructure, drivetrain));
@@ -256,6 +254,15 @@ public class Robot extends TimedRobot {
 
     // configureBindings();
     configureTestBindings();
+  }
+
+  private WaltAutonFactory autonFactoryFactory(
+    StartingLocs startLoc, ArrayList<ReefLocs> scoreLocs,
+    ArrayList<EleHeight> heights, ArrayList<HPStation> hpStations) {
+      return new WaltAutonFactory(
+        elevator, drivetrain.autoFactory, superstructure, drivetrain, 
+        startLoc, scoreLocs, heights, hpStations
+      );
   }
 
   Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
