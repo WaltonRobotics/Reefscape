@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.Constants;
 
 public abstract class TrajsAndLocs {
     /* 
@@ -42,7 +43,16 @@ public abstract class TrajsAndLocs {
         REEF_L("L");
 
         public final String str;
-        private ReefLoc(String _str) {
+
+        public Pose2d getIdealScoringPose() {
+            var potentialPose = Constants.FieldK.Reef.reefLocationToIdealRobotPoseMap.get(this);
+            if (potentialPose != null) {
+                return potentialPose;
+            }
+            return new Pose2d();
+        }
+
+        private ReefLocs(String _str) {
             str = _str;
         }
         
