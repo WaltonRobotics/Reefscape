@@ -44,11 +44,11 @@ import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
+import frc.robot.autons.TrajsAndLocs.StartingLoc;
 import frc.robot.autons.WaltAutonBuilder.NumCycles;
 
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
+import static frc.robot.autons.TrajsAndLocs.ReefLoc.*;
 
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
@@ -147,6 +147,7 @@ public class Robot extends TimedRobot {
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
   private String autonName = "No Auton Made";
+  private boolean isShort = false;
 
   /* WaltAutonBuilder trigs */
   // When the user selects a different option, this thing runs
@@ -155,7 +156,7 @@ public class Robot extends TimedRobot {
     numCycleChange = true;
   };
 
-  private final Consumer<StartingLocs> startingPositionConsumer = startingPosition -> {
+  private final Consumer<StartingLoc> startingPositionConsumer = startingPosition -> {
     WaltAutonBuilder.startingPosition = startingPosition;
     startingPositionChange = true;
   };
@@ -165,7 +166,7 @@ public class Robot extends TimedRobot {
     startingHeightChange = true;
   };
 
-  private final Consumer<ReefLocs> initialScoringPositionConsumer = scoringPosition -> {
+  private final Consumer<ReefLoc> initialScoringPositionConsumer = scoringPosition -> {
     WaltAutonBuilder.scoringPosition = scoringPosition;
     firstScoringPositionChange = true;
   };
@@ -438,18 +439,18 @@ public class Robot extends TimedRobot {
     configWaltAutonBuilder();
     
     addPeriodic(() -> superstructure.periodic(), 0.01);
-    robotField.getObject("reefARobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    robotField.getObject("reefBRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    robotField.getObject("reefCRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    robotField.getObject("reefDRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    robotField.getObject("reefERobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    robotField.getObject("reefFRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    robotField.getObject("reefGRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    robotField.getObject("reefHRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    robotField.getObject("reefIRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    robotField.getObject("reefJRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    robotField.getObject("reefKRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    robotField.getObject("reefLRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+    robotField.getObject("reefARobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_A));
+    robotField.getObject("reefBRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_B));
+    robotField.getObject("reefCRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_C));
+    robotField.getObject("reefDRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_D));
+    robotField.getObject("reefERobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_E));
+    robotField.getObject("reefFRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_F));
+    robotField.getObject("reefGRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_G));
+    robotField.getObject("reefHRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_H));
+    robotField.getObject("reefIRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_I));
+    robotField.getObject("reefJRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_J));
+    robotField.getObject("reefKRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_K));
+    robotField.getObject("reefLRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLoc.REEF_L));
   }
 
   @Override
@@ -535,7 +536,7 @@ public class Robot extends TimedRobot {
           drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
-          StartingLocs.SUPER_LEFT, 
+          StartingLoc.SUPER_LEFT, 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of(HPStation.HP_LEFT)),  // uses an hp station as a flag that its leaving and not doing nothing
@@ -553,7 +554,7 @@ public class Robot extends TimedRobot {
           drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
-          StartingLocs.RIGHT, 
+          StartingLoc.RIGHT, 
           new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
           new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
@@ -571,7 +572,7 @@ public class Robot extends TimedRobot {
           drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
-          StartingLocs.LEFT, 
+          StartingLoc.LEFT, 
           new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
           new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)),
@@ -589,7 +590,7 @@ public class Robot extends TimedRobot {
           drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
-          StartingLocs.MID_G, 
+          StartingLoc.MID_G, 
           new ArrayList<>(List.of(REEF_G)), 
           new ArrayList<>(List.of(EleHeight.L4)), 
           new ArrayList<>(List.of()),
@@ -608,7 +609,7 @@ public class Robot extends TimedRobot {
           drivetrain.autoFactory, 
           superstructure, 
           drivetrain,
-          StartingLocs.SUPER_LEFT, 
+          StartingLoc.SUPER_LEFT, 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()),
@@ -621,7 +622,7 @@ public class Robot extends TimedRobot {
 
       // ---- SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
-        AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+        AutonChooser.addPathsAndCmds(waltAutonFactory.get(), isShort);
         autonNotMade = false;
         WaltAutonBuilder.nte_autonEntry.setBoolean(false);
 

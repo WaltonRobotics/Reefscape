@@ -9,8 +9,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +16,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import frc.robot.Constants.RobotK;
+import frc.robot.autons.TrajsAndLocs.*;
 import frc.robot.autons.TrajsAndLocs.HPStation;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.autons.TrajsAndLocs.StartingLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
+import frc.robot.autons.TrajsAndLocs.StartingLoc;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
@@ -97,8 +96,8 @@ public class WaltAutonFactory {
         AutoFactory autoFactory, 
         Superstructure superstructure,
         Swerve drivetrain,
-        StartingLocs startLoc,
-        ArrayList<ReefLocs> scoreLocs,
+        StartingLoc startLoc,
+        ArrayList<ReefLoc> scoreLocs,
         ArrayList<EleHeight> heights,
         ArrayList<HPStation> hpStations,
         boolean pushTime
@@ -150,20 +149,17 @@ public class WaltAutonFactory {
     }
 
     private ArrayList<WaltAutonCycle> cycleMaker(boolean isShort) {
-        var reefToHpMap = ReefToHPTrajs;
-        var hpToReefMap = isShort ? HPToReefShortTrajs : HPToReefTrajs;
-
         ArrayList<WaltAutonCycle> cycleList = new ArrayList<>();
 
         try {
             for (int i = 0; i < m_hpStations.size(); i++) {
-                String rToHName = reefToHpMap.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+                String rToHName = TrajsAndLocs.getToHPTrajName(m_scoreLocs.get(i), m_hpStations.get(i), isShort);
                 var rToHTraj = m_routine.trajectory(rToHName);
 
                 // either do or don't add a ReefCycle
                 Optional<ReefCycle> reefCycleOpt = Optional.empty();
                 if (i < m_scoreLocs.size() - 1) {
-                    String hToRName = hpToReefMap.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), m_scoreLocs.get(i + 1)));
+                    String hToRName = TrajsAndLocs.getToReefTrajName(m_hpStations.get(i), m_scoreLocs.get(i + 1), isShort);
                     var hToRTraj = m_routine.trajectory(hToRName);
                     reefCycleOpt = Optional.of(new ReefCycle(hToRTraj, m_scoreLocs.get(i), m_heights.get(i)));
                 }
@@ -305,9 +301,8 @@ public class WaltAutonFactory {
     
 
     public AutoRoutine cycleRoutineMaker(boolean isShort) {
-        var startToReefMap = isShort ? StartToReefShortTrajs : StartToReefTrajs;
         var startScoreLoc = m_scoreLocs.get(0);
-        var startTrajName = startToReefMap.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, startScoreLoc));
+        var startTrajName = TrajsAndLocs.getStartingTrajName(m_startLoc, m_scoreLocs.get(0), isShort);
         AutoTrajectory firstScoreTraj = m_routine.trajectory(startTrajName);
 
         ReefCycle firstCycle = new ReefCycle(firstScoreTraj, startScoreLoc, m_heights.get(0));

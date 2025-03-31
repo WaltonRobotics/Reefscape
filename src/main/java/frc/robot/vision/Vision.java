@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
 import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
 import frc.util.AllianceFlipUtil;
 
 import java.util.List;
@@ -169,43 +169,43 @@ public class Vision {
      * @return
      */
     public static Optional<Pose2d> getScorePose(int tagId, boolean rightReef) {
-        ReefLocs correctReefLocation = null;
+        ReefLoc correctReefLocation = null;
         switch (tagId) {
             case 18:
-                correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+                correctReefLocation = rightReef ? ReefLoc.REEF_B : ReefLoc.REEF_A;
                 break;
             case 17:
-                correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+                correctReefLocation = rightReef ? ReefLoc.REEF_D : ReefLoc.REEF_C;
                 break;
             case 22:
-                correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+                correctReefLocation = rightReef ? ReefLoc.REEF_F : ReefLoc.REEF_E;
                 break;
             case 21:
-                correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+                correctReefLocation = rightReef ? ReefLoc.REEF_H : ReefLoc.REEF_G;
                 break;
             case 20:
-                correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+                correctReefLocation = rightReef ? ReefLoc.REEF_J : ReefLoc.REEF_I;
                 break;
             case 19:
-                correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+                correctReefLocation = rightReef ? ReefLoc.REEF_L : ReefLoc.REEF_K;
                 break;
             case 7:
-                correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
+                correctReefLocation = rightReef ? ReefLoc.REEF_B : ReefLoc.REEF_A;
                 break;
             case 8:
-                correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
+                correctReefLocation = rightReef ? ReefLoc.REEF_D : ReefLoc.REEF_C;
                 break;
             case 9:
-                correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
+                correctReefLocation = rightReef ? ReefLoc.REEF_F : ReefLoc.REEF_E;
                 break;
             case 10:
-                correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
+                correctReefLocation = rightReef ? ReefLoc.REEF_H : ReefLoc.REEF_G;
                 break;
             case 11:
-                correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
+                correctReefLocation = rightReef ? ReefLoc.REEF_J : ReefLoc.REEF_I;
                 break;
             case 6:
-                correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
+                correctReefLocation = rightReef ? ReefLoc.REEF_L : ReefLoc.REEF_K;
                 break;
             default:
                 System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose switch case defaulted");

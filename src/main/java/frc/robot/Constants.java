@@ -50,7 +50,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.robot.autons.TrajsAndLocs.ReefLoc;
 
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -409,11 +409,11 @@ public class Constants {
                 new Translation2d(Units.inchesToMeters(176.746), Units.inchesToMeters(158.501));
             public static final double faceToZoneLineMeters = Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
             public static final Pose2d[] centerFaces = new Pose2d[6]; // starting face is the one parallel-ly facing the starting line and then moves counterclockwise
-            public static final Map<ReefLocs, Map<ReefHeight, Pose3d>> branchPose3ds = new HashMap<>(); // Map reef locations to Pose3ds. uses branchPositions behind the scenes
+            public static final Map<ReefLoc, Map<ReefHeight, Pose3d>> branchPose3ds = new HashMap<>(); // Map reef locations to Pose3ds. uses branchPositions behind the scenes
             public static final List<Map<ReefHeight, Pose3d>> branchPositions = new ArrayList<>();
-            public static final Map<ReefLocs, Pose2d> reefLocationToIdealRobotPoseMap = new HashMap<ReefLocs, Pose2d>();
-            public static final List<ReefLocs> leftReefs = new ArrayList<>();
-            public static final List<ReefLocs> rightReefs = new ArrayList<>();
+            public static final Map<ReefLoc, Pose2d> reefLocationToIdealRobotPoseMap = new HashMap<ReefLoc, Pose2d>();
+            public static final List<ReefLoc> leftReefs = new ArrayList<>();
+            public static final List<ReefLoc> rightReefs = new ArrayList<>();
             
             static {
                 // Initialize faces
@@ -479,46 +479,46 @@ public class Constants {
                     branchPositions.add(leftBranches);
                 }
 
-                branchPose3ds.put(ReefLocs.REEF_A, branchPositions.get(1));
-                branchPose3ds.put(ReefLocs.REEF_B, branchPositions.get(0));
-                branchPose3ds.put(ReefLocs.REEF_C, branchPositions.get(11));
-                branchPose3ds.put(ReefLocs.REEF_D, branchPositions.get(10));
-                branchPose3ds.put(ReefLocs.REEF_E, branchPositions.get(9));
-                branchPose3ds.put(ReefLocs.REEF_F, branchPositions.get(8));
-                branchPose3ds.put(ReefLocs.REEF_G, branchPositions.get(7));
-                branchPose3ds.put(ReefLocs.REEF_H, branchPositions.get(6));
-                branchPose3ds.put(ReefLocs.REEF_I, branchPositions.get(5));
-                branchPose3ds.put(ReefLocs.REEF_J, branchPositions.get(4));
-                branchPose3ds.put(ReefLocs.REEF_K, branchPositions.get(3));
-                branchPose3ds.put(ReefLocs.REEF_L, branchPositions.get(2));
+                branchPose3ds.put(ReefLoc.REEF_A, branchPositions.get(1));
+                branchPose3ds.put(ReefLoc.REEF_B, branchPositions.get(0));
+                branchPose3ds.put(ReefLoc.REEF_C, branchPositions.get(11));
+                branchPose3ds.put(ReefLoc.REEF_D, branchPositions.get(10));
+                branchPose3ds.put(ReefLoc.REEF_E, branchPositions.get(9));
+                branchPose3ds.put(ReefLoc.REEF_F, branchPositions.get(8));
+                branchPose3ds.put(ReefLoc.REEF_G, branchPositions.get(7));
+                branchPose3ds.put(ReefLoc.REEF_H, branchPositions.get(6));
+                branchPose3ds.put(ReefLoc.REEF_I, branchPositions.get(5));
+                branchPose3ds.put(ReefLoc.REEF_J, branchPositions.get(4));
+                branchPose3ds.put(ReefLoc.REEF_K, branchPositions.get(3));
+                branchPose3ds.put(ReefLoc.REEF_L, branchPositions.get(2));
 
                 // TODO: get a real distance from the reef for this
                 double distanceFromReef = Units.inchesToMeters(17);
                 double leftRightOffset = -Units.inchesToMeters(1.25); // positive left robot
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, leftRightOffset, Rotation2d.fromDegrees(180));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_A, branchPose3ds.get(ReefLoc.REEF_A).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_B, branchPose3ds.get(ReefLoc.REEF_B).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_C, branchPose3ds.get(ReefLoc.REEF_C).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_D, branchPose3ds.get(ReefLoc.REEF_D).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_E, branchPose3ds.get(ReefLoc.REEF_E).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_F, branchPose3ds.get(ReefLoc.REEF_F).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_G, branchPose3ds.get(ReefLoc.REEF_G).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_H, branchPose3ds.get(ReefLoc.REEF_H).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_I, branchPose3ds.get(ReefLoc.REEF_I).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_J, branchPose3ds.get(ReefLoc.REEF_J).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_K, branchPose3ds.get(ReefLoc.REEF_K).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d()
+                reefLocationToIdealRobotPoseMap.put(ReefLoc.REEF_L, branchPose3ds.get(ReefLoc.REEF_L).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
             }
 
