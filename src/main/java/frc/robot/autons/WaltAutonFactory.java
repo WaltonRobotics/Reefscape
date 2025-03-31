@@ -209,6 +209,13 @@ public class WaltAutonFactory {
         return AllianceFlipUtil.apply(reefPose);
     }
 
+    private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
+        return Commands.defer(() -> {
+            Pose2d alignPose = getReefAutoAlignPose(reefLocSup.get());
+            return m_drivetrain.moveToPose(alignPose);
+        }, Set.of(m_drivetrain));
+    }
+
     public AutoRoutine generateAuton() {
         if (doNothing()) {
             return m_routine;
@@ -239,12 +246,10 @@ public class WaltAutonFactory {
         // normal cycle logic down here
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> allTheTrajs = trajMaker();
 
-        var firstAlignPose = getReefAutoAlignPose(m_scoreLocs.get(0));
-
         firstScoreTraj.done()
             .onTrue(
                 Commands.sequence(
-                    m_drivetrain.moveToPose(firstAlignPose),
+                    autoAlignCommand(() -> m_scoreLocs.get(0)),
                     scoreCmd(m_heights.get(heightCounter++)),
                     allTheTrajs.get(0).getFirst().cmd()
                 )
@@ -280,8 +285,7 @@ public class WaltAutonFactory {
             Command autoAlign = Commands.none();
             var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
             if (reefLocOpt.isPresent()) {
-                Pose2d alignPose = getReefAutoAlignPose(reefLocOpt.get());
-                autoAlign = m_drivetrain.moveToPose(alignPose).withTimeout(1);
+                autoAlign = autoAlignCommand(() -> reefLocOpt.get()).withTimeout(1);
             }
 
 
