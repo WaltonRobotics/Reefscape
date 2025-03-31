@@ -520,7 +520,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.getCycleScoringLocs(), 
           WaltAutonBuilder.getCycleEleHeights(), 
           WaltAutonBuilder.getCycleHPStations(),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Custom Path: Scoring Locs: " + WaltAutonBuilder.getCycleScoringLocs().toString();
@@ -539,7 +539,7 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of(HPStation.HP_LEFT)),  // uses an hp station as a flag that its leaving and not doing nothing
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Taxi";
@@ -557,7 +557,7 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
           new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
@@ -575,7 +575,7 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
           new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Left 3 Piece: J-L2, K-L4, L-L4";
@@ -593,7 +593,7 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of(REEF_G)), 
           new ArrayList<>(List.of(EleHeight.L4)), 
           new ArrayList<>(List.of()),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Mid G-L4";
@@ -612,7 +612,7 @@ public class Robot extends TimedRobot {
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()), 
           new ArrayList<>(List.of()),
-          WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
+          robotField
         ));
 
         autonName = "Do Nothing";
