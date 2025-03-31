@@ -659,7 +659,7 @@ public class Robot extends TimedRobot {
     if(waltAutonFactory.isPresent()) {
       WaltAutonFactory frsiesWaf = waltAutonFactory.get();
       AutoRoutine generatedRoutine = frsiesWaf.generateAuton();
-      Command autonCmd = generatedRoutine.cmd();
+      Command autonCmd = autonCmdBuilder(generatedRoutine.cmd());
       m_autonomousCommand = autonCmd;
     } else {
       m_autonomousCommand = Commands.none();
