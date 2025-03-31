@@ -5,32 +5,21 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.units.Measure;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Rotations;
-import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_H;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
-
-import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
-import frc.robot.Constants.FieldK.Reef;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
@@ -38,7 +27,6 @@ import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.robot.vision.VisionSim;
 import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
@@ -212,7 +200,7 @@ public class WaltAutonFactory {
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
         return Commands.defer(() -> {
             Pose2d alignPose = getReefAutoAlignPose(reefLocSup.get());
-            return m_drivetrain.moveToPose(alignPose);
+            return m_drivetrain.moveToPose(alignPose).withTimeout(0.5).andThen(Commands.print("finish auto align"));
         }, Set.of(m_drivetrain));
     }
 
@@ -283,22 +271,26 @@ public class WaltAutonFactory {
             }
 
             Command autoAlign = Commands.none();
+            var runningTraj = allTheTrajs.get(allTrajIdx).getFirst();
+            Trigger afterPathTrg = runningTraj.done();
             var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
             if (reefLocOpt.isPresent()) {
-                autoAlign = autoAlignCommand(() -> reefLocOpt.get()).withTimeout(1);
+                autoAlign = autoAlignCommand(() -> reefLocOpt.get());
+                double trajTime = runningTraj.getRawTrajectory().getTotalTime();
+                afterPathTrg = runningTraj.atTime(trajTime * 0.85);
             }
 
+            var pathDoneCmd = Commands.sequence(
+                autoAlign,
+                Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                scoreCmd(m_heights.get(heightCounter++)),
+                nextTrajCmd,
+                m_drivetrain.stopCmd()
+            );
 
-            allTheTrajs.get(allTrajIdx).getFirst().done()
-                .onTrue(
-                    Commands.sequence(
-                        autoAlign,
-                        Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                        scoreCmd(m_heights.get(heightCounter++)),
-                        nextTrajCmd,
-                        m_drivetrain.stopCmd()
-                    )
-                );
+           afterPathTrg.onTrue(
+                pathDoneCmd
+            );
             
             allTrajIdx++;
         }
