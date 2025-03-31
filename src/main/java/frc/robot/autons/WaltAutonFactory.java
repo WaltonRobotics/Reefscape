@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
 import frc.robot.Constants.FieldK.Reef;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -38,6 +39,7 @@ import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.robot.vision.VisionSim;
+import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -202,6 +204,11 @@ public class WaltAutonFactory {
         return leaveAuto;
     }
 
+    private Pose2d getReefAutoAlignPose(ReefLocs reefLoc) {
+        Pose2d reefPose = FieldK.Reef.reefLocationToIdealRobotPoseMap.getOrDefault(reefLoc, new Pose2d());
+        return AllianceFlipUtil.apply(reefPose);
+    }
+
     public AutoRoutine generateAuton() {
         if (doNothing()) {
             return m_routine;
@@ -232,10 +239,12 @@ public class WaltAutonFactory {
         // normal cycle logic down here
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> allTheTrajs = trajMaker();
 
+        var firstAlignPose = getReefAutoAlignPose(m_scoreLocs.get(0));
+
         firstScoreTraj.done()
             .onTrue(
                 Commands.sequence(
-                    m_drivetrain.moveToPose(Reef.reefLocationToIdealRobotPoseMap.get(m_scoreLocs.get(0))),
+                    m_drivetrain.moveToPose(firstAlignPose),
                     scoreCmd(m_heights.get(heightCounter++)),
                     allTheTrajs.get(0).getFirst().cmd()
                 )
@@ -269,11 +278,10 @@ public class WaltAutonFactory {
             }
 
             Command autoAlign = Commands.none();
-            var alignPoseOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
-            if (alignPoseOpt.isPresent()) {
-                autoAlign = m_drivetrain.moveToPose(
-                    Reef.reefLocationToIdealRobotPoseMap.get(alignPoseOpt.get()))
-                    .withTimeout(1);
+            var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
+            if (reefLocOpt.isPresent()) {
+                Pose2d alignPose = getReefAutoAlignPose(reefLocOpt.get());
+                autoAlign = m_drivetrain.moveToPose(alignPose).withTimeout(1);
             }
 
 
