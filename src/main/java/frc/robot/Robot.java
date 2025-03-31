@@ -104,7 +104,7 @@ public class Robot extends TimedRobot {
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
 
- private final Trigger trg_leftTeleopAutoAlign = driver.x();
+  private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
 
   // private final Trigger trg_teleopEleHeightReq;
@@ -245,10 +245,14 @@ public class Robot extends TimedRobot {
         new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
         new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT))
     ));
+
+    AutoRoutine generatedRoutine = waltAutonFactory.get().generateAuton();
+    m_autonomousCommand = autonCmdBuilder(generatedRoutine.cmd());
+
     // TODO: change back to:
     // Optional.of(new WaltAutonFactory(elevator, drivetrain.autoFactory, superstructure, drivetrain));
     // once autochooser is unbrokenified
-
+    
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
@@ -663,15 +667,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    if(waltAutonFactory.isPresent()) {
-      WaltAutonFactory frsiesWaf = waltAutonFactory.get();
-      AutoRoutine generatedRoutine = frsiesWaf.generateAuton();
-      Command autonCmd = autonCmdBuilder(generatedRoutine.cmd());
-      m_autonomousCommand = autonCmd;
-    } else {
-      m_autonomousCommand = Commands.none();
-    }
-
     if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
     }
