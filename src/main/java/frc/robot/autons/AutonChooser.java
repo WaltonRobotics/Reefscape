@@ -11,7 +11,7 @@ public class AutonChooser {
     }
 
     public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
-        autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
+        autoChooser.addRoutine("auton", () -> autonFactory.cycleRoutineMaker(true));
         autoChooser.addRoutine("leave-only", () -> autonFactory.leaveOnly());
         autoChooser.select("auton");
 
