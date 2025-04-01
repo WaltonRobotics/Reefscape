@@ -475,6 +475,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         }
         log_autoAlignDestinationPose.accept(destinationPose);
 
+        final double kMaxXYSpeed = 2;
+
         return Commands.run(
             () -> {
                 Pose2d curPose = getState().Pose;
@@ -482,7 +484,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double xSpeed = AutoAlignmentK.kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
                 double ySpeed = AutoAlignmentK.kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
                 double thetaSpeed = AutoAlignmentK.kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-
+                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeed, kMaxXYSpeed);
+                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeed, kMaxXYSpeed);
                 setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
