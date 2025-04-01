@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -18,6 +19,7 @@ import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -53,6 +55,8 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
     private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
     private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
+    private final Servo m_climbServo = new Servo(kServoChannel);
+
     private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true).withSlot(0);
     private DynamicMotionMagicVoltage m_climbMMVReq = new DynamicMotionMagicVoltage(0, 0, 0, 0);
     private PositionVoltage m_climbRequest = new PositionVoltage(0).withEnableFOC(true);
@@ -148,6 +152,7 @@ public class Elevator extends SubsystemBase {
         m_rearMotor.setControl(m_followerReq);
 
         SmartDashboard.putData("Elevator Sim", m_mech2d);
+        unlockLatch();
 
         setDefaultCommand(currentSenseHoming());
     }
@@ -200,6 +205,22 @@ public class Elevator extends SubsystemBase {
         ).until(() -> nearSetpoint());
     }
 
+    private void unlockLatch() {
+        m_climbServo.set(kLatchUnlockedPos);
+    }
+
+    private void lockLatch() {
+        m_climbServo.set(kLatchLockedPos);
+    }
+
+    public Command unlockLatchCmd() {
+        return Commands.runOnce(() -> unlockLatch());
+    }
+
+    public Command lockLatchCmd() {
+        return Commands.runOnce(() -> lockLatch());
+    }
+
     public Command climbBump() {
         return Commands.sequence(
             toHeight(CLIMB_BUMP.rotations),
@@ -227,10 +248,16 @@ public class Elevator extends SubsystemBase {
                 m_frontMotor.setControl(m_climbMMVReq);
             }),
             Commands.waitUntil(notMoving(m_climbCurrSpike)).withTimeout(3),
-            Commands.runOnce(() -> {
-                m_climbRequest = m_climbRequest.withPosition(m_desiredHeight).withSlot(1);
-                m_frontMotor.setControl(m_climbRequest);
-            }).until(() -> nearSetpoint())
+            Commands.parallel(
+                lockLatchCmd(),
+                Commands.runOnce(() -> {
+                    m_climbRequest = m_climbRequest.withPosition(m_desiredHeight).withSlot(1);
+                    m_frontMotor.setControl(m_climbRequest);
+                }).until(() -> nearSetpoint())
+            ),
+            Commands.waitSeconds(1),
+            Commands.runOnce(() -> m_frontMotor.setControl(new StaticBrake())),
+            Commands.print("Climb Complete")
         );
     }
 

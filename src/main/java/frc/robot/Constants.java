@@ -227,6 +227,10 @@ public class Constants {
  
          public static final int kFrontCANID = 10;
          public static final int kBackCANID = 11;
+         public static final int kServoChannel = 0;
+
+         public static final double kLatchUnlockedPos = 0.85;
+         public static final double kLatchLockedPos = 0;
  
          public static final double kGearRatio = 50/12;
          public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
@@ -270,6 +274,7 @@ public class Constants {
              return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
          }
  
+         // TODO: change back to 100/75 after latch testing
          private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
              .withStatorCurrentLimit(100)
              .withStatorCurrentLimitEnable(true)
