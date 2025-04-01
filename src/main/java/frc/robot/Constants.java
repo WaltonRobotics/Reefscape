@@ -50,6 +50,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 
 import org.photonvision.simulation.SimCameraProperties;
@@ -373,9 +374,11 @@ public class Constants {
     }
 
     public static class FieldK {
-        public static final double kFieldLengthMeters = Units.inchesToMeters(687.876);
-        public static final double kFieldWidthMeters = Units.inchesToMeters(317);
+        public static final double kFieldLengthMeters = 17.548;
+        public static final double kFieldWidthMeters = 8.052;
         public static final double kStartLineXMeters = Units.inchesToMeters(299.438); // measured from the inside of starting line
+
+        public static final Field2d kDestinationPosesField2d = new Field2d();
 
         public static boolean inField(Pose2d pose) {
             return (
