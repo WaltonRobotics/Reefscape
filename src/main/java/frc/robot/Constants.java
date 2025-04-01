@@ -570,9 +570,9 @@ public class Constants {
         public static double kThetaKP = 10;
         
         private static final TrapezoidProfile.Constraints kAutoAlignConstraints = new TrapezoidProfile.Constraints(3, 12);
-        public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0.1);
-        public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0.1);
-        public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0.1);
+        public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
+        public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0);
+        public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0);
         // we need to do this so the PIDController works properly
         static {
             kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
