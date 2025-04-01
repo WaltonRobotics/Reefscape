@@ -26,6 +26,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -139,6 +140,8 @@ public class Robot extends TimedRobot {
   private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
 
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
+
+  private final DoubleLogger log_rio6VRailCurrent = WaltLogger.logDouble("Rio", "6VRailCurrent");
 
   /* WaltAutonBuilder vars */
   private boolean numCycleChange = false;
@@ -465,6 +468,8 @@ public class Robot extends TimedRobot {
 
     boolean visionSeenPastSec = !lastGotTagMsmtTimer.hasElapsed(1);
     log_visionSeenPastSecond.accept(visionSeenPastSec);
+    double rio6VCurrent = RobotController.getCurrent6V();
+    log_rio6VRailCurrent.accept(rio6VCurrent);
 
     // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
