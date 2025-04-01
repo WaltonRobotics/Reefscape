@@ -475,9 +475,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * Given a destination pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPose Give it a destination to go to
      * @param field Field object for sim logging
-     * @param allotedTime Time given for auto alignment to occur
-     * @param finalTranslationTolerance Largest allowed translation tolerance
-     * @param finalRotationTolerance Largest allowed rotation tolerance
+     * @param allotedTime Time given for auto alignment to occur - seconds
+     * @param finalTranslationTolerance Largest allowed translation tolerance - meters
+     * @param finalRotationTolerance Largest allowed rotation tolerance - degrees
      * @return Returns a command that loops until it gets sufficiently close
      */
     public Command moveToPose(Pose2d destinationPose, Field2d field, double allotedTime, double finalTranslationTolerance, double finalRotationTolerance) {
@@ -487,27 +487,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_autoAlignDestinationPose.accept(destinationPose);
 
         double startTime = Timer.getFPGATimestamp();
-        DoubleSupplier translationToleranceSupplier;
+        // default values so i don't have to put them in the else block
+        DoubleSupplier translationToleranceSupplier = () -> AutoAlignmentK.kFieldTranslationTolerance;
+        DoubleSupplier rotationToleranceSupplier = () -> AutoAlignmentK.kFieldRotationTolerance;
+        // check if alloted time is 0 because we're going to divide by it and i wouldn't like to crash by dividing by zero
         if (allotedTime != 0) {
             double translationToleranceSupplierSlope = (finalTranslationTolerance - AutoAlignmentK.kFieldTranslationTolerance) / allotedTime;
             translationToleranceSupplier = () -> {
                 double elapsedTime = Timer.getFPGATimestamp() - startTime;
                 return elapsedTime * translationToleranceSupplierSlope + AutoAlignmentK.kFieldTranslationTolerance;
             };
-        } else {
-            System.out.println("SWERVE WARN: Invalid argument 0 as allotedTime in Swerve::moveToPose");
-            translationToleranceSupplier = () -> AutoAlignmentK.kFieldTranslationTolerance;
-        }
-
-        DoubleSupplier rotationToleranceSupplier;
-        if (allotedTime != 0) {
             double rotationToleranceSupplierSlope = (finalRotationTolerance - AutoAlignmentK.kFieldRotationTolerance) / allotedTime;
             rotationToleranceSupplier = () -> {
                 double elapsedTime = Timer.getFPGATimestamp() - startTime;
                 return elapsedTime * rotationToleranceSupplierSlope + AutoAlignmentK.kFieldRotationTolerance;
             };
         } else {
-            rotationToleranceSupplier = () -> AutoAlignmentK.kFieldRotationTolerance;
+            System.out.println("SWERVE WARN: Invalid argument 0 as allotedTime in Swerve::moveToPose");
         }
 
         return Commands.run(
@@ -537,12 +533,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private BooleanSupplier nearPose(Pose2d dest, DoubleSupplier toleranceMetersSupplier, DoubleSupplier toleranceDegreesSupplier) {
         return () -> {
-            double toleranceMeters = toleranceMetersSupplier.getAsDouble();
-            double toleranceDegrees = toleranceDegreesSupplier.getAsDouble();
-
             Pose2d drivetrainPose = getState().Pose;
             double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
+            return distance <= toleranceMetersSupplier.getAsDouble() 
+                && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegreesSupplier.getAsDouble();
         };
     }
 
