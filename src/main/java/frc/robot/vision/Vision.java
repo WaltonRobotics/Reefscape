@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
 import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
+import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
@@ -218,7 +219,8 @@ public class Vision {
         }
 
         // AllianceFlipUtil::flip handles checking whether flipping should occur
-        return Optional.of(AllianceFlipUtil.apply(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
+        var pose = FieldConstants.kReefRobotLocationPoseMap.get(correctReefLocation);
+        return Optional.of(AllianceFlipUtil.apply(pose));
     }
 
     /**

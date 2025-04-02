@@ -20,6 +20,7 @@ import java.util.function.Supplier;
 
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
+import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
@@ -193,7 +194,7 @@ public class WaltAutonFactory {
     }
 
     private Pose2d getReefAutoAlignPose(ReefLocs reefLoc) {
-        Pose2d reefPose = FieldK.Reef.reefLocationToIdealRobotPoseMap.getOrDefault(reefLoc, new Pose2d());
+        Pose2d reefPose = FieldConstants.kReefRobotLocationPoseMap.getOrDefault(reefLoc, new Pose2d());
         return AllianceFlipUtil.apply(reefPose);
     }
 

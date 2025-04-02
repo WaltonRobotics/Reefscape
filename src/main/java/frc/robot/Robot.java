@@ -42,9 +42,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.AutoAlignmentK;
-import frc.robot.Constants.FieldK;
-import frc.robot.Constants.FieldK.Reef;
-
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
@@ -343,7 +340,7 @@ public class Robot extends TimedRobot {
 
       driver.y().whileTrue(
         drivetrain.swervePIDTuningSeq(
-          Reef.reefLocationToIdealRobotPoseMap.get(REEF_E),
+          FieldConstants.kReefRobotLocationPoseMap.get(ReefLocs.REEF_E),
           robotField
           )
         );
@@ -466,20 +463,8 @@ public class Robot extends TimedRobot {
     configWaltAutonBuilder();
     
     addPeriodic(() -> superstructure.periodic(), 0.01);
-    robotField.getObject("reefARobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_A));
-    robotField.getObject("reefBRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_B));
-    robotField.getObject("reefCRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_C));
-    robotField.getObject("reefDRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_D));
-    robotField.getObject("reefERobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_E));
-    robotField.getObject("reefFRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_F));
-    robotField.getObject("reefGRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_G));
-    robotField.getObject("reefHRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_H));
-    robotField.getObject("reefIRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_I));
-    robotField.getObject("reefJRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
-    robotField.getObject("reefKRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
-    robotField.getObject("reefLRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
 
-    SmartDashboard.putData("Autoalign Destination Poses", FieldK.kDestinationPosesField2d);
+    SmartDashboard.putData("ReefPoses", FieldConstants.kReefPosesField2d);
   }
 
   @Override
