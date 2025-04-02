@@ -9,6 +9,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.Constants;
+import frc.robot.FieldConstants;
 
 public abstract class TrajsAndLocs {
     /* 
@@ -49,7 +50,7 @@ public abstract class TrajsAndLocs {
         public final String str;
 
         public Pose2d getIdealScoringPose() {
-            var potentialPose = Constants.FieldK.Reef.reefLocationToIdealRobotPoseMap.get(this);
+            var potentialPose = FieldConstants.kReefRobotLocationPoseMap.get(this);
             if (potentialPose != null) {
                 return potentialPose;
             }
