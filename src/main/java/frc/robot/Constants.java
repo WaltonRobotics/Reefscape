@@ -15,6 +15,7 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
 import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
@@ -50,7 +51,9 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.util.AllianceFlipUtil;
 
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -145,8 +148,8 @@ public class Constants {
          // coral things
          public static final String kLogTab = "CoralSubsys";
          public static final int kCoralMotorCANID = 30; 
-         public static final int kTopBeamBreakChannel = 0;
-         public static final int kBotBeamBreakChannel = 1;
+         public static final int kTopBeamBreakChannel = 1;
+         public static final int kBotBeamBreakChannel = 0;
  
          // TODO: ask alexandra and hrehaan what these are for (???)
          // public static final double kGearRatio = 1; //for arm spinup and coral intake
@@ -168,8 +171,8 @@ public class Constants {
  
          public static final double kMaxAngleRotations = 0;
          public static final double kMinAngleRotations = -1;
-         public static final double kParallelToGroundRotations = -0.7;
-         public static final double kClimbRotations = -0.88;
+         public static final double kParallelToGroundRotations = -0.64;
+         public static final double kClimbRotations = -0.9;
          public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
@@ -220,93 +223,116 @@ public class Constants {
      }
  
      public final class ElevatorK {
-         public static final String kLogTab = "EleSubsys";
- 
-         public static final int kFrontCANID = 10;
-         public static final int kBackCANID = 11;
- 
-         public static final double kGearRatio = 50/12;
-         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
- 
-         public static final double kP = 5;
-         public static final double kI = 0;
-         public static final double kS = 0.05;
-         public static final double kV = 0.58403;
-         public static final double kA = 0;
-         public static final double kG = 0.57989; 
- 
-         public static final Mass kCarriageMassKg = Pounds.of(5);
-         public static final Distance kMinimumHeight = Feet.of(0);
-         public static final Distance kMaximumHeight = Meters.of(15);
-         public static final Distance kStartingHeightMeters = Feet.of(0);
-         public static final double kTolerancePulleyRotations = 0.1;
-         //SensorToMechanismRatio = kGearRatio
- 
-         public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
-             return kSpoolRadius.per(Second).times(rotations.in(RadiansPerSecond));
-         }
- 
-         public static Angle metersToRotation(Distance meters){
-         return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
-         }
- 
-         public static Distance rotationsToMeters(Angle rotations) {
-             return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
-         }
- 
-         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
-             return RadiansPerSecond.of(meters.in(MetersPerSecond)/kSpoolRadius.in(Meters));
-         }
- 
-         public static AngularVelocity metersToRotationVel(double metersPerSecond){
-             return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
-         }
- 
-         private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
+        public static final String kLogTab = "EleSubsys";
+
+        public static final int kFrontCANID = 10;
+        public static final int kBackCANID = 11;
+        public static final int kServoChannel = 0;
+
+        public static final double kLatchUnlockedPos = 0.85;
+        public static final double kLatchLockedPos = 0;
+
+        public static final double kGearRatio = 50/12;
+        public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
+
+        public static final double kP = 5;
+        public static final double kI = 0;
+        public static final double kS = 0.05;
+        public static final double kV = 0.58403;
+        public static final double kA = 0;
+        public static final double kG = 0.57989; 
+
+        private static final double kPClimb = 100;
+        private static final double kSClimb = 0.5;
+        private static final double kVClimb = 0.9;
+
+
+        public static final Mass kCarriageMassKg = Pounds.of(5);
+        public static final Distance kMinimumHeight = Feet.of(0);
+        public static final Distance kMaximumHeight = Meters.of(15);
+        public static final Distance kStartingHeightMeters = Feet.of(0);
+        public static final double kTolerancePulleyRotations = 0.1;
+        //SensorToMechanismRatio = kGearRatio
+
+        public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
+            return kSpoolRadius.per(Second).times(rotations.in(RadiansPerSecond));
+        }
+
+        public static Angle metersToRotation(Distance meters){
+        return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
+        }
+
+        public static Distance rotationsToMeters(Angle rotations) {
+            return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(LinearVelocity meters){
+            return RadiansPerSecond.of(meters.in(MetersPerSecond)/kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(double metersPerSecond){
+            return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
+        }
+
+        private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
              .withStatorCurrentLimit(100)
              .withStatorCurrentLimitEnable(true)
              .withSupplyCurrentLimit(75)
              .withSupplyCurrentLimitEnable(true);
-         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-             .withSensorToMechanismRatio(kGearRatio);
-         private static final Slot0Configs kSlot0Configs = new Slot0Configs()
-             .withKS(kS) 
-             .withKV(kV) 
-             .withGravityType(GravityTypeValue.Elevator_Static)
-             .withKP(kP)
-             .withKI(kI) 
-             .withKG(kG);
-         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
-             .withNeutralMode(NeutralModeValue.Brake)
-             .withInverted(InvertedValue.CounterClockwise_Positive);
-         public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
-             .withForwardSoftLimitEnable(true)
-             .withForwardSoftLimitThreshold(12.8975)  // true hard 12.9849854
-             .withReverseSoftLimitEnable(true)
-             .withReverseSoftLimitThreshold(0);
-         public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
-         private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
-             .withMotionMagicCruiseVelocity(20)
-             .withMotionMagicAcceleration(100)
-             .withMotionMagicJerk(0);
+        public static final CurrentLimitsConfigs kClimbCurrentLimitConfigs = new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(175)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(55)
+            .withSupplyCurrentLimitEnable(true);
+        private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
+            .withSensorToMechanismRatio(kGearRatio);
+        private static final Slot0Configs kSlot0Configs = new Slot0Configs()
+            .withKS(kS) 
+            .withKV(kV) 
+            .withGravityType(GravityTypeValue.Elevator_Static)
+            .withKP(kP)
+            .withKI(kI) 
+            .withKG(kG);
+        private static final Slot1Configs kSlot1Configs = new Slot1Configs()
+            .withKS(kSClimb) 
+            .withKV(kVClimb) 
+            .withGravityType(GravityTypeValue.Elevator_Static)
+            .withKP(kPClimb);
+        private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.CounterClockwise_Positive);
+        public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(12.8975)  // true hard 12.9849854
+            .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(0);
+        public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
+        private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
+            .withMotionMagicCruiseVelocity(20)
+            .withMotionMagicAcceleration(100)
+            .withMotionMagicJerk(0);
  
  
-         public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kCurrentLimitConfigs)
-             .withFeedback(kFeedbackConfigs)
-             .withMotionMagic(kMotionMagicConfigs)
-             .withSlot0(kSlot0Configs)
-             .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
- 
-         public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kCurrentLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
- 
+        public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
+            .withFeedback(kFeedbackConfigs)
+            .withMotionMagic(kMotionMagicConfigs)
+            .withSlot0(kSlot0Configs)
+            .withSlot1(kSlot1Configs)
+            .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
+
+        public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
      }
  
      public class RobotK {
-         public static final String kLogTab = "SuperStructure";
+        public static final String kLogTab = "SuperStructure";
+        // TODO: get a real distance from the reef for this
+        public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
+        public static final double kRobotScoringOffset = Units.inchesToMeters(2.75); // positive left robot, measured 4/1/2025
+        public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
      public static class VisionK {
@@ -357,9 +383,11 @@ public class Constants {
     }
 
     public static class FieldK {
-        public static final double kFieldLengthMeters = Units.inchesToMeters(687.876);
-        public static final double kFieldWidthMeters = Units.inchesToMeters(317);
+        public static final double kFieldLengthMeters = 17.548;
+        public static final double kFieldWidthMeters = 8.052;
         public static final double kStartLineXMeters = Units.inchesToMeters(299.438); // measured from the inside of starting line
+
+        public static final Field2d kDestinationPosesField2d = new Field2d();
 
         public static boolean inField(Pose2d pose) {
             return (
@@ -369,158 +397,6 @@ public class Constants {
         }
 
         public static final AprilTagFieldLayout kTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-        private static final List<AprilTag> kRedReefTags = List.of(
-            kTagLayout.getTags().get(5),
-            kTagLayout.getTags().get(6), 
-            kTagLayout.getTags().get(7), 
-            kTagLayout.getTags().get(8), 
-            kTagLayout.getTags().get(9), 
-            kTagLayout.getTags().get(10)
-        );
-        private static final List<AprilTag> kBlueReefTags = List.of(
-            kTagLayout.getTags().get(16),
-            kTagLayout.getTags().get(17), 
-            kTagLayout.getTags().get(18), 
-            kTagLayout.getTags().get(19), 
-            kTagLayout.getTags().get(20),
-            kTagLayout.getTags().get(21)
-        );
-        public static final AprilTagFieldLayout kRedSpeakerTagLayout = new AprilTagFieldLayout(kRedReefTags, kTagLayout.getFieldLength(), kTagLayout.getFieldWidth());
-        public static final AprilTagFieldLayout kBlueSpeakerTagLayout = new AprilTagFieldLayout(kBlueReefTags, kTagLayout.getFieldLength(), kTagLayout.getFieldWidth());
-
-        public static class Reef {
-            public static final Translation2d center =
-                new Translation2d(Units.inchesToMeters(176.746), Units.inchesToMeters(158.501));
-            public static final double faceToZoneLineMeters = Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
-            public static final Pose2d[] centerFaces = new Pose2d[6]; // starting face is the one parallel-ly facing the starting line and then moves counterclockwise
-            public static final Map<ReefLocs, Map<ReefHeight, Pose3d>> branchPose3ds = new HashMap<>(); // Map reef locations to Pose3ds. uses branchPositions behind the scenes
-            public static final List<Map<ReefHeight, Pose3d>> branchPositions = new ArrayList<>();
-            public static final Map<ReefLocs, Pose2d> reefLocationToIdealRobotPoseMap = new HashMap<ReefLocs, Pose2d>();
-            public static final List<ReefLocs> leftReefs = new ArrayList<>();
-            public static final List<ReefLocs> rightReefs = new ArrayList<>();
-            
-            static {
-                // Initialize faces
-                centerFaces[0] =
-                    new Pose2d(
-                        Units.inchesToMeters(209.489),
-                        Units.inchesToMeters(158.502),
-                        Rotation2d.fromDegrees(0));
-                centerFaces[1] = 
-                    new Pose2d(
-                        Units.inchesToMeters(193.116),
-                        Units.inchesToMeters(186.858),
-                        Rotation2d.fromDegrees(60));
-                centerFaces[2] =
-                    new Pose2d(
-                        Units.inchesToMeters(160.373),
-                        Units.inchesToMeters(186.857),
-                        Rotation2d.fromDegrees(120));
-                centerFaces[3] =
-                    new Pose2d(
-                        Units.inchesToMeters(144.003),
-                        Units.inchesToMeters(158.500),
-                        Rotation2d.fromDegrees(180));
-                centerFaces[4] =
-                    new Pose2d(
-                        Units.inchesToMeters(160.375),
-                        Units.inchesToMeters(130.144),
-                        Rotation2d.fromDegrees(-120));
-                centerFaces[5] =
-                    new Pose2d(
-                        Units.inchesToMeters(193.118),
-                        Units.inchesToMeters(130.145),
-                        Rotation2d.fromDegrees(-60));
-                
-                // Initialize branch positions
-                for (int face = 0; face < 6; face++) {
-                    Map<ReefHeight, Pose3d> rightBranches = new HashMap<>();
-                    Map<ReefHeight, Pose3d> leftBranches = new HashMap<>();
-                    for (var reefLvl : ReefHeight.values()) {
-                        Pose2d poseDirection = new Pose2d(center, Rotation2d.fromDegrees(180 - (60 * face)));
-                        double adjustXMeters = Units.inchesToMeters(30.738);
-                        double adjustYMeters = Units.inchesToMeters(6.469);
-
-                        rightBranches.put(
-                            reefLvl,
-                            new Pose3d(
-                                new Translation3d(
-                                    poseDirection.transformBy(new Transform2d(adjustXMeters, adjustYMeters, new Rotation2d())).getX(),
-                                    poseDirection.transformBy(new Transform2d(adjustXMeters, adjustYMeters, new Rotation2d())).getY(),
-                            reefLvl.m_heightMeters),
-                            new Rotation3d(0, Units.degreesToRadians(reefLvl.m_pitchDegs),
-                            poseDirection.getRotation().getRadians())));
-                        leftBranches.put(
-                            reefLvl,
-                            new Pose3d(
-                                new Translation3d(
-                                    poseDirection.transformBy(new Transform2d(adjustXMeters, -adjustYMeters, new Rotation2d())).getX(),
-                                    poseDirection.transformBy(new Transform2d(adjustXMeters, -adjustYMeters, new Rotation2d())).getY(),
-                            reefLvl.m_heightMeters),
-                            new Rotation3d(0, Units.degreesToRadians(reefLvl.m_pitchDegs), poseDirection.getRotation().getRadians())));
-                    }
-                    branchPositions.add(rightBranches);
-                    branchPositions.add(leftBranches);
-                }
-
-                branchPose3ds.put(ReefLocs.REEF_A, branchPositions.get(1));
-                branchPose3ds.put(ReefLocs.REEF_B, branchPositions.get(0));
-                branchPose3ds.put(ReefLocs.REEF_C, branchPositions.get(11));
-                branchPose3ds.put(ReefLocs.REEF_D, branchPositions.get(10));
-                branchPose3ds.put(ReefLocs.REEF_E, branchPositions.get(9));
-                branchPose3ds.put(ReefLocs.REEF_F, branchPositions.get(8));
-                branchPose3ds.put(ReefLocs.REEF_G, branchPositions.get(7));
-                branchPose3ds.put(ReefLocs.REEF_H, branchPositions.get(6));
-                branchPose3ds.put(ReefLocs.REEF_I, branchPositions.get(5));
-                branchPose3ds.put(ReefLocs.REEF_J, branchPositions.get(4));
-                branchPose3ds.put(ReefLocs.REEF_K, branchPositions.get(3));
-                branchPose3ds.put(ReefLocs.REEF_L, branchPositions.get(2));
-
-                // TODO: get a real distance from the reef for this
-                double distanceFromReef = Units.inchesToMeters(17);
-                double leftRightOffset = -Units.inchesToMeters(1.25); // positive left robot
-                Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, leftRightOffset, Rotation2d.fromDegrees(180));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_B, branchPose3ds.get(ReefLocs.REEF_B).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_C, branchPose3ds.get(ReefLocs.REEF_C).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_D, branchPose3ds.get(ReefLocs.REEF_D).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_E, branchPose3ds.get(ReefLocs.REEF_E).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_F, branchPose3ds.get(ReefLocs.REEF_F).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_G, branchPose3ds.get(ReefLocs.REEF_G).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_H, branchPose3ds.get(ReefLocs.REEF_H).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_I, branchPose3ds.get(ReefLocs.REEF_I).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_J, branchPose3ds.get(ReefLocs.REEF_J).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_K, branchPose3ds.get(ReefLocs.REEF_K).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-                reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d()
-                    .transformBy(transformToRobotPosition));
-            }
-
-            public enum ReefHeight {
-                L4(Units.inchesToMeters(72), -90),
-                L3(Units.inchesToMeters(47.625), -35),
-                L2(Units.inchesToMeters(31.875), -35),
-                L1(Units.inchesToMeters(18), 0);
-
-                public double m_heightMeters;
-                public double m_pitchDegs;
-            
-                ReefHeight(double height, double pitch) {
-                  m_heightMeters = height;
-                  m_pitchDegs = pitch; // in degrees
-                }
-            }
-        }
     
         public static class CS {
             public static final Pose2d leftCenterFace =
@@ -548,17 +424,24 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
+
+        public static double kXKP = 7;
+        public static double kYKP = 7;
+        public static double kThetaKP = 10;
         
-        public static final PIDController m_autoAlignXController = new PIDController(7, 0, 0.1);
-        public static final PIDController m_autoAlignYController = new PIDController(7, 0, 0.1);
-        public static final PIDController m_autoAlignThetaController = new PIDController(10, 0, 0.1);
+        private static final TrapezoidProfile.Constraints kAutoAlignConstraints = new TrapezoidProfile.Constraints(3, 12);
+        public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
+        public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0);
+        public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0);
         // we need to do this so the PIDController works properly
         static {
-            m_autoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
+            kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static final double kSideToSideTolerance = 0.002; // meters
+        public static final double kTranslationTolerance = 0.005; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
+
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
         public static final double kXMaxVelocity = 3; // m/s

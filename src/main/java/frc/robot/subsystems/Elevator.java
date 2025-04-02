@@ -2,25 +2,24 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.Kilograms;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
-import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.TalonFXSimState;
-import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -34,10 +33,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj.Timer;
 
 import static frc.robot.Constants.ElevatorK.*;
+import static frc.robot.subsystems.Elevator.EleHeight.*;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -55,14 +56,19 @@ public class Elevator extends SubsystemBase {
     private final TalonFX m_frontMotor = new TalonFX(kFrontCANID, TunerConstants.kCANBus);
     private final TalonFX m_rearMotor = new TalonFX(kBackCANID, TunerConstants.kCANBus);
     private final Follower m_followerReq = new Follower(m_frontMotor.getDeviceID(),true);
-    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true);
+    private final Servo m_climbServo = new Servo(kServoChannel);
+
+    private MotionMagicVoltage m_MMVRequest = new MotionMagicVoltage(0).withEnableFOC(true).withSlot(0);
+    private DynamicMotionMagicVoltage m_climbMMVReq = new DynamicMotionMagicVoltage(0, 0, 0, 0);
+    private PositionVoltage m_climbRequest = new PositionVoltage(0).withEnableFOC(true);
 
     private double m_desiredHeight = 0; // needs to be logged
     private double m_requestStartTime = 0; //temporary value i guess but in reality its just to make sure that runs correctly
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
-    private BooleanSupplier m_currentSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
+    private BooleanSupplier m_homingCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
+    private BooleanSupplier m_climbCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 110.0;
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
     private VoltageOut m_voltageCtrlReq = new VoltageOut(0);
 
@@ -71,6 +77,8 @@ public class Elevator extends SubsystemBase {
         .add("Coast", false)
         .withWidget(BuiltInWidgets.kToggleSwitch)
         .getEntry();
+
+    final Trigger trg_nearSetpoint = new Trigger(() -> nearSetpoint());
 
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
@@ -97,6 +105,7 @@ public class Elevator extends SubsystemBase {
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
     private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
     private final DoubleLogger log_eleTimings = WaltLogger.logDouble(kLogTab, "timeFromReqToHeight");
+    private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "motorTemp");
 
     /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
     private final SysIdRoutine m_sysIdRoutineLinear = new SysIdRoutine(
@@ -146,9 +155,9 @@ public class Elevator extends SubsystemBase {
         m_rearMotor.setControl(m_followerReq);
 
         SmartDashboard.putData("Elevator Sim", m_mech2d);
+        unlockLatch();
 
         setDefaultCommand(currentSenseHoming());
-
     }
 
     private void setCoast(boolean coast) {
@@ -215,6 +224,72 @@ public class Elevator extends SubsystemBase {
         );
     }
 
+    private void unlockLatch() {
+        m_climbServo.set(kLatchUnlockedPos);
+    }
+
+    private void lockLatch() {
+        m_climbServo.set(kLatchLockedPos);
+    }
+
+    public Command unlockLatchCmd() {
+        return Commands.runOnce(() -> unlockLatch());
+    }
+
+    public Command lockLatchCmd() {
+        return Commands.runOnce(() -> lockLatch());
+    }
+
+    public Command climbBump() {
+        return Commands.sequence(
+            toHeight(CLIMB_BUMP.rotations),
+            Commands.waitUntil(trg_nearSetpoint.debounce(0.05)),
+            toHeight(CLIMB_UP.rotations)
+        );
+    }
+
+    public Command climbTime() {
+        return Commands.sequence(
+            Commands.runOnce(
+                () -> {
+                    m_frontMotor.getConfigurator().apply(kClimbCurrentLimitConfigs);
+                    m_rearMotor.getConfigurator().apply(kClimbCurrentLimitConfigs);
+                    m_desiredHeight = EleHeight.CLIMB_DOWN.rotations;
+                    log_elevatorDesiredPosition.accept(m_desiredHeight);
+                }
+            ),
+            Commands.runOnce(() -> {
+                m_climbMMVReq = m_climbMMVReq
+                    .withPosition(m_desiredHeight)
+                    .withVelocity(2.5)
+                    .withAcceleration(5)
+                    .withSlot(0);
+                m_frontMotor.setControl(m_climbMMVReq);
+            }),
+            Commands.waitUntil(notMoving(m_climbCurrSpike)).withTimeout(3),
+            Commands.parallel(
+                lockLatchCmd(),
+                Commands.runOnce(() -> {
+                    m_climbRequest = m_climbRequest.withPosition(m_desiredHeight).withSlot(1);
+                    m_frontMotor.setControl(m_climbRequest);
+                }).until(() -> nearSetpoint())
+            ),
+            Commands.waitSeconds(1),
+            Commands.runOnce(() -> m_frontMotor.setControl(new StaticBrake())),
+            Commands.print("Climb Complete")
+        );
+    }
+
+    // when will this be used? idrk
+    public Command resetConfigsAfterClimb() {
+        return runOnce(
+            () -> {
+                m_frontMotor.getConfigurator().apply(kFrontTalonFXConfig);
+                m_rearMotor.getConfigurator().apply(kRearTalonFXConfig);
+            }
+        );
+    }
+
     public Command testVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_frontMotor.setControl(m_voltageCtrlReq.withOutput(-(stick.getAsDouble()) * 6));
@@ -222,6 +297,12 @@ public class Elevator extends SubsystemBase {
             m_frontMotor.setControl(m_voltageCtrlReq.withOutput(0));
         }
         );
+    }
+
+    private BooleanSupplier notMoving(BooleanSupplier currentSpikeSupplier) {
+        return () ->
+            m_currentDebouncer.calculate(currentSpikeSupplier.getAsBoolean()) && 
+            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
     }
 
     public Command currentSenseHoming() {
@@ -244,11 +325,7 @@ public class Elevator extends SubsystemBase {
             System.out.println("Zeroed Elevator!!!");
         };
 
-        BooleanSupplier isFinished = () ->
-            m_currentDebouncer.calculate(m_currentSpike.getAsBoolean()) && 
-            m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
-
-        return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+        return new FunctionalCommand(init, execute, onEnd, notMoving(m_homingCurrSpike), this);
     }
 
     public Command externalWaitUntilHomed() {
@@ -266,6 +343,7 @@ public class Elevator extends SubsystemBase {
 
         log_eleAtHeight.accept(nearSetpoint());
         log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
+        log_eleMotorTemp.accept(m_frontMotor.getDeviceTemp().getValueAsDouble());
     }
 
     @Override
@@ -287,15 +365,15 @@ public class Elevator extends SubsystemBase {
 
     private static final double kInch = 0.169;
 
-    //all these values here are still not 100% exact (CLIMB_UP and CLIMB_DOWN ARE STILL DUMMY VALUES) and will need tweaking
     public enum EleHeight {
         HOME(0.3),
         L1(5.590325),
         L2(5.653564 + kInch),
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
-        CLIMB_UP(2.08 - (kInch * 5)), // this height will move the robot up for climb
-        CLIMB_DOWN(2.08 - (kInch * 8)), //this height will move robot down for climb
+        CLIMB_UP(2.08 - (kInch * 2.5)), // good value
+        CLIMB_BUMP(CLIMB_UP.rotations + (kInch * 1.5)),
+        CLIMB_DOWN(0.0),
         HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;

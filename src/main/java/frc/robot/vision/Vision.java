@@ -19,11 +19,10 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
 import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
+import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
-import java.lang.StackWalker.Option;
-import java.rmi.StubNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +37,6 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
-import static edu.wpi.first.units.Units.Rotation;
 import static frc.robot.Constants.FieldK.kTagLayout;
 
 public class Vision {
@@ -221,7 +219,8 @@ public class Vision {
         }
 
         // AllianceFlipUtil::flip handles checking whether flipping should occur
-        return Optional.of(AllianceFlipUtil.apply(FieldK.Reef.reefLocationToIdealRobotPoseMap.get(correctReefLocation)));
+        var pose = FieldConstants.kReefRobotLocationPoseMap.get(correctReefLocation);
+        return Optional.of(AllianceFlipUtil.apply(pose));
     }
 
     /**
