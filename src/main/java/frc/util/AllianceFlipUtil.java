@@ -7,7 +7,6 @@
 
 package frc.util;
 
-import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.Constants.FieldK.kFieldLengthMeters;
 import static frc.robot.Constants.FieldK.kFieldWidthMeters;
 
@@ -46,7 +45,7 @@ public class AllianceFlipUtil {
   }
 
   public static Translation2d flip(Translation2d translation) {
-    return new Translation2d(applyX(translation.getX()), applyY(translation.getY()));
+    return new Translation2d(flipXCoordinate(translation.getX()), flipYCoordinate(translation.getY()));
   }
 
   /** Flips a translation to the correct side of the field based on the current alliance color. */
@@ -59,7 +58,7 @@ public class AllianceFlipUtil {
   }
 
   public static Rotation2d flip(Rotation2d rotation) {
-    return rotation.rotateBy(Rotation2d.k180deg);
+    return rotation.rotateBy(Rotation2d.kPi);
   }
 
   /** Flips a rotation based on the current alliance color. */
