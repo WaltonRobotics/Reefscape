@@ -26,6 +26,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
@@ -125,6 +126,7 @@ public class Robot extends TimedRobot {
   private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
   private final Trigger trg_climbPrep = manipulator.y().and(manipulator.povUp());
+  private final Trigger trg_climbBump = manipulator.start();
   private final Trigger trg_climbLockingIn = manipulator.y().and(manipulator.povDown());
 
   // simulation
@@ -138,6 +140,8 @@ public class Robot extends TimedRobot {
   private final Trigger trg_inOverride = trg_manipDanger.or(trg_driverDanger);
 
   private final SwerveRequest straightWheelsReq = new SwerveRequest.PointWheelsAt().withModuleDirection(new Rotation2d());
+
+  private final DoubleLogger log_rio6VRailCurrent = WaltLogger.logDouble("Rio", "6VRailCurrent");
 
   /* WaltAutonBuilder vars */
   private boolean numCycleChange = false;
@@ -199,6 +203,7 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
       trg_climbPrep,
+      manipulator.start(),
       trg_climbLockingIn,
       trg_inOverride,
       new Trigger(() -> false),
@@ -219,6 +224,7 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2),
       trg_deAlgae.and(trg_toL3),
       trg_climbPrep,
+      trg_climbBump,
       trg_climbLockingIn,
       trg_inOverride,
       trg_simTopBeamBreak,
@@ -238,6 +244,20 @@ public class Robot extends TimedRobot {
 
     configureBindings();
     // configureTestBindings();
+  }
+
+  // checks for finger in unsafe place
+  private Command resetEverythingCheck() {
+    if(superstructure.m_state == Superstructure.State.ELE_TO_CLIMB || 
+       superstructure.m_state == Superstructure.State.CLIMB_READY ||
+       superstructure.m_state == Superstructure.State.CLIMBING) {
+      return Commands.none();
+    } else {
+      return Commands.parallel(
+        algae.toIdleCmd(),
+        superstructure.forceIdle()
+      );
+    }
   }
 
   private void configureTestBindings() {
@@ -323,8 +343,7 @@ public class Robot extends TimedRobot {
 
       driver.rightBumper().onTrue(
         Commands.parallel(
-          algae.toIdleCmd(),
-          superstructure.forceIdle()
+          resetEverythingCheck()
         )
       );
 
@@ -449,6 +468,8 @@ public class Robot extends TimedRobot {
 
     boolean visionSeenPastSec = !lastGotTagMsmtTimer.hasElapsed(1);
     log_visionSeenPastSecond.accept(visionSeenPastSec);
+    double rio6VCurrent = RobotController.getCurrent6V();
+    log_rio6VRailCurrent.accept(rio6VCurrent);
 
     // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
