@@ -36,11 +36,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.AutoAlignmentK;
+import frc.robot.Constants.FieldK;
 import frc.robot.Constants.FieldK.Reef;
 
 import frc.robot.Constants.VisionK;
@@ -476,6 +478,8 @@ public class Robot extends TimedRobot {
     robotField.getObject("reefJRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_J));
     robotField.getObject("reefKRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_K));
     robotField.getObject("reefLRobotLocation").setPose(Reef.reefLocationToIdealRobotPoseMap.get(ReefLocs.REEF_L));
+
+    SmartDashboard.putData("Autoalign Destination Poses", FieldK.kDestinationPosesField2d);
   }
 
   @Override
