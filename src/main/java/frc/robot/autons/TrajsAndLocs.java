@@ -8,6 +8,8 @@ import java.util.HashMap;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.Constants;
+import frc.robot.FieldConstants;
 
 public abstract class TrajsAndLocs {
     /* 
@@ -46,6 +48,15 @@ public abstract class TrajsAndLocs {
         REEF_L("L");
 
         public final String str;
+
+        public Pose2d getIdealScoringPose() {
+            var potentialPose = FieldConstants.kReefRobotLocationPoseMap.get(this);
+            if (potentialPose != null) {
+                return potentialPose;
+            }
+            return new Pose2d();
+        }
+
         private ReefLocs(String _str) {
             str = _str;
         }
@@ -141,40 +152,47 @@ public abstract class TrajsAndLocs {
 
     public static class Trajectories {
         public static HashMap<Pair<StartingLocs, ReefLocs>, String> StartToReefTrajs = new HashMap<>();
+        public static HashMap<Pair<StartingLocs, ReefLocs>, String> StartToReefShortTrajs = new HashMap<>();
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPTrajs = new HashMap<>();
+        public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPShortTrajs = new HashMap<>();
         public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
+        public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefShortTrajs = new HashMap<>();
         public static HashMap<StartingLocs, String> PushingTrajs = new HashMap<>();
 
         static {
             // fill in maps here
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_H), "Start_Left_H");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_I), "Start_Left_I");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_I), "Start_Left_I_short");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_J), "Start_Left_J");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.LEFT, ReefLocs.REEF_J), "Start_Left_J_short");
 
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_LEFT, ReefLocs.REEF_K), "Start_Left_K");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_LEFT, ReefLocs.REEF_K), "Start_Left_K_short");
 
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_E), "Start_Mid_E");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_F), "Start_Mid_F");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_G), "Start_Mid_G");
-
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_G), "Start_Mid_G_short");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_H), "Start_Mid_H");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_I), "Start_Mid_I");
-            StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_J), "Start_Mid_J");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.MID_H, ReefLocs.REEF_H), "Start_Mid_H_short");
 
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_RIGHT, ReefLocs.REEF_D), "Start_Right_D");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.SUPER_RIGHT, ReefLocs.REEF_D), "Start_Right_D_short");
 
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_E), "Start_Right_E");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_E), "Start_Right_E_short");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_F), "Start_Right_F");
+            StartToReefShortTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_F), "Start_Right_F_short");
             StartToReefTrajs.put(new Pair<StartingLocs, ReefLocs>(StartingLocs.RIGHT, ReefLocs.REEF_G), "Start_Right_G");
 
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT), "A_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_LEFT), "B_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_LEFT), "G_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_LEFT), "H_Left");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_I, HPStation.HP_LEFT), "I_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_J, HPStation.HP_LEFT), "J_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_K, HPStation.HP_LEFT), "K_Left");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_L, HPStation.HP_LEFT), "L_Left");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_LEFT), "A_Left_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_LEFT), "B_Left_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_J, HPStation.HP_LEFT), "J_Left_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_K, HPStation.HP_LEFT), "K_Left_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_L, HPStation.HP_LEFT), "L_Left_short");
 
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_RIGHT), "A_Right");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_RIGHT), "B_Right");
@@ -182,33 +200,34 @@ public abstract class TrajsAndLocs {
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_D, HPStation.HP_RIGHT), "D_Right");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_E, HPStation.HP_RIGHT), "E_Right");
             ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_F, HPStation.HP_RIGHT), "F_Right");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_G, HPStation.HP_RIGHT), "G_Right");
-            ReefToHPTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_H, HPStation.HP_RIGHT), "H_Right");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_A, HPStation.HP_RIGHT), "A_Right_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_B, HPStation.HP_RIGHT), "B_Right_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_C, HPStation.HP_RIGHT), "C_Right_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_D, HPStation.HP_RIGHT), "D_Right_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_E, HPStation.HP_RIGHT), "E_Right_short");
+            ReefToHPShortTrajs.put(new Pair<ReefLocs, HPStation>(ReefLocs.REEF_F, HPStation.HP_RIGHT), "F_Right_short");
 
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_A), "Left_A");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_B), "Left_B");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_G), "Left_G");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_H), "Left_H");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_I), "Left_I");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_J), "Left_J");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_K), "Left_K");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_L), "Left_L");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_A), "Left_A_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_B), "Left_B_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_J), "Left_J_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_K), "Left_K_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_LEFT, ReefLocs.REEF_L), "Left_L_short");
 
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_A), "Right_A");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_B), "Right_B");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_C), "Right_C");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_D), "Right_D");
             HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_E), "Right_E");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_F), "Right_F");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_G), "Right_G");
-            HPToReefTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_H), "Right_H");
-
-            PushingTrajs.put(StartingLocs.LEFT, "Pushing_Left");
-            PushingTrajs.put(StartingLocs.RIGHT, "Pushing_Right");
-            PushingTrajs.put(StartingLocs.MID_G, "Pushing_Mid_G");
-            PushingTrajs.put(StartingLocs.MID_H, "Pushing_Mid_H");
-            PushingTrajs.put(StartingLocs.SUPER_LEFT, "Pushing_Super_Left");
-            PushingTrajs.put(StartingLocs.SUPER_RIGHT, "Pushing_Super_Right");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_A), "Right_A_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_B), "Right_B_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_C), "Right_C_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_D), "Right_D_short");
+            HPToReefShortTrajs.put(new Pair<HPStation, ReefLocs>(HPStation.HP_RIGHT, ReefLocs.REEF_E), "Right_E_short");
         }
     }
 }
