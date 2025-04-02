@@ -277,8 +277,8 @@ public class WaltAutonFactory {
             var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond(); 
             if (reefLocOpt.isPresent()) {
                 autoAlign = autoAlignCommand(() -> reefLocOpt.get());
-                double trajTime = runningTraj.getRawTrajectory().getTotalTime();
-                afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.1);
+                // double trajTime = runningTraj.getRawTrajectory().getTotalTime();
+                // afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.3);
             }
 
             var pathDoneCmd = Commands.sequence(
