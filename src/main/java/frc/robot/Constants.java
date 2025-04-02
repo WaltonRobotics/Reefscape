@@ -52,6 +52,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
+import frc.util.AllianceFlipUtil;
 
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -498,6 +499,7 @@ public class Constants {
                 // TODO: get a real distance from the reef for this
                 double distanceFromReef = Units.inchesToMeters(17);
                 double leftRightOffset = -Units.inchesToMeters(1.25); // positive left robot
+
                 Transform2d transformToRobotPosition = new Transform2d(distanceFromReef, leftRightOffset, Rotation2d.fromDegrees(180));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_A, branchPose3ds.get(ReefLocs.REEF_A).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
@@ -523,6 +525,30 @@ public class Constants {
                     .transformBy(transformToRobotPosition));
                 reefLocationToIdealRobotPoseMap.put(ReefLocs.REEF_L, branchPose3ds.get(ReefLocs.REEF_L).get(ReefHeight.L1).toPose2d()
                     .transformBy(transformToRobotPosition));
+
+                reefLocationToIdealRobotPoseMap.entrySet().stream().forEach(entry -> {
+                    ReefLocs key = entry.getKey();
+                    Pose2d value = entry.getValue();
+
+                    kDestinationPosesField2d.getObject("BLUE_"+key.toString()).setPose(value);
+                    Pose2d flipPose = new Pose2d(
+                        new Translation2d(AllianceFlipUtil.flipXCoordinate(value.getX()), AllianceFlipUtil.flipYCoordinate(value.getY())),
+                        AllianceFlipUtil.flip(value.getRotation()));
+                    kDestinationPosesField2d.getObject("RED_"+key.toString()).setPose(AllianceFlipUtil.flip(flipPose));
+                });
+
+                // branchPose3ds.entrySet().stream().forEach(entry -> {
+                //     ReefLocs key = entry.getKey();
+                //     Pose3d value3d = entry.getValue().get(ReefHeight.L1);
+                //     Pose2d value = value3d.toPose2d();
+
+                //     kDestinationPosesField2d.getObject("BLUE_"+key.toString()).setPose(value);
+                //     Pose2d flipPose = new Pose2d(
+                //         new Translation2d(AllianceFlipUtil.flipXCoordinate(value.getX()), AllianceFlipUtil.flipYCoordinate(value.getY())),
+                //         AllianceFlipUtil.flip(value.getRotation()));
+                //     kDestinationPosesField2d.getObject("RED_"+key.toString()).setPose(AllianceFlipUtil.flip(flipPose));
+                // });
+                
             }
 
             public enum ReefHeight {
