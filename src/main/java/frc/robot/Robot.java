@@ -23,11 +23,10 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import choreo.auto.AutoFactory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -39,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.VisionK;
 import frc.robot.autons.AutonChooser;
-import frc.robot.autons.SimpleAutons;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -50,10 +48,10 @@ import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 
 import frc.robot.autons.WaltAutonFactory;
 import frc.robot.generated.TunerConstants;
-import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
 import frc.util.Elastic.Notification.NotificationLevel;
+import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -61,7 +59,6 @@ import frc.robot.vision.Vision;
 import frc.robot.vision.VisionSim;
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.Algae.State;
-import frc.robot.subsystems.Algae.WristPos;
 
 public class Robot extends TimedRobot {
 
@@ -175,14 +172,18 @@ public class Robot extends TimedRobot {
   };
 
   private final Field2d robotField = visionSim.getSimDebugField();
+  private final Timer lastGotTagMsmtTimer = new Timer();
+  private final BooleanLogger log_visionSeenPastSecond = new BooleanLogger("Robot", "VisionSeenLastSec");
 
   public Robot() {
     DriverStation.silenceJoystickConnectionWarning(true);
     if (Robot.isReal()) {
+      lastGotTagMsmtTimer.start();
       superstructure = new Superstructure(
       coral,
       finger,
-      elevator, 
+      elevator,
+      Optional.of(eleForwardsCam),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -199,7 +200,8 @@ public class Robot extends TimedRobot {
       superstructure = new Superstructure(
       coral,
       finger,
-      elevator, 
+      elevator,
+      Optional.empty(),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -433,8 +435,12 @@ public class Robot extends TimedRobot {
         Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
         var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
         drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
+        lastGotTagMsmtTimer.restart();
       }
     }
+
+    boolean visionSeenPastSec = !lastGotTagMsmtTimer.hasElapsed(1);
+    log_visionSeenPastSecond.accept(visionSeenPastSec);
 
     // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
@@ -520,12 +526,12 @@ public class Robot extends TimedRobot {
           drivetrain,
           StartingLocs.RIGHT, 
           new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
-          new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4)), 
+          new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        autonName = "Right 3 Piece: E, D, C";
+        autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
         WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
       }
@@ -538,12 +544,12 @@ public class Robot extends TimedRobot {
           drivetrain,
           StartingLocs.LEFT, 
           new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
-          new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4)), 
+          new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
           new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)),
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        autonName = "Left 3 Piece: J, K, L";
+        autonName = "Left 3 Piece: J-L2, K-L4, L-L4";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
@@ -561,7 +567,7 @@ public class Robot extends TimedRobot {
           WaltAutonBuilder.nte_autonRobotPush.getBoolean(false)
         ));
 
-        autonName = "Mid G";
+        autonName = "Mid G-L4";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
         WaltAutonBuilder.nte_midGOnly.setBoolean(false);
       }

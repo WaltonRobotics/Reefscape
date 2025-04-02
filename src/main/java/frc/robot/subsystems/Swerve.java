@@ -69,8 +69,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.ApplyFieldSpeeds m_pathApplyFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds()
         .withDriveRequestType(DriveRequestType.Velocity)
         .withSteerRequestType(SteerRequestType.Position);
-    private final PIDController m_pathXController = new PIDController(10, 0, 0);
-    private final PIDController m_pathYController = new PIDController(10, 0, 0);
+    private final PIDController m_pathXController = new PIDController(7.7, 0, 0);
+    private final PIDController m_pathYController = new PIDController(7.7, 0, 0);
     private final PIDController m_pathThetaController = new PIDController(7, 0, 0);
 
     /* Swerve requests to apply during SysId characterization */
@@ -78,8 +78,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+    private final SwerveRequest.FieldCentric swreq_drive = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+
+    private final SwerveRequest.SwerveDriveBrake swreq_brake = new SwerveRequest.SwerveDriveBrake();
 
     /* wheel radius characterization schtuffs */
     // public final DoubleSupplier m_gyroYawRadsSupplier = () -> 360 - Units.degreesToRadians(getPigeon2().getYaw().getValueAsDouble());
@@ -304,6 +306,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return run(() -> this.setControl(requestSupplier.get()));
     }
 
+    public Command stopCmd() {
+        return runOnce(() -> setControl(swreq_brake));
+    }
+
     private void followPath(SwerveSample sample) {
         m_pathThetaController.enableContinuousInput(-Math.PI, Math.PI);
         var pose = getState().Pose;
@@ -348,7 +354,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destination.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destination.getRotation().getRadians());
 
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destination.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destination.getY()-curPose.getY());
@@ -384,7 +390,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 double ySpeed = AutoAlignmentK.m_autoAlignYController.calculate(curPose.getY(), destinationPose.getY());
                 double thetaSpeed = AutoAlignmentK.m_autoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
 
-                setControl(drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
+                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
