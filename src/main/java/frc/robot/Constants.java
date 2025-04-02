@@ -223,59 +223,58 @@ public class Constants {
      }
  
      public final class ElevatorK {
-         public static final String kLogTab = "EleSubsys";
- 
-         public static final int kFrontCANID = 10;
-         public static final int kBackCANID = 11;
-         public static final int kServoChannel = 0;
+        public static final String kLogTab = "EleSubsys";
 
-         public static final double kLatchUnlockedPos = 0.85;
-         public static final double kLatchLockedPos = 0;
- 
-         public static final double kGearRatio = 50/12;
-         public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
- 
-         public static final double kP = 5;
-         public static final double kI = 0;
-         public static final double kS = 0.05;
-         public static final double kV = 0.58403;
-         public static final double kA = 0;
-         public static final double kG = 0.57989; 
+        public static final int kFrontCANID = 10;
+        public static final int kBackCANID = 11;
+        public static final int kServoChannel = 0;
 
-         private static final double kPClimb = 100;
-         private static final double kSClimb = 0.5;
-         private static final double kVClimb = 0.9;
+        public static final double kLatchUnlockedPos = 0.85;
+        public static final double kLatchLockedPos = 0;
 
- 
-         public static final Mass kCarriageMassKg = Pounds.of(5);
-         public static final Distance kMinimumHeight = Feet.of(0);
-         public static final Distance kMaximumHeight = Meters.of(15);
-         public static final Distance kStartingHeightMeters = Feet.of(0);
-         public static final double kTolerancePulleyRotations = 0.1;
-         //SensorToMechanismRatio = kGearRatio
- 
-         public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
-             return kSpoolRadius.per(Second).times(rotations.in(RadiansPerSecond));
-         }
- 
-         public static Angle metersToRotation(Distance meters){
-         return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
-         }
- 
-         public static Distance rotationsToMeters(Angle rotations) {
-             return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
-         }
- 
-         public static AngularVelocity metersToRotationVel(LinearVelocity meters){
-             return RadiansPerSecond.of(meters.in(MetersPerSecond)/kSpoolRadius.in(Meters));
-         }
- 
-         public static AngularVelocity metersToRotationVel(double metersPerSecond){
-             return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
-         }
- 
-         // TODO: change back to 100/75 after latch testing
-         private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
+        public static final double kGearRatio = 50/12;
+        public static final Distance kSpoolRadius = Inches.of(0.9175);  // TODO: ask banks if the thing we considered a spool is a spool?
+
+        public static final double kP = 5;
+        public static final double kI = 0;
+        public static final double kS = 0.05;
+        public static final double kV = 0.58403;
+        public static final double kA = 0;
+        public static final double kG = 0.57989; 
+
+        private static final double kPClimb = 100;
+        private static final double kSClimb = 0.5;
+        private static final double kVClimb = 0.9;
+
+
+        public static final Mass kCarriageMassKg = Pounds.of(5);
+        public static final Distance kMinimumHeight = Feet.of(0);
+        public static final Distance kMaximumHeight = Meters.of(15);
+        public static final Distance kStartingHeightMeters = Feet.of(0);
+        public static final double kTolerancePulleyRotations = 0.1;
+        //SensorToMechanismRatio = kGearRatio
+
+        public static LinearVelocity rotationsToMetersVel(AngularVelocity rotations){
+            return kSpoolRadius.per(Second).times(rotations.in(RadiansPerSecond));
+        }
+
+        public static Angle metersToRotation(Distance meters){
+        return Radians.of(meters.in(Meters) / (2 * Math.PI * kSpoolRadius.in(Meters)));
+        }
+
+        public static Distance rotationsToMeters(Angle rotations) {
+            return Meters.of(rotations.in(Radians) * 2 * Math.PI * kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(LinearVelocity meters){
+            return RadiansPerSecond.of(meters.in(MetersPerSecond)/kSpoolRadius.in(Meters));
+        }
+
+        public static AngularVelocity metersToRotationVel(double metersPerSecond){
+            return metersToRotationVel(LinearVelocity.ofBaseUnits(metersPerSecond, MetersPerSecond));
+        }
+
+        private static final CurrentLimitsConfigs kCurrentLimitConfigs = new CurrentLimitsConfigs()
              .withStatorCurrentLimit(100)
              .withStatorCurrentLimitEnable(true)
              .withSupplyCurrentLimit(75)
@@ -285,47 +284,47 @@ public class Constants {
             .withStatorCurrentLimitEnable(true)
             .withSupplyCurrentLimit(55)
             .withSupplyCurrentLimitEnable(true);
-         private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
-             .withSensorToMechanismRatio(kGearRatio);
-         private static final Slot0Configs kSlot0Configs = new Slot0Configs()
-             .withKS(kS) 
-             .withKV(kV) 
-             .withGravityType(GravityTypeValue.Elevator_Static)
-             .withKP(kP)
-             .withKI(kI) 
-             .withKG(kG);
-         private static final Slot1Configs kSlot1Configs = new Slot1Configs()
+        private static final FeedbackConfigs kFeedbackConfigs = new FeedbackConfigs()
+            .withSensorToMechanismRatio(kGearRatio);
+        private static final Slot0Configs kSlot0Configs = new Slot0Configs()
+            .withKS(kS) 
+            .withKV(kV) 
+            .withGravityType(GravityTypeValue.Elevator_Static)
+            .withKP(kP)
+            .withKI(kI) 
+            .withKG(kG);
+        private static final Slot1Configs kSlot1Configs = new Slot1Configs()
             .withKS(kSClimb) 
             .withKV(kVClimb) 
             .withGravityType(GravityTypeValue.Elevator_Static)
             .withKP(kPClimb);
-         private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
-             .withNeutralMode(NeutralModeValue.Brake)
-             .withInverted(InvertedValue.CounterClockwise_Positive);
-         public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
-             .withForwardSoftLimitEnable(true)
-             .withForwardSoftLimitThreshold(12.8975)  // true hard 12.9849854
-             .withReverseSoftLimitEnable(true)
-             .withReverseSoftLimitThreshold(0);
-         public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
-         private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
-             .withMotionMagicCruiseVelocity(20)
-             .withMotionMagicAcceleration(100)
-             .withMotionMagicJerk(0);
+        private static final MotorOutputConfigs kMotorOutputConfigs = new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.CounterClockwise_Positive);
+        public static final SoftwareLimitSwitchConfigs kSoftwareLimitConfigs = new SoftwareLimitSwitchConfigs()
+            .withForwardSoftLimitEnable(true)
+            .withForwardSoftLimitThreshold(12.8975)  // true hard 12.9849854
+            .withReverseSoftLimitEnable(true)
+            .withReverseSoftLimitThreshold(0);
+        public static final SoftwareLimitSwitchConfigs kSoftLimitSwitchDisabledConfig = new SoftwareLimitSwitchConfigs();
+        private static final MotionMagicConfigs kMotionMagicConfigs = new MotionMagicConfigs()
+            .withMotionMagicCruiseVelocity(20)
+            .withMotionMagicAcceleration(100)
+            .withMotionMagicJerk(0);
  
  
-         public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kCurrentLimitConfigs)
-             .withFeedback(kFeedbackConfigs)
-             .withMotionMagic(kMotionMagicConfigs)
-             .withSlot0(kSlot0Configs)
-             .withSlot1(kSlot1Configs)
-             .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
- 
-         public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
-             .withCurrentLimits(kCurrentLimitConfigs)
-             .withMotorOutput(kMotorOutputConfigs);
+        public static final TalonFXConfiguration kFrontTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
+            .withFeedback(kFeedbackConfigs)
+            .withMotionMagic(kMotionMagicConfigs)
+            .withSlot0(kSlot0Configs)
+            .withSlot1(kSlot1Configs)
+            .withSoftwareLimitSwitch(kSoftwareLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
+
+        public static final TalonFXConfiguration kRearTalonFXConfig = new TalonFXConfiguration()
+            .withCurrentLimits(kCurrentLimitConfigs)
+            .withMotorOutput(kMotorOutputConfigs);
      }
  
      public class RobotK {
