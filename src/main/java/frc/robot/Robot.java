@@ -239,10 +239,10 @@ public class Robot extends TimedRobot {
     // default auton
     waltAutonFactory = Optional.of(
       autonFactoryFactory(
-        StartingLocs.LEFT, 
-        new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
+        StartingLocs.RIGHT, 
+        new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
         new ArrayList<>(List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4)), 
-        new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT))
+        new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT))
     ));
 
     AutoRoutine generatedRoutine = waltAutonFactory.get().generateAuton();
