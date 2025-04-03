@@ -30,7 +30,7 @@ public class WaltAutonBuilder {
     public static GenericEntry nte_taxiOnly;
     public static GenericEntry nte_rightThreePiece;
     public static GenericEntry nte_leftThreePiece;
-    public static GenericEntry nte_midGOnly;
+    // public static GenericEntry nte_midGOnly;
     
     // ---- Initial
     // Define Initial Choosers
@@ -101,10 +101,10 @@ public class WaltAutonBuilder {
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
-        nte_midGOnly = Shuffleboard.getTab("AutonChooser")
-                .add("Mid G Only", false)
-                .withWidget(BuiltInWidgets.kToggleSwitch)
-                .getEntry();
+        // nte_midGOnly = Shuffleboard.getTab("AutonChooser")
+        //         .add("Mid G Only", false)
+        //         .withWidget(BuiltInWidgets.kToggleSwitch)
+        //         .getEntry();
     }
 
     // adds the options

@@ -507,18 +507,19 @@ public class Robot extends TimedRobot {
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
 
-      if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
-        waltAutonFactory = Optional.of(autonFactoryFactory(
-          StartingLocs.MID_G, 
-          List.of(REEF_G), 
-          List.of(EleHeight.L4), 
-          List.of()
-        ));
+      // MID G IS BROKEN
+      // if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
+      //   waltAutonFactory = Optional.of(autonFactoryFactory(
+      //     StartingLocs.MID_G, 
+      //     List.of(REEF_G), 
+      //     List.of(EleHeight.L4), 
+      //     List.of()
+      //   ));
 
-        // autonName = "Mid G-L4";
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
-        WaltAutonBuilder.nte_midGOnly.setBoolean(false);
-      }
+      //   // autonName = "Mid G-L4";
+      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
+      //   WaltAutonBuilder.nte_midGOnly.setBoolean(false);
+      // }
 
       // fail-case (no auton selected) - do nothing (its no longer that now)
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
