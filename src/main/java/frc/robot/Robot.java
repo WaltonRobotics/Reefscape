@@ -486,8 +486,8 @@ public class Robot extends TimedRobot {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT, 
           List.of(REEF_E, REEF_D, REEF_C), 
-          eleHeights, 
-          hpStations
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
@@ -498,7 +498,7 @@ public class Robot extends TimedRobot {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
           List.of(REEF_J, REEF_K, REEF_L),
-          List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
           List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
@@ -526,7 +526,7 @@ public class Robot extends TimedRobot {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT,
           List.of(REEF_E, REEF_D, REEF_C),
-          List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
           List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
