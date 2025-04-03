@@ -20,16 +20,18 @@ public abstract class TrajsAndLocs {
      */
     public static enum StartingLocs {
         // TODO: fill out the Real Values
-        SUPER_LEFT("Start_Left"),
-        LEFT("Start_Left"),
-        MID_G("Start_Mid"),
-        MID_H("Start_Mid"),
-        SUPER_RIGHT("Start_Mid"),
-        RIGHT("Start_Right");
+        SUPER_LEFT("Left"),
+        LEFT("Left"),
+        MID_G("Mid"),
+        MID_H("Mid"),
+        SUPER_RIGHT("Mid"),
+        RIGHT("Right");
 
-        public final String str;
+        public final String pathName;
+        public final String name;
         private StartingLocs(String _str ) {
-            str = _str;
+            name = _str;
+            pathName = "Start_" + _str;
         }
     }
 
