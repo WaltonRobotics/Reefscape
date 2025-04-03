@@ -483,20 +483,6 @@ public class Robot extends TimedRobot {
       }
 
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
-        resetAutonLists();
-
-        scoringLocs.add(REEF_E);
-        scoringLocs.add(REEF_D);
-        scoringLocs.add(REEF_C);
-
-        eleHeights.add(EleHeight.L2);
-        eleHeights.add(EleHeight.L4);
-        eleHeights.add(EleHeight.L4);
-
-        hpStations.add(HPStation.HP_RIGHT);
-        hpStations.add(HPStation.HP_RIGHT);
-        hpStations.add(HPStation.HP_RIGHT);
-
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT, 
           List.of(REEF_E, REEF_D, REEF_C), 
@@ -509,29 +495,11 @@ public class Robot extends TimedRobot {
       }
 
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
-        resetAutonLists();
-
-        scoringLocs.add(REEF_J);
-        scoringLocs.add(REEF_K);
-        scoringLocs.add(REEF_L);
-
-        eleHeights.add(EleHeight.L2);
-        eleHeights.add(EleHeight.L4);
-        eleHeights.add(EleHeight.L4);
-
-        hpStations.add(HPStation.HP_LEFT);
-        hpStations.add(HPStation.HP_LEFT);
-        hpStations.add(HPStation.HP_LEFT);
-
-        waltAutonFactory = Optional.of(new WaltAutonFactory(
-          elevator,
-          drivetrain.autoFactory, 
-          superstructure, 
-          drivetrain,
+        waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
-          new ArrayList<>(List.of(REEF_J, REEF_K, REEF_L)), 
-          new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
-          new ArrayList<>(List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT))
+          List.of(REEF_J, REEF_K, REEF_L),
+          List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
         // autonName = "Left 3 Piece: ";
@@ -540,15 +508,11 @@ public class Robot extends TimedRobot {
       }
 
       if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
-        waltAutonFactory = Optional.of(new WaltAutonFactory(
-          elevator,
-          drivetrain.autoFactory, 
-          superstructure, 
-          drivetrain,
+        waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.MID_G, 
-          new ArrayList<>(List.of(REEF_G)), 
-          new ArrayList<>(List.of(EleHeight.L4)), 
-          new ArrayList<>(List.of())
+          List.of(REEF_G), 
+          List.of(EleHeight.L4), 
+          List.of()
         ));
 
         // autonName = "Mid G-L4";
@@ -558,15 +522,11 @@ public class Robot extends TimedRobot {
 
       // fail-case (no auton selected) - do nothing (its no longer that now)
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
-        waltAutonFactory = Optional.of(new WaltAutonFactory(
-          elevator,
-          drivetrain.autoFactory, 
-          superstructure, 
-          drivetrain,
-          StartingLocs.RIGHT, 
-          new ArrayList<>(List.of(REEF_E, REEF_D, REEF_C)), 
-          new ArrayList<>(List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4)), 
-          new ArrayList<>(List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT))
+        waltAutonFactory = Optional.of(autonFactoryFactory(
+          StartingLocs.RIGHT,
+          List.of(REEF_E, REEF_D, REEF_C),
+          List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
         // autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
