@@ -62,6 +62,8 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import static frc.robot.Constants.AutoAlignmentK.*;
+
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -479,8 +481,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             () -> {
                 Pose2d curPose = getState().Pose;
 
-                double xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double xSpeed = 0;
+                if (destinationPose.getX() - curPose.getX() > AutoAlignmentK.kSingleDimensionTolerance) {
+                    xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getY());
+                }
+                double ySpeed = 0;
+                if (destinationPose.getY() - curPose.getY() > AutoAlignmentK.kSingleDimensionTolerance) {
+                    ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                }
                 double thetaSpeed = kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
                 xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
                 ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);

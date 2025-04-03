@@ -441,6 +441,8 @@ public class Constants {
         public static final double kTranslationTolerance = 0.005; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
+        public static final double kSingleDimensionTolerance = 0.0025;
+
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
