@@ -438,7 +438,7 @@ public class Constants {
             kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
 
-        public static final double kTranslationTolerance = 0.005; // meters
+        public static final double kFieldTranslationTolerance = 0.005; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
