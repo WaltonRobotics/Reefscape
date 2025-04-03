@@ -402,14 +402,7 @@ public class Robot extends TimedRobot {
 			manipulator.getHID().setRumble(RumbleType.kBothRumble, intensity);
 		} 
 	}
-
-  /* RESETS THE AUTON LISTS */
-  private void resetAutonLists() {
-    scoringLocs = new ArrayList<ReefLocs>();
-    eleHeights = new ArrayList<EleHeight>();
-    hpStations = new ArrayList<HPStation>();
-  }
-
+  
   @Override
   public void robotInit(){
     WaltAutonBuilder.configureFirstCycle();
