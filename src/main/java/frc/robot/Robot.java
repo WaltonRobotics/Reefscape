@@ -140,10 +140,6 @@ public class Robot extends TimedRobot {
   private boolean readyToMakeAuton = false;
   private String autonName = "No Auton Made";
 
-  private ArrayList<ReefLocs> scoringLocs = new ArrayList<ReefLocs>();
-  private ArrayList<EleHeight> eleHeights = new ArrayList<EleHeight>();
-  private ArrayList<HPStation> hpStations = new ArrayList<HPStation>();
-
   private final Field2d robotField = visionSim.getSimDebugField();
   private final Timer lastGotTagMsmtTimer = new Timer();
   private final BooleanLogger log_visionSeenPastSecond = new BooleanLogger("Robot", "VisionSeenLastSec");
