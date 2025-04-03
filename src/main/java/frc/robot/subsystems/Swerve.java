@@ -24,7 +24,6 @@ import choreo.Choreo;
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
-import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
@@ -45,10 +44,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -60,6 +56,8 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import static frc.robot.Constants.AutoAlignmentK.*;
+
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -468,7 +466,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @return Returns a command that loops until it gets near
      */
     public Command moveToPose(Pose2d destinationPose, Field2d field) {
-        return moveToPose(destinationPose, field, 1, AutoAlignmentK.kFieldTranslationTolerance, AutoAlignmentK.kFieldRotationTolerance);
+        return moveToPose(destinationPose, field, 0.5, 
+            AutoAlignmentK.kFieldTranslationTolerance * 10, AutoAlignmentK.kFieldRotationTolerance * 10);
     }
 
     /**
@@ -480,7 +479,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
      * @param finalRotationTolerance Largest allowed rotation tolerance - degrees
      * @return Returns a command that loops until it gets sufficiently close
      */
-    public Command moveToPose(Pose2d destinationPose, Field2d field, double allotedTime, double finalTranslationTolerance, double finalRotationTolerance) {
+    public Command moveToPose(Pose2d destinationPose, Field2d field, double allotedTime, 
+        double finalTranslationTolerance, double finalRotationTolerance
+    ) {
         if (field != null) {
             field.getObject("destinationPose").setPose(destinationPose);
         }
@@ -533,12 +534,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
     private BooleanSupplier nearPose(Pose2d dest, DoubleSupplier toleranceMetersSupplier, DoubleSupplier toleranceDegreesSupplier) {
-        return () -> {
-            Pose2d drivetrainPose = getState().Pose;
-            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMetersSupplier.getAsDouble() 
-                && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegreesSupplier.getAsDouble();
-        };
+        return nearPose(dest, toleranceMetersSupplier.getAsDouble(), toleranceDegreesSupplier.getAsDouble());
     }
 
     /**
