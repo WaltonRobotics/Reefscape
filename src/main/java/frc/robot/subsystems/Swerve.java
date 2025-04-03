@@ -61,7 +61,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import frc.robot.Constants.AutoAlignmentK;
+import static frc.robot.Constants.AutoAlignmentK.*;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -72,22 +72,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public static GenericEntry nte_autoAlignmentKPY;
     public static GenericEntry nte_autoAlignmentKPTheta;
     
-    static {
-        nte_autoAlignmentKPX = Shuffleboard.getTab("Teleoperated")
-            .add("KPX", AutoAlignmentK.kXKP)
-            .withWidget(BuiltInWidgets.kTextView)
-            .getEntry();
+    // static {
+    //     nte_autoAlignmentKPX = Shuffleboard.getTab("Teleoperated")
+    //         .add("KPX", kXKP)
+    //         .withWidget(BuiltInWidgets.kTextView)
+    //         .getEntry();
 
-        nte_autoAlignmentKPY = Shuffleboard.getTab("Teleoperated")
-            .add("KPY", AutoAlignmentK.kYKP)
-            .withWidget(BuiltInWidgets.kTextView)
-            .getEntry();
+    //     nte_autoAlignmentKPY = Shuffleboard.getTab("Teleoperated")
+    //         .add("KPY", kYKP)
+    //         .withWidget(BuiltInWidgets.kTextView)
+    //         .getEntry();
 
-        nte_autoAlignmentKPTheta = Shuffleboard.getTab("Teleoperated")
-            .add("KPTheta", AutoAlignmentK.kThetaKP)
-            .withWidget(BuiltInWidgets.kTextView)
-            .getEntry();
-    }
+    //     nte_autoAlignmentKPTheta = Shuffleboard.getTab("Teleoperated")
+    //         .add("KPTheta", kThetaKP)
+    //         .withWidget(BuiltInWidgets.kTextView)
+    //         .getEntry();
+    // }
 
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
@@ -309,13 +309,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             startSimThread();
         }
 
-        SmartDashboard.putData(kTopicPrefix + "AA_X", AutoAlignmentK.kAutoAlignXController);
-        SmartDashboard.putData(kTopicPrefix + "AA_Y", AutoAlignmentK.kAutoAlignYController);
-        SmartDashboard.putData(kTopicPrefix + "AA_Z", AutoAlignmentK.kAutoAlignThetaController);
+        // SmartDashboard.putData(kTopicPrefix + "AA_X", kAutoAlignXController);
+        // SmartDashboard.putData(kTopicPrefix + "AA_Y", kAutoAlignYController);
+        // SmartDashboard.putData(kTopicPrefix + "AA_Z", kAutoAlignThetaController);
 
-        SmartDashboard.putData(kTopicPrefix + "Choreo_X", m_pathXController);
-        SmartDashboard.putData(kTopicPrefix + "Choreo_Y", m_pathYController);
-        SmartDashboard.putData(kTopicPrefix + "Choreo_Z", m_pathThetaController);
+        // SmartDashboard.putData(kTopicPrefix + "Choreo_X", m_pathXController);
+        // SmartDashboard.putData(kTopicPrefix + "Choreo_Y", m_pathYController);
+        // SmartDashboard.putData(kTopicPrefix + "Choreo_Z", m_pathThetaController);
     }
 
     /**
@@ -475,24 +475,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         }
         log_autoAlignDestinationPose.accept(destinationPose);
 
-        final double kMaxXYSpeed = 2;
-
         return Commands.run(
             () -> {
                 Pose2d curPose = getState().Pose;
 
-                double xSpeed = AutoAlignmentK.kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = AutoAlignmentK.kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = AutoAlignmentK.kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeed, kMaxXYSpeed);
-                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeed, kMaxXYSpeed);
+                double xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
+                double ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
+                double thetaSpeed = kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
+                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
+                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
                 setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
 
                 log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
                 log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
                 log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
             }
-        ).until(nearPose(destinationPose, AutoAlignmentK.kTranslationTolerance, AutoAlignmentK.kFieldRotationTolerance));
+        ).until(nearPose(destinationPose, kTranslationTolerance, kFieldRotationTolerance));
     }
 
     private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {

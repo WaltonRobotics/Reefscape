@@ -274,29 +274,24 @@ public class Robot extends TimedRobot {
       );
   }
 
-  Supplier<Command> leftTeleopAutoAlignCmdSupp = () -> {
-    Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, false);
-    if (scorePoseOptional.isEmpty()) {
-      return Commands.none();
-    }
-    Pose2d scorePose = scorePoseOptional.get();
-    return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
-      .andThen(Commands.print("intermediate pose"))
-      .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()))
-      .andThen(Commands.print("auto align truly finish"));
-  };
+  Command autoAlignCmd(boolean rightReef) {
+    return Commands.defer(() -> {
+      Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, rightReef);
+      if (scorePoseOptional.isEmpty()) {
+        return Commands.none();
+      }
+      Pose2d scorePose = scorePoseOptional.get();
 
-  Supplier<Command> rightTeleopAutoAlignCmdSupp = () -> {
-    Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, true);
-    if (scorePoseOptional.isEmpty()) {
-      return Commands.none();
-    }
-    Pose2d scorePose = scorePoseOptional.get();
-    return drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField())
-      .andThen(Commands.print("intermediate pose"))
-      .andThen(drivetrain.moveToPose(scorePose, visionSim.getSimDebugField()))
-      .andThen(Commands.print("auto align truly finish"));
-  };
+      var initialMove = drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField());
+      var closeInMove = drivetrain.moveToPose(scorePose, visionSim.getSimDebugField());
+      return Commands.sequence(
+        initialMove.withTimeout(0.5),
+        Commands.print("intermediate pose"),
+        closeInMove,
+        Commands.print("auto align truly finish")
+      );
+    }, Set.of(drivetrain)); 
+  }
 
   // checks for finger in unsafe place
   private Command resetEverythingCheck() {
@@ -360,10 +355,10 @@ public class Robot extends TimedRobot {
         );
 
       trg_leftTeleopAutoAlign.whileTrue(
-        new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        autoAlignCmd(false)
       );
       trg_rightTeleopAutoAlign.whileTrue(
-        new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        autoAlignCmd(true)
       );
 
     // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
@@ -408,10 +403,10 @@ public class Robot extends TimedRobot {
       );
 
       trg_leftTeleopAutoAlign.whileTrue(
-        new DeferredCommand(leftTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        autoAlignCmd(false)
       );
       trg_rightTeleopAutoAlign.whileTrue(
-        new DeferredCommand(rightTeleopAutoAlignCmdSupp, Set.of(drivetrain))
+        autoAlignCmd(true)
       );
       trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
      

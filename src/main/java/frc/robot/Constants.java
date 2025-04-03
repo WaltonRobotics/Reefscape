@@ -464,5 +464,7 @@ public class Constants {
         /**<p>Equal to 1 - {@link #kFutureWeight}. Controls weight of the current pose in velocity weighted tag selection */
         public static final double kCurrentWeight = 1 - kFutureWeight;
         public static final double kFutureDelta = 0.1; // s
+
+        public static final double kMaxXYSpeedAutoalign = 1.5;
     }
 }
