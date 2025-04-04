@@ -200,7 +200,6 @@ public class WaltAutonFactory {
 
     private Command scoreCmd(EleHeight eleHeight) {
         return Commands.sequence(
-            m_superstructure.autonEleToScoringPosReq(eleHeight),
             m_superstructure.autonScoreReq(),
             logTimer("CoralScored", () -> autonTimer),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
@@ -269,7 +268,10 @@ public class WaltAutonFactory {
         firstScoreTraj.done()
             .onTrue(
                 Commands.sequence(
-                    autoAlignCommand(() -> m_scoreLocs.get(0)),
+                    Commands.parallel(
+                        autoAlignCommand(() -> m_scoreLocs.get(0)),
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                    ),
                     scoreCmd(m_heights.get(heightCounter++)),
                     allTheTrajs.get(0).getFirst().cmd()
                 )
@@ -313,7 +315,10 @@ public class WaltAutonFactory {
             }
 
             var pathDoneCmd = Commands.sequence(
-                autoAlign,
+                Commands.parallel(
+                    autoAlign,
+                    m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                ),
                 Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
                 scoreCmd(m_heights.get(heightCounter++)),
                 nextTrajCmd,
