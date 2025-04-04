@@ -443,7 +443,7 @@ public class Robot extends TimedRobot {
       autonFactoryFactory(
         StartingLocs.RIGHT, 
         List.of(REEF_E, REEF_D, REEF_C),
-        List.of(EleHeight.L2, EleHeight.L4, EleHeight.L4), 
+        List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4), 
         List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
       )
     );
@@ -474,14 +474,14 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT, 
-          List.of(REEF_E, REEF_D, REEF_C), 
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+          List.of(REEF_E, REEF_D, REEF_C, REEF_B), 
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
         WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
-      }
+      } 
 
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
