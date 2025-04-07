@@ -173,6 +173,7 @@ public class Constants {
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
+         public static final double kIntakeRotations = -0.9;    // dummy value
          public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()

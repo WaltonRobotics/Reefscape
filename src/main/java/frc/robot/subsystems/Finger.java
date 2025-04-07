@@ -61,6 +61,10 @@ public class Finger extends SubsystemBase {
         return runOnce(() -> setFingerPos(kClimbRotations)); // idk if the climb rots r right. we gotta test this
     }
 
+    public Command fingerPrepareForIntakeCmd() {
+        return runOnce(() -> setFingerPos(kIntakeRotations));
+    }
+
     public void fingerIn() {
         log_fingerOut.accept(false);
         System.out.println("Finger Requested In");

@@ -218,7 +218,7 @@ public class Superstructure {
         (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
         (stateTrg_intaking.and(trg_inOverride.negate()))
-            .onTrue(m_finger.fingerOutCmd());
+            .onTrue(m_finger.fingerPrepareForIntakeCmd());
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
