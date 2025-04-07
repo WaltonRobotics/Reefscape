@@ -1,6 +1,8 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.NeutralOut;
+import com.ctre.phoenix6.controls.StaticBrake;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -29,10 +31,24 @@ public class Intake extends SubsystemBase{
     
     public Intake() {
         m_motor.getConfigurator().apply(kIntakeConfiguration);
+
+        setDefaultCommand(setBrakeCommand());
+    }
+
+    public void setBrake() {
+        m_motor.setControl(new StaticBrake());
+    }
+
+    public Command setBrakeCommand() {
+        return runOnce(() -> setBrake());
     }
 
     public void setIntakeCoast(boolean coast) {
         m_motor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
+    }
+
+    public Command setIntakeCoastCommand(boolean coast) {
+        return runOnce(() -> setIntakeCoast(coast));
     }
 
     private void setIntakeMotorAction(double voltage) {
