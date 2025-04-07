@@ -51,6 +51,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
@@ -64,6 +65,7 @@ public class Constants {
  
      public static final double kRumbleIntensity = 1.0;
      public static final double kRumbleTimeoutSecs = 0.5;
+
      public static class AlgaeK {
          public static final String kLogTab = "AlgaeSubsys";
          
@@ -158,6 +160,22 @@ public class Constants {
          public static final double kCoralSpeed = 1;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
+             .withMotorOutput(new MotorOutputConfigs()
+                .withInverted(InvertedValue.Clockwise_Positive)
+                .withNeutralMode(NeutralModeValue.Brake));
+     }
+
+     public class IntakeK {
+         //motorized intake schtuff
+         public static final String kLogTab = "IntakeSubsys";
+         /* HIGHKEY TEMPORARY          | TODO: change when we assign the canid to actual canid :D 
+          * ALSO APPLIES TO BEAM BREAK | TODO: change when we figure out beambreak channel :D
+         */
+         public static final int kIntakeMotorCANID = 32; 
+         public static final int kBeamBreakChannel = 2;
+        
+         // dont see why the configs would need to be different than what the coral intake has
+         public static final TalonFXConfiguration kIntakeConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
                 .withNeutralMode(NeutralModeValue.Brake));
@@ -326,7 +344,7 @@ public class Constants {
             .withCurrentLimits(kCurrentLimitConfigs)
             .withMotorOutput(kMotorOutputConfigs);
      }
- 
+
      public class RobotK {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
