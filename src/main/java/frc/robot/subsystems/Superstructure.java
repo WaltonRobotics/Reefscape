@@ -217,12 +217,16 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
+        (stateTrg_intaking.and(trg_inOverride.negate()))
+            .onTrue(m_finger.fingerOutCmd());
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
-        (stateTrg_slowIntake.and(trg_inOverride.negate()).and(transTrg_botSensor))
+        (stateTrg_slowIntake.debounce(0.125).and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
+        (stateTrg_intook.and(trg_inOverride.negate()))
+            .onTrue(m_finger.fingerInCmd());
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
         ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
