@@ -43,32 +43,24 @@ public class Finger extends SubsystemBase {
         setDefaultCommand(currentSenseHoming());
     }
 
-    private void setFingerPos(double rotations) {
-        m_motor.setControl(m_PosVoltReq.withPosition(rotations));
-    }
-
-    public void fingerOut() {
-        log_fingerOut.accept(true);
-        System.out.println("Finger Requested out");
-        m_motor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
+    public void setFingerPos(FingerPos fingerPos) {
+        m_desiredAngleRots = fingerPos.angleRots;
+        m_motor.setControl(m_PosVoltReq.withPosition(m_desiredAngleRots));
     }
 
     public Command fingerOutCmd() {
-        return runOnce(this::fingerOut);
-    }
-
-    public Command fingerPrepareForClimbCmd() {
-        return runOnce(() -> setFingerPos(kClimbRotations)); // idk if the climb rots r right. we gotta test this
-    }
-
-    public void fingerIn() {
-        log_fingerOut.accept(false);
-        System.out.println("Finger Requested In");
-        m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
+        return runOnce(() -> setFingerPos(FingerPos.OUT));
     }
 
     public Command fingerInCmd() {
-        return runOnce(this::fingerIn);
+        return runOnce(() -> setFingerPos(FingerPos.OUT));
+    }
+
+    // this is bad but we're like not gonna have a climber so ykw idc #freedom #majorcope #cryinglowk #riprankingpts
+    // im still keeping it tho j in case we climb for grits
+    // awh look at me caring abt the team after i graduate im so nice
+    public Command fingerPrepareForClimbCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.DOWN)); // idk if the climb rots r right. we gotta test this
     }
 
     public Command testFingerVoltageControl(DoubleSupplier stick) {
@@ -105,5 +97,15 @@ public class Finger extends SubsystemBase {
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+    public enum FingerPos {
+        OUT(kParallelToGroundRotations),
+        IN(kDefaultPos),
+        DOWN(kClimbRotations); // TODO: name better (rip climb)
+
+        public double angleRots;
+        private FingerPos(double rots) {
+            angleRots = rots;
+        }
     }
 }

@@ -19,6 +19,7 @@ import static frc.robot.subsystems.Elevator.EleHeight.*;
 import frc.robot.Robot;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Finger.FingerPos;
 import frc.robot.vision.Vision;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
@@ -519,10 +520,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.fingerOut();
+                m_finger.setFingerPos(FingerPos.OUT);
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.fingerIn();
+                m_finger.setFingerPos(FingerPos.IN);
                 m_coral.stopCoralMotor();
             }
         );
