@@ -460,6 +460,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
+    // transform2d will have to be put in a supplier if you want to ever change it after the program starts running
+    // i know it will always be the same offset so i don't have to worry about that though
+    public Command autoAlignWithIntermediatePose(
+        Supplier<Pose2d> end,
+        Transform2d translationToIntermediate) {
+        return autoAlignWithIntermediatePose(() -> end.get().transformBy(translationToIntermediate) , end);
+    }   
+
+    public Command autoAlignWithIntermediatePose(
+        Supplier<Pose2d> intermediate,
+        Supplier<Pose2d> end) {
+        return moveToPose(this, intermediate, ChassisSpeeds::new)
+            .until(() -> isInTolerance(getState().Pose, intermediate.get()))
+            .andThen(moveToPose(this, end, ChassisSpeeds::new));
+    }
+
+
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPose Give it a destination to go to
@@ -494,7 +511,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             Supplier<ChassisSpeeds> speedsModifier) {
         // This feels like a horrible way of getting around lambda final requirements
         // Is there a cleaner way of doing this?
-        final Pose2d cachedTarget[] = {new Pose2d()};
+        final Pose2d cachedTarget[] = {Pose2d.kZero};
         // interestingly no kD in the heading controller
         final ProfiledPIDController headingController =
             // assume we can accelerate to max in 2/3 of a second
@@ -504,23 +521,20 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         // ok, use passed constraints on X controller
         final ProfiledPIDController vxController =
-            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.01, 0.02, AutoAlignmentK.kXYConstraints);
+            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
         // use constraints from constants for y controller?
         // why define them with different constraints?? it's literally field relative
         // the difference in x and y dimensions almost definitely do not mean anything to robot movement
         final ProfiledPIDController vyController =
-            new ProfiledPIDController(
-                AutoAlignmentK.kYKP,
-                0.01,
-                0.02,
-                AutoAlignmentK.kXYConstraints);
+            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
 
         // this is created at trigger binding, not created every time the command is scheduled
-        final SwerveRequest.ApplyRobotSpeeds swreq_driveChassisSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+        final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
 
         return Commands.runOnce(
-            () -> {
+            () -> {                
                 cachedTarget[0] = target.get();
+                Robot.robotField.getObject("auto align destination").setPose(cachedTarget[0]);
 
                 SwerveDriveState curState = swerve.getState();
                 Pose2d curPose = curState.Pose;
@@ -586,16 +600,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 //             vxController.getSetpoint().position,
                 //             vyController.getSetpoint().position,
                 //             Rotation2d.fromRadians(headingController.getSetpoint().position)));
-                  return swreq_driveChassisSpeeds.withSpeeds(speeds);
+                  return swreq_driveFieldSpeeds.withSpeeds(speeds);
                 }));
   }
 
-    private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
-        return () -> {
-            Pose2d drivetrainPose = getState().Pose;
-            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
-        };
+    // highlander robotics implementation of nearPose is much cooler
+    public static boolean isInTolerance(Pose2d pose, Pose2d pose2) {
+        final Transform2d diff = pose.minus(pose2);
+        return MathUtil.isNear(
+                0.0, Math.hypot(diff.getX(), diff.getY()), AutoAlignmentK.kFieldTranslationTolerance)
+            && MathUtil.isNear(
+                0.0, diff.getRotation().getRadians(), AutoAlignmentK.kFieldRotationTolerance);
     }
 
     public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
@@ -610,7 +625,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
                 robotRelChassisSpeeds.omegaRadiansPerSecond);
     }
 
-    private ChassisSpeeds getFieldRelativeChassisSpeeds() {
+    public ChassisSpeeds getFieldRelativeChassisSpeeds() {
         return getFieldRelativeChassisSpeeds(getState());
     }
 

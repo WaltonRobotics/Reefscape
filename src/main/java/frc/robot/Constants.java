@@ -431,18 +431,18 @@ public class Constants {
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
-        public static final double kTranslationTolerance = 0.05; // meters
+        public static final double kFieldTranslationTolerance = 0.05; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
-        public static final double kMaxDimensionVel = 3; // m/s
-        public static final double kMaxDimensionAccel = 4; // m/s^2
+        public static final double kMaxDimensionVel = 2; // m/s
+        public static final double kMaxDimensionAccel = 6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
 
-        public static final double kMaxThetaVel = 45; // deg/sa
-        public static final double kMaxThetaAccel = 45; // deg/s^2
+        public static final double kMaxThetaVel = 3; // rad/s
+        public static final double kMaxThetaAccel = 8; // rad/s^2
         public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight

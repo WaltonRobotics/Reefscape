@@ -24,6 +24,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -96,6 +97,8 @@ public class Robot extends TimedRobot {
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
+  private final DoubleLogger log_fieldX = WaltLogger.logDouble("Swerve", "calculated field x speed");
+  private final DoubleLogger log_fieldY = WaltLogger.logDouble("Swerve", "calculate field y speed");
 
   private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -140,11 +143,16 @@ public class Robot extends TimedRobot {
   private boolean readyToMakeAuton = false;
   private String autonName = "No Auton Made";
 
-  private final Field2d robotField = visionSim.getSimDebugField();
+  // istg if you touch this outside of updateStaticField
+  public static Field2d robotField = null;
   private final Timer lastGotTagMsmtTimer = new Timer();
   private final BooleanLogger log_visionSeenPastSecond = new BooleanLogger("Robot", "VisionSeenLastSec");
 
   private Optional<WaltAutonFactory> waltAutonFactory;
+
+  public void updateStaticField() {
+    Robot.robotField = visionSim.getSimDebugField();
+  }
 
   public Robot() {
     SignalLogger.start();
@@ -208,6 +216,7 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
+    updateStaticField();
     configureBindings();
     // configureTestBindings();
   }
@@ -222,22 +231,8 @@ public class Robot extends TimedRobot {
   }
 
   Command autoAlignCmd(boolean rightReef) {
-    return Commands.defer(() -> {
-      Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, rightReef);
-      if (scorePoseOptional.isEmpty()) {
-        return Commands.none();
-      }
-      Pose2d scorePose = scorePoseOptional.get();
-
-      var initialMove = drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField());
-      var closeInMove = drivetrain.moveToPose(scorePose, visionSim.getSimDebugField());
-      return Commands.sequence(
-        initialMove.withTimeout(0.5),
-        Commands.print("intermediate pose"),
-        closeInMove,
-        Commands.print("auto align truly finish")
-      );
-    }, Set.of(drivetrain)); 
+    return drivetrain.autoAlignWithIntermediatePose(() -> Vision.getMostRealisticScorePose(drivetrain.getState(), rightReef),
+      new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero));
   }
 
   // checks for finger in unsafe place
@@ -432,6 +427,11 @@ public class Robot extends TimedRobot {
     log_visionSeenPastSecond.accept(visionSeenPastSec);
     double rio6VCurrent = RobotController.getCurrent6V();
     log_rio6VRailCurrent.accept(rio6VCurrent);
+
+    // TODO: remove this before comp
+    ChassisSpeeds fieldRelativeSpeeds = drivetrain.getFieldRelativeChassisSpeeds();
+    log_fieldX.accept(fieldRelativeSpeeds.vxMetersPerSecond);
+    log_fieldY.accept(fieldRelativeSpeeds.vyMetersPerSecond);
 
     // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }

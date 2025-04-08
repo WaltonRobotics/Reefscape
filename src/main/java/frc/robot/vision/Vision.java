@@ -102,7 +102,7 @@ public class Vision {
         System.out.println(m_cameraName + ": BothSnapshot");
     }
 
-    public static Optional<Integer> getClosestReefTagId(SwerveDriveState curState) {
+    public static int getMostLikelyReefTagId(SwerveDriveState curState) {
         // cache current alliance
         Optional<Alliance> curAlliance = DriverStation.getAlliance();
         // this all handles looking slightly ahead to the future and predicting future position
@@ -113,6 +113,7 @@ public class Vision {
             fieldRelativeChassisSpeeds.vyMetersPerSecond * AutoAlignmentK.kFutureDelta, 
             Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * AutoAlignmentK.kFutureDelta));
         Pose2d futurePose = curPose.transformBy(transformToFuture);
+        Robot.robotField.getObject("predicted future pose").setPose(futurePose);
 
         // this WILL get updated. it loops through all april tags later
         Optional<AprilTag> closestReefAprilTag = Optional.empty();
@@ -136,20 +137,19 @@ public class Vision {
         }
         if (closestReefAprilTag.isEmpty()) {
             System.out.println("Vision::getClosestReefTagId empty closestReefAprilTag");
-            return Optional.empty();
         }
 
-        return Optional.of(closestReefAprilTag.get().ID);
+        return closestReefAprilTag.get().ID;
     }
 
     /**
      * <p>See {@link #getMostRealisticScorePose(Pose2d, boolean)} or {@link #getMostRealisticScorePose(SwerveDriveState, boolean)}
      * <p>This takes in a reef aprilTag id and whether you want left or right reef and returns the correct pose.
-     * @param tagId
+     * @param tagId tagId is either [17, 22] or [6, 11]
      * @param rightReef
-     * @return
+     * @return Pose2d for correct scoring location. Returns 0,0 if the method screws up
      */
-    public static Optional<Pose2d> getScorePose(int tagId, boolean rightReef) {
+    public static Pose2d getScorePose(int tagId, boolean rightReef) {
         ReefLocs correctReefLocation = null;
         switch (tagId) {
             case 18:
@@ -190,17 +190,17 @@ public class Vision {
                 break;
             default:
                 System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose switch case defaulted");
-                return Optional.empty();
+                return AllianceFlipUtil.apply(Pose2d.kZero);
         }
 
         if (correctReefLocation == null) {
             System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose correctReefLocation null uncaught");
-            return Optional.empty();
+            return AllianceFlipUtil.apply(Pose2d.kZero);
         }
 
-        // AllianceFlipUtil::flip handles checking whether flipping should occur
-        var pose = FieldConstants.kReefRobotLocationPoseMap.get(correctReefLocation);
-        return Optional.of(AllianceFlipUtil.apply(pose));
+        // handles checking whether flipping should occur
+        Pose2d pose = FieldConstants.kReefRobotLocationPoseMap.get(correctReefLocation);
+        return AllianceFlipUtil.apply(pose);
     }
 
     /**
@@ -210,12 +210,9 @@ public class Vision {
      * @return <p>Returns the scoring position in the form of a Pose2d if no error is encountered.
      * If it encounters an error, it returns empty to avoid crashing the robot in the event of a failure.
      */
-    public static Optional<Pose2d> getMostRealisticScorePose(SwerveDriveState curState, boolean rightReef) {
-        Optional<Integer> closestReefFaceTagId = getClosestReefTagId(curState);
-        if (closestReefFaceTagId.isEmpty()) {
-            return Optional.empty();
-        }
-        return getScorePose(closestReefFaceTagId.get(), rightReef);
+    public static Pose2d getMostRealisticScorePose(SwerveDriveState curState, boolean rightReef) {
+        int closestReefFaceTagId = getMostLikelyReefTagId(curState);
+        return getScorePose(closestReefFaceTagId, rightReef);
     }
     
     /**
@@ -288,7 +285,8 @@ public class Vision {
     /**
      * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
      * <p>If no alliance is available from the driver station, assumes blue
-     * <p>Consider caching the alliance and using {@link #isTagIdOnAllianceReef(int, Optional)}
+     * <p>Consider caching the alliance when repeated calls are neccessary 
+     *  and using {@link #isTagIdOnAllianceReef(int, Optional)}
      *  to improve performance
      * @param givenId integer april tag id
      * @return whether a tag id corresponds to an apriltag on the current alliance reef
