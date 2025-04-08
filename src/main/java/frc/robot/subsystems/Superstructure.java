@@ -325,6 +325,7 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> HP),
+                    m_finger.fingerDownCmd(),
                     Commands.runOnce(() -> m_autonEleToHPReq = false)
                 )
             );
@@ -332,7 +333,6 @@ public class Superstructure {
         stateTrg_intaking
             .onTrue(
                 Commands.sequence(
-                    m_finger.fingerDownCmd(),
                     m_coral.fastIntake(),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
                     Commands.print("RUMBLE coming to a controller near you soon...")
