@@ -9,6 +9,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -33,6 +34,13 @@ public class Intake extends SubsystemBase{
         m_motor.getConfigurator().apply(kIntakeConfiguration);
 
         setDefaultCommand(setBrakeCommand());
+    }
+
+    public Command automaticIntake() {
+        return Commands.sequence(
+            fastIntake().until(trg_intakeBeamBreak),
+            stopIntakeMotorCmd()
+        );
     }
 
     public void setBrake() {
@@ -67,6 +75,7 @@ public class Intake extends SubsystemBase{
         return runOnce(this::stopIntakeMotor);
     }
 
+    //double check voltage value
     public Command fastIntake() {
         return setIntakeMotorActionCmd(12);
     }
