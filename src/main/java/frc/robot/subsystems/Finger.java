@@ -7,7 +7,9 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Constants.FingerK.*;
 
 import java.util.function.BooleanSupplier;
@@ -32,14 +34,16 @@ public class Finger extends SubsystemBase {
 
     private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
-
-    private BooleanLogger log_fingerOut = WaltLogger.logBoolean(kLogTab, "finger out");
     
     private boolean m_isHomed = false;
+    private double m_desiredAngleRots = 0;
+
+    private BooleanLogger log_isHomed = new WaltLogger.BooleanLogger(kLogTab, "Finger is homed");
+    private DoubleLogger log_desiredPos = new WaltLogger.DoubleLogger(kLogTab, "Finger desired pos");
+    private DoubleLogger log_actualPos = new WaltLogger.DoubleLogger(kLogTab, "Finger actual pos");
 
     public Finger() {
         m_motor.getConfigurator().apply(kTalonFXSConfig);
-
         setDefaultCommand(currentSenseHoming());
     }
 
@@ -98,6 +102,14 @@ public class Finger extends SubsystemBase {
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
     }
+
+    @Override
+    public void periodic() {
+        log_isHomed.accept(m_isHomed);
+        log_desiredPos.accept(m_desiredAngleRots);
+        log_actualPos.accept(m_motor.getPosition().getValue().in(Rotations));
+    }
+
     public enum FingerPos {
         OUT(kParallelToGroundRotations),
         IN(kDefaultPos),

@@ -10,6 +10,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.util.datalog.BooleanLogEntry;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -44,7 +45,6 @@ public class Algae extends SubsystemBase {
     private final DoubleConsumer m_manipRumbler;
 
     private double m_desiredWristRotations = 0;
-    private final DoubleLogger log_desiredAngleDegs = WaltLogger.logDouble(kLogTab, "desiredAngleDegs");
 
     private DynamicMotionMagicVoltage m_MMVRequest = new DynamicMotionMagicVoltage(
         0, kWristMMVelo, kWristMMAccel, kWristMMJerk
@@ -70,10 +70,15 @@ public class Algae extends SubsystemBase {
     private VoltageOut zeroingVoltageCtrlReq = new VoltageOut(-0.75);
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_wrist.getVelocity().getValueAsDouble()) < 0.01;
 
+    private BooleanLogger log_isHomed = WaltLogger.logBoolean(kLogTab, "Algae is homed");
     private IntLogger log_stateIdx = WaltLogger.logInt(kLogTab, "Algae State idx");
     private StringLogger log_stateName = WaltLogger.logString(kLogTab, "Algae State name");
     private BooleanLogger log_hasAlgae = WaltLogger.logBoolean(kLogTab, "trgHasAlgae");
+    private BooleanLogger log_intakeReq = WaltLogger.logBoolean(kLogTab, "Algae trgIntakeReq");
+    private BooleanLogger log_scoreReq = WaltLogger.logBoolean(kLogTab, "Algae trgScoreReq");
     private DoubleLogger log_actualAngle = WaltLogger.logDouble(kLogTab, "Algae angle");
+    private final DoubleLogger log_desiredAngleDegs = WaltLogger.logDouble(kLogTab, "Algae desiredAngleDegs");
+    private final DoubleLogger log_motorTemp = WaltLogger.logDouble(kLogTab, "Algae motorTemp");
 
     public Algae(
         Trigger groundReq, 
@@ -271,11 +276,14 @@ public class Algae extends SubsystemBase {
         log_stateIdx.accept(m_state.idx);
         log_stateName.accept(m_state.name);
 
-        log_desiredAngleDegs.accept(m_desiredWristRotations);
         log_hasAlgae.accept(trg_hasAlgae);
+        log_intakeReq.accept(trg_groundReq);
+        log_scoreReq.accept(trg_processorReq);
 
         log_actualAngle.accept(m_wrist.getPosition().getValueAsDouble());
         log_desiredAngleDegs.accept(m_desiredWristRotations);
+
+        log_isHomed.accept(m_isHomed);
     }
 
     public enum State {

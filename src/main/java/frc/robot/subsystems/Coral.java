@@ -33,8 +33,8 @@ public class Coral extends SubsystemBase {
     public final Trigger trg_topBeamBreak = new Trigger(() -> !m_topBeamBreak.get());
     public final Trigger trg_botBeamBreak = new Trigger(() -> !m_botBeamBreak.get());
 
-    private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
-    private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");
+    private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "coral topBeamBreak");
+    private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "coral botBeamBreak");
 
     public Coral() {
         m_motor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);

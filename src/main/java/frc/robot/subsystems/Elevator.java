@@ -98,11 +98,12 @@ public class Elevator extends SubsystemBase {
             new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
         );
 
-    private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition");
-    private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
-    private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
-    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
-    private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "motorTemp");
+    private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "ele desiredPosition");
+    private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "ele simPosition");
+    private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "ele atDesiredHeight");
+    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "ele actualHeightMeters");
+    private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "ele motorTemp");
+    private final BooleanLogger log_isHomed = WaltLogger.logBoolean(kLogTab, "ele is homed");
 
     /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
     private final SysIdRoutine m_sysIdRoutineLinear = new SysIdRoutine(
@@ -322,6 +323,7 @@ public class Elevator extends SubsystemBase {
 
         setCoast(nte_coast.getBoolean(false));
 
+        log_isHomed.accept(m_isHomed);
         log_eleAtHeight.accept(nearSetpoint());
         log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
         log_eleMotorTemp.accept(m_frontMotor.getDeviceTemp().getValueAsDouble());
