@@ -20,6 +20,7 @@ import frc.util.WaltLogger.BooleanLogger;
 
 //TODO: actually finish when recieve basic plan
 public class Intake extends SubsystemBase{
+
     private final TalonFX m_motor = new TalonFX(kIntakeMotorCANID);
     private VoltageOut m_voltOutReq = new VoltageOut(0);
     private NeutralOut m_neutralOut = new NeutralOut();
@@ -37,10 +38,7 @@ public class Intake extends SubsystemBase{
     }
 
     public Command automaticIntake() {
-        return Commands.sequence(
-            fastIntake().until(trg_intakeBeamBreak),
-            stopIntakeMotorCmd()
-        );
+        return Commands.startEnd(() -> fastIntake(),() -> stopIntakeMotorCmd());
     }
 
     public void setBrake() {

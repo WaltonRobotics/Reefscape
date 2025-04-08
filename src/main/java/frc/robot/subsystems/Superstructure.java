@@ -31,6 +31,7 @@ public class Superstructure {
     private final Finger m_finger;
     private final Elevator m_ele;
     private final Optional<Vision> m_cam1;
+    private final Intake m_intake;
 
     public final EventLoop stateEventLoop = new EventLoop();
     public State m_state = State.IDLE;
@@ -149,6 +150,7 @@ public class Superstructure {
         Finger finger,
         Elevator ele,
         Optional<Vision> cam1,
+        Intake intake,
         Trigger eleToHPReq,
         Trigger L1Req,
         Trigger L2Req,
@@ -169,6 +171,7 @@ public class Superstructure {
         m_finger = finger;
         m_ele = ele;
         m_cam1 = cam1;
+        m_intake = intake;
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
@@ -351,6 +354,9 @@ public class Superstructure {
                     )
                 ).alongWith(takeCam1Snapshots())
             );
+        
+        stateTrg_slowIntake
+            .whileTrue(m_intake.automaticIntake());
         
         stateTrg_intook
             .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));

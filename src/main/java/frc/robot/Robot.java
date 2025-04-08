@@ -80,6 +80,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
+  private final Intake intake = new Intake();
   private final Algae algae;
   private final Superstructure superstructure;
 
@@ -156,6 +157,7 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.of(eleForwardsCam),
+      intake,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -177,6 +179,7 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.empty(),
+      intake,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
