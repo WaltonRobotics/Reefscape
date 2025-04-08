@@ -57,7 +57,7 @@ public class Finger extends SubsystemBase {
     }
 
     public Command fingerInCmd() {
-        return runOnce(() -> setFingerPos(FingerPos.OUT));
+        return runOnce(() -> setFingerPos(FingerPos.IN));
     }
 
     public Command fingerDownCmd() {

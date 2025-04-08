@@ -224,8 +224,6 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.INTOOK));
         (stateTrg_slowIntake.debounce(0.125).and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
-        (stateTrg_intook.and(trg_inOverride.negate()))
-            .onTrue(m_finger.fingerInCmd());
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
         ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
@@ -334,6 +332,7 @@ public class Superstructure {
         stateTrg_intaking
             .onTrue(
                 Commands.sequence(
+                    m_finger.fingerDownCmd(),
                     m_coral.fastIntake(),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
                     Commands.print("RUMBLE coming to a controller near you soon...")
@@ -356,7 +355,12 @@ public class Superstructure {
             );
         
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
+            .onTrue(
+                Commands.parallel(
+                    m_finger.fingerInCmd(),
+                    m_coral.stopCoralMotorCmd() 
+                )
+            );
         
         stateTrg_eleToL1
             .onTrue(
