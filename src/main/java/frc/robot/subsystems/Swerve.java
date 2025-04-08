@@ -28,6 +28,7 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -36,6 +37,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -62,6 +65,9 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import static frc.robot.Constants.AutoAlignmentK.*;
+
+import frc.robot.Robot;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -475,23 +481,114 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         }
         log_autoAlignDestinationPose.accept(destinationPose);
 
-        return Commands.run(
-            () -> {
-                Pose2d curPose = getState().Pose;
-
-                double xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
-
-                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
-                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
-                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
-            }
-        ).until(nearPose(destinationPose, kTranslationTolerance, kFieldRotationTolerance));
+        return moveToPose(this, () -> destinationPose, () -> new ChassisSpeeds());
     }
+
+    // these parameters are suppliers because even though this method only uses each once
+    // the returned command might be used multiple times
+    // the stuff at the beginning is just stuff that can be initialized when the command is bound
+    // unfortunately though you need to use final shenanigans to screw with lambdas
+    public static Command moveToPose(
+            Swerve swerve,
+            Supplier<Pose2d> target,
+            Supplier<ChassisSpeeds> speedsModifier) {
+        // This feels like a horrible way of getting around lambda final requirements
+        // Is there a cleaner way of doing this?
+        final Pose2d cachedTarget[] = {new Pose2d()};
+        // interestingly no kD in the heading controller
+        final ProfiledPIDController headingController =
+            // assume we can accelerate to max in 2/3 of a second
+            new ProfiledPIDController(
+                AutoAlignmentK.kThetaKP, 0.0, 0.0, 
+                AutoAlignmentK.kThetaConstraints);
+        headingController.enableContinuousInput(-Math.PI, Math.PI);
+        // ok, use passed constraints on X controller
+        final ProfiledPIDController vxController =
+            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.01, 0.02, AutoAlignmentK.kXYConstraints);
+        // use constraints from constants for y controller?
+        // why define them with different constraints?? it's literally field relative
+        // the difference in x and y dimensions almost definitely do not mean anything to robot movement
+        final ProfiledPIDController vyController =
+            new ProfiledPIDController(
+                AutoAlignmentK.kYKP,
+                0.01,
+                0.02,
+                AutoAlignmentK.kXYConstraints);
+
+        // this is created at trigger binding, not created every time the command is scheduled
+        final SwerveRequest.ApplyRobotSpeeds swreq_driveChassisSpeeds = new SwerveRequest.ApplyRobotSpeeds();
+
+        return Commands.runOnce(
+            () -> {
+                cachedTarget[0] = target.get();
+
+                SwerveDriveState curState = swerve.getState();
+                Pose2d curPose = curState.Pose;
+                ChassisSpeeds fieldRelativeChassisSpeeds = Swerve.getFieldRelativeChassisSpeeds(curState);
+                // for some reason only do logging in simulation?
+                // very smart of them to cache whether the robot is in simulation though rather than
+                // checking every time though
+                // reset profiled PIDs to have the correct speeds
+                // we can likely use the Swerve::getVelocityFieldRelative i stuck in there previously
+                // stolen from someone elses code
+                // this code sets all the setpoints of the controllers
+
+                headingController.reset(
+                    curPose.getRotation().getRadians(),
+                    fieldRelativeChassisSpeeds.omegaRadiansPerSecond);
+                vxController.reset(
+                    curPose.getX(), fieldRelativeChassisSpeeds.vxMetersPerSecond);
+                vyController.reset(
+                    curPose.getY(), fieldRelativeChassisSpeeds.vyMetersPerSecond);
+            })
+        .andThen(
+            // so does this keep running over and over again?
+            // i assume it has to make sure that the speeds actually update as
+            swerve.applyRequest(
+                () -> {
+                // get difference between target pose and current pose
+                // (this is the transform that maps current pose to target pose)
+                // this is only used for tolerances right here.
+                final Pose2d curPose = swerve.getState().Pose;
+                final Transform2d diff = curPose.minus(cachedTarget[0]);
+                final ChassisSpeeds speeds =
+                    // for some reason not using tolerance constatnts?? who knows why
+                    MathUtil.isNear(0.0, diff.getX(), Units.inchesToMeters(0.75))
+                        && MathUtil.isNear(0.0, diff.getY(), Units.inchesToMeters(0.75))
+                        && MathUtil.isNear(0.0, diff.getRotation().getDegrees(), 0.5)
+                    // there is no case in code where speedsModifier is nonzero
+                    ? new ChassisSpeeds().plus(speedsModifier.get())
+                    : new ChassisSpeeds(
+                        // these add the setpoint to velocity for some reason?
+                        // i just trust that they know how motion profiles work better
+                        // than i do
+                        // also why do they include the goal in every call? they shouldn't
+                        // have to
+                        vxController.calculate(
+                                curPose.getX(), cachedTarget[0].getX())
+                            + vxController.getSetpoint().velocity,
+                        vyController.calculate(
+                                curPose.getY(), cachedTarget[0].getY())
+                            + vyController.getSetpoint().velocity,
+                        headingController.calculate(
+                                curPose.getRotation().getRadians(),
+                                cachedTarget[0].getRotation().getRadians())
+                            + headingController.getSetpoint().velocity)
+                        // again there is no case existing in code speedsModifier is nonzero
+                    .plus(speedsModifier.get());
+                // these people hate logging when the robot is real. do they just go to comp and
+                // say screw it we ball?????
+                // gng why
+                //   if (Robot.ROBOT_TYPE != RobotType.REAL)
+                //     Logger.recordOutput(
+                //         "AutoAim/Target Pose",
+                //         new Pose2d(
+                //             vxController.getSetpoint().position,
+                //             vyController.getSetpoint().position,
+                //             Rotation2d.fromRadians(headingController.getSetpoint().position)));
+                  return swreq_driveChassisSpeeds.withSpeeds(speeds);
+                }));
+  }
 
     private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
         return () -> {
@@ -499,6 +596,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
             return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
         };
+    }
+
+    public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
+        Pose2d pose = swerveDriveState.Pose;
+        ChassisSpeeds robotRelChassisSpeeds = swerveDriveState.Speeds;
+
+        return new ChassisSpeeds(
+                robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getCos()
+                        - robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getCos()
+                        + robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.omegaRadiansPerSecond);
+    }
+
+    private ChassisSpeeds getFieldRelativeChassisSpeeds() {
+        return getFieldRelativeChassisSpeeds(getState());
     }
 
     /**
