@@ -171,11 +171,11 @@ public class Constants {
  
          public static final int kFingerMotorCANID = 31;
  
-         public static final double kMaxAngleRotations = 0;
+         public static final double kMaxAngleRotations = -0.1;
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
-         public static final double kDefaultPos = -0.04; 
+         public static final double kDefaultPos = -0.1; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
              .withInverted(InvertedValue.Clockwise_Positive)
