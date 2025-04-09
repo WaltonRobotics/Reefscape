@@ -156,6 +156,8 @@ public class Constants {
          // public static final double kArmGearRatio = 2; //for arm pivot
  
          public static final double kCoralSpeed = 1;
+         public static final double kFastIntakeVolts = 12;
+         public static final double kSlowIntakeVolts = kFastIntakeVolts * .9;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()
@@ -173,6 +175,7 @@ public class Constants {
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
+         public static final double kIntakeRotations = -0.9;    // dummy value
          public static final double kDefaultPos = -0.04; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()

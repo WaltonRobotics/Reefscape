@@ -19,6 +19,7 @@ import static frc.robot.subsystems.Elevator.EleHeight.*;
 import frc.robot.Robot;
 import frc.robot.subsystems.Elevator.AlgaeHeight;
 import frc.robot.subsystems.Elevator.EleHeight;
+import frc.robot.subsystems.Finger.FingerPos;
 import frc.robot.vision.Vision;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
@@ -217,7 +218,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
-        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
+        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor).debounce(0.125)) // TODO: tell hrehaan why this goes 
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
@@ -353,7 +354,9 @@ public class Superstructure {
             );
         
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
+            .onTrue(
+                m_coral.stopCoralMotorCmd()
+            );
         
         stateTrg_eleToL1
             .onTrue(
@@ -519,10 +522,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.fingerOut();
+                m_finger.setFingerPos(FingerPos.ALGAE);
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.fingerIn();
+                m_finger.setFingerPos(FingerPos.NEAR_HOME);
                 m_coral.stopCoralMotor();
             }
         );

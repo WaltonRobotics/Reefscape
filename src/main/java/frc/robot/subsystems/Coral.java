@@ -70,14 +70,14 @@ public class Coral extends SubsystemBase {
     }
 
     public Command fastIntake() {
-        return setCoralMotorActionCmd(12);
+        return setCoralMotorActionCmd(kFastIntakeVolts);
     }
 
     /*
      * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
      */
     public Command slowIntake(){
-        return setCoralMotorActionCmd(m_slowIntakeSpeed);
+        return setCoralMotorActionCmd(kSlowIntakeVolts);
     }
 
     public Command slowIntakeReversal(){
