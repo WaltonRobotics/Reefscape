@@ -53,7 +53,7 @@ public class Finger extends SubsystemBase {
     }
 
     public Command fingerOutCmd() {
-        return runOnce(() -> setFingerPos(FingerPos.OUT));
+        return runOnce(() -> setFingerPos(FingerPos.ALGAE));
     }
 
     public Command fingerInCmd() {
@@ -62,6 +62,10 @@ public class Finger extends SubsystemBase {
 
     public Command fingerDownCmd() {
         return runOnce(() -> setFingerPos(FingerPos.DOWN));
+    }
+
+    public Command toIdle() {
+        return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
 
     // this is bad but we're like not gonna have a climber so ykw idc #freedom #majorcope #cryinglowk #riprankingpts
@@ -115,8 +119,10 @@ public class Finger extends SubsystemBase {
     }
 
     public enum FingerPos {
-        OUT(kParallelToGroundRotations),
-        IN(kDefaultPos),
+        INTAKE_HOLDING(-0.383),
+        NEAR_HOME(-0.1),
+        ALGAE(-0.914),
+        IN(-0.294),
         DOWN(kIntakeRotations); // TODO: name better (rip climb)
 
         public double angleRots;
