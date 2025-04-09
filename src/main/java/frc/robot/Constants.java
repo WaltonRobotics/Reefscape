@@ -437,7 +437,7 @@ public class Constants {
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
-        public static final double kMaxDimensionVel = 2; // m/s
+        public static final double kMaxDimensionVel = 1.25; // m/s
         public static final double kMaxDimensionAccel = 6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
 
