@@ -486,9 +486,9 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
-          List.of(REEF_J, REEF_K, REEF_L),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+          List.of(REEF_J, REEF_K, REEF_L, REEF_A),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
         // autonName = "Left 3 Piece: ";

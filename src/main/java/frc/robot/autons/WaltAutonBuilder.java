@@ -101,10 +101,11 @@ public class WaltAutonBuilder {
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
-        // nte_midGOnly = Shuffleboard.getTab("AutonChooser")
-        //         .add("Mid G Only", false)
-        //         .withWidget(BuiltInWidgets.kToggleSwitch)
-        //         .getEntry();
+        nte_leftThreePiece = Shuffleboard.getTab("AutonChooser")
+                .add("Mid 1 Piece", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+        
     }
 
     // adds the options

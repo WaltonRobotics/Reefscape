@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
 import java.util.ArrayList;
@@ -238,6 +239,34 @@ public class WaltAutonFactory {
                 () -> destinationPose,
                 new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)
             ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
+    }
+
+    public AutoRoutine midAuton() {
+        var theTraj = StartToReefShortTrajs.get(new Pair<StartingLocs , ReefLocs>(StartingLocs.MID_G, ReefLocs.REEF_G));
+        AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
+        System.out.println("Running Path: " + theTraj);
+
+        Command firstCmd = firstScoreTraj.cmd();
+        if (RobotBase.isSimulation()) {
+            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+        }
+
+        m_routine.active().onTrue(
+            firstCmd
+        );
+
+        firstScoreTraj.done()   
+            .onTrue(
+                Commands.sequence(
+                    Commands.parallel(
+                        autoAlignCommand(() -> REEF_G),
+                        m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
+                    ),
+                    scoreCmd(EleHeight.L4)
+                )
+            );
+
+        return m_routine;
     }
 
     public AutoRoutine generateAuton() {
