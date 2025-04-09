@@ -5,6 +5,8 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
 import frc.robot.FieldConstants;
@@ -27,6 +30,7 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
+import frc.robot.vision.Vision;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
@@ -228,10 +232,12 @@ public class WaltAutonFactory {
     }
 
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
-        return Commands.defer(() -> {
-            Pose2d alignPose = getReefAutoAlignPose(reefLocSup.get());
-            return m_drivetrain.moveToPose(alignPose).withTimeout(0.5).andThen(Commands.print("finish auto align"));
-        }, Set.of(m_drivetrain));
+        Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
+
+        return m_drivetrain.autoAlignWithIntermediatePose(
+                () -> destinationPose,
+                new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)
+            ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
     }
 
     public AutoRoutine generateAuton() {
