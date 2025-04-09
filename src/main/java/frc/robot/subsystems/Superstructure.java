@@ -325,7 +325,6 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> HP),
-                    m_finger.fingerDownCmd(),
                     Commands.runOnce(() -> m_autonEleToHPReq = false)
                 )
             );
@@ -356,10 +355,7 @@ public class Superstructure {
         
         stateTrg_intook
             .onTrue(
-                Commands.parallel(
-                    m_finger.fingerInCmd(),
-                    m_coral.stopCoralMotorCmd() 
-                )
+                m_coral.stopCoralMotorCmd()
             );
         
         stateTrg_eleToL1
@@ -526,10 +522,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.setFingerPos(FingerPos.OUT);
+                m_finger.setFingerPos(FingerPos.ALGAE);
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.setFingerPos(FingerPos.IN);
+                m_finger.setFingerPos(FingerPos.NEAR_HOME);
                 m_coral.stopCoralMotor();
             }
         );
