@@ -496,6 +496,10 @@ public class Robot extends TimedRobot {
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
 
+      if(WaltAutonBuilder.nte_midOnePiece.getBoolean(false)) {
+        //  TODO: add things idk figure it out.
+      }
+
       // MID G IS BROKEN
       // if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
       //   waltAutonFactory = Optional.of(autonFactoryFactory(
