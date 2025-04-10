@@ -116,7 +116,7 @@ public class Robot extends TimedRobot {
 
   private final Trigger trg_algaeIntake = manipulator.a();
   private final Trigger trg_processorReq = manipulator.y();
-  private final Trigger trg_shootReq = manipulator.rightTrigger();
+  private final Trigger trg_shootReq = driver.b().and(manipulator.rightTrigger()); // the drivers like never use this, but i lowk dont want to change anything in the constructor but sameer also wanted rightTrig for something. lol. this is an impossible button combo.
   private final Trigger trg_deAlgae = manipulator.leftTrigger();
 
   private final Trigger trg_climbPrep = manipulator.y().and(manipulator.povUp());
@@ -393,6 +393,8 @@ public class Robot extends TimedRobot {
     manipulator.y()
       .onTrue(algae.changeStateCmd(State.HOME));
 
+    manipulator.rightTrigger()
+      .onTrue(coral.coralUnstopper());
   }
 
   private void driverRumble(double intensity) {
