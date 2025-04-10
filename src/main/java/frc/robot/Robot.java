@@ -141,6 +141,7 @@ public class Robot extends TimedRobot {
 
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
+  private boolean midAuton = false;
   private String autonName = "No Auton Made";
 
   // istg if you touch this outside of updateStaticField
@@ -236,6 +237,7 @@ public class Robot extends TimedRobot {
   }
 
   // checks for finger in unsafe place
+  // no it doesnt lol. it prolly should tho.
   private Command resetEverythingCheck() {
     return Commands.parallel(
         algae.toIdleCmd(),
@@ -447,7 +449,7 @@ public class Robot extends TimedRobot {
       )
     );
 
-    AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+    AutonChooser.addPathsAndCmds(waltAutonFactory.get(), false);
   }
 
   @Override
@@ -457,19 +459,6 @@ public class Robot extends TimedRobot {
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
 
       // --- PRESET AUTONS
-      if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
-        waltAutonFactory = Optional.of(autonFactoryFactory(
-          StartingLocs.SUPER_LEFT, 
-          new ArrayList<>(List.of()), 
-          new ArrayList<>(List.of()), 
-          new ArrayList<>(List.of(HPStation.HP_LEFT))  // uses an hp station as a flag that its leaving and not doing nothing
-        ));
-
-        autonName = "Taxi";
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Taxi Time!"));
-        WaltAutonBuilder.nte_taxiOnly.setBoolean(false);
-      }
-
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT, 
@@ -496,30 +485,27 @@ public class Robot extends TimedRobot {
       }
 
       if(WaltAutonBuilder.nte_midOnePiece.getBoolean(false)) {
-        //  TODO: add things idk figure it out.
+        midAuton = true;
+        // tbh none of these values get used lol
+        waltAutonFactory = Optional.of(autonFactoryFactory(
+          StartingLocs.MID_G,
+          List.of(REEF_G),
+          List.of(EleHeight.L4),
+          List.of(HPStation.HP_RIGHT)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
+        WaltAutonBuilder.nte_midOnePiece.setBoolean(false);
       }
 
-      // MID G IS BROKEN
-      // if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
-      //   waltAutonFactory = Optional.of(autonFactoryFactory(
-      //     StartingLocs.MID_G, 
-      //     List.of(REEF_G), 
-      //     List.of(EleHeight.L4), 
-      //     List.of()
-      //   ));
-
-      //   // autonName = "Mid G-L4";
-      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
-      //   WaltAutonBuilder.nte_midGOnly.setBoolean(false);
-      // }
-
+    
       // fail-case (no auton selected) - do nothing (its no longer that now)
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT,
-          List.of(REEF_E, REEF_D, REEF_C),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+          List.of(REEF_E, REEF_D, REEF_C, REEF_B),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
         // autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
@@ -529,7 +515,7 @@ public class Robot extends TimedRobot {
       // ---- SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
         AutonChooser.resetAutoChooser();  // to remove the default pathing
-        AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+        AutonChooser.addPathsAndCmds(waltAutonFactory.get(), midAuton);
         autonNotMade = false;
         WaltAutonBuilder.nte_autonEntry.setBoolean(false);
         autonName = waltAutonFactory.get().toString();
