@@ -30,6 +30,7 @@ public class WaltAutonBuilder {
     public static GenericEntry nte_taxiOnly;
     public static GenericEntry nte_rightThreePiece;
     public static GenericEntry nte_leftThreePiece;
+    public static GenericEntry nte_midOnePiece;
     // public static GenericEntry nte_midGOnly;
     
     // ---- Initial
@@ -101,7 +102,7 @@ public class WaltAutonBuilder {
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
-        nte_leftThreePiece = Shuffleboard.getTab("AutonChooser")
+        nte_midOnePiece = Shuffleboard.getTab("AutonChooser")
                 .add("Mid 1 Piece", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
