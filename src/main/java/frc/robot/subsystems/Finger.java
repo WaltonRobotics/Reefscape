@@ -52,15 +52,15 @@ public class Finger extends SubsystemBase {
         m_motor.setControl(m_PosVoltReq.withPosition(m_desiredAngleRots));
     }
 
-    public Command fingerOutCmd() {
+    public Command algaeDescoreCmd() {
         return runOnce(() -> setFingerPos(FingerPos.ALGAE));
     }
 
-    public Command fingerInCmd() {
+    public Command inCmd() {
         return runOnce(() -> setFingerPos(FingerPos.IN));
     }
 
-    public Command toIdle() {
+    public Command toIdleCmd() {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
 
