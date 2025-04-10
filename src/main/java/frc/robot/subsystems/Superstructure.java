@@ -437,7 +437,7 @@ public class Superstructure {
         stateTrg_climbing
             .onTrue(
                 Commands.sequence(
-                    m_finger.fingerOutCmd(),
+                    m_finger.algaeDescoreCmd(),
                     m_ele.climbTime()
                 )
             );
@@ -519,10 +519,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.fingerOut();
+                m_finger.algaeDescoreCmd();
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.fingerIn();
+                m_finger.toIdleCmd();
                 m_coral.stopCoralMotor();
             }
         );
