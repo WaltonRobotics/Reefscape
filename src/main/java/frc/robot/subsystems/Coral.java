@@ -87,6 +87,10 @@ public class Coral extends SubsystemBase {
         return setVoltageCmd(m_scoreSpeed);
     }
 
+    public Command slowScore() {
+        return setVoltageCmd(-m_slowIntakeSpeed);
+    }
+
     public Command runWheelsAlgaeRemoval() {
         return startEnd(
             () -> setVoltage(-m_fingerSpeed),
