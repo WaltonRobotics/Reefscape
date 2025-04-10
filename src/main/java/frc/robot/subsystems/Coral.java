@@ -88,10 +88,6 @@ public class Coral extends SubsystemBase {
         return setCoralMotorActionCmd(m_scoreSpeed);
     }
 
-    public Command slowScore() {
-        return setCoralMotorActionCmd(-m_slowIntakeSpeed);
-    }
-
     public void runWheelsAlgaeRemoval() {
         setCoralMotorAction(-m_fingerSpeed);
     }
