@@ -64,6 +64,17 @@ public class Finger extends SubsystemBase {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
 
+    public Command l1HelpCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.L1_HELPER));
+    }
+
+    // this is bad but we're like not gonna have a climber so ykw idc #freedom #majorcope #cryinglowk #riprankingpts
+    // im still keeping it tho j in case we climb for grits
+    // awh look at me caring abt the team after i graduate im so nice
+    public Command fingerPrepareForClimbCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.DOWN)); // idk if the climb rots r right. we gotta test this
+    }
+
     public Command testFingerVoltageControl(DoubleSupplier stick) {
         return runEnd(() -> {
             m_motor.setControl(m_voltOutReq.withOutput(-(stick.getAsDouble()) * 6));
@@ -109,7 +120,10 @@ public class Finger extends SubsystemBase {
 
     public enum FingerPos {
         NEAR_HOME(-0.1),
-        ALGAE(-0.9);
+        L1_HELPER(-0.914), // TODO: test height this is prolly not right
+        ALGAE(-0.914),
+        IN(-0.294),
+        DOWN(-0.95); // TODO: name better (rip climb). also get an actual value for this cuz this ones not it.
 
         public double angleRots;
         private FingerPos(double rots) {

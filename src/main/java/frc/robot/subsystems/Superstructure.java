@@ -530,9 +530,18 @@ public class Superstructure {
     }
 
     public Command algaeRemoval() {
-        return Commands.parallel(
-            m_finger.algaeDescoreCmd(),
-            m_coral.runWheelsAlgaeRemoval()
+        return baseAlgaeRemoval();
+    }
+
+    public Command baseAlgaeRemoval() {
+        return Commands.startEnd(
+            () -> {
+                m_finger.algaeDescoreCmd();
+                m_coral.runWheelsAlgaeRemoval();
+            }, () -> {
+                m_finger.toIdleCmd();
+                m_coral.stopCoralMotor();
+            }
         );
     }
 
