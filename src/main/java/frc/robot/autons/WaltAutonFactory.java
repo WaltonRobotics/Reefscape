@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import frc.robot.Constants.AutoAlignmentK;
-import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
 import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -31,7 +30,6 @@ import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
-import frc.robot.vision.Vision;
 import frc.robot.subsystems.Elevator.EleHeight;
 import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
