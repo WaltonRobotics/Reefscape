@@ -195,6 +195,7 @@ public class Constants {
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
+         public static final double kL1GuideRotations = -0.8;
          public static final double kDefaultPos = -0.1; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
