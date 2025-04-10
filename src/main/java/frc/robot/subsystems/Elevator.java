@@ -350,7 +350,7 @@ public class Elevator extends SubsystemBase {
 
     public enum EleHeight {
         HOME(0.3),
-        L1(5.590325),
+        L1(2 + (kInch * 9)),
         L2(5.653564 + kInch),
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
