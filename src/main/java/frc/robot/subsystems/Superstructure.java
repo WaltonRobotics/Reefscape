@@ -220,7 +220,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
-        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
+        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor.debounce(0.125)))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
@@ -334,7 +334,10 @@ public class Superstructure {
         stateTrg_intaking
             .onTrue(
                 Commands.sequence(
-                    m_coral.fastIntake(),
+                    Commands.parallel(
+                        m_intake.fastIntake(),
+                        m_coral.fastIntake()
+                    ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
                     Commands.print("RUMBLE coming to a controller near you soon...")
                     // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
@@ -346,20 +349,27 @@ public class Superstructure {
                 Commands.sequence(
                     Commands.deadline(Commands.waitUntil(m_coral.trg_botBeamBreak),
                         Commands.repeatingSequence(
-                            m_coral.slowIntake(),
+                            Commands.parallel(
+                                m_intake.slowIntake(),
+                                m_coral.slowIntake()
+                            ),
                             Commands.waitSeconds(1),
-                            m_coral.slowIntakeReversal(),
+                            Commands.parallel(
+                                m_intake.slowIntakeReversal(),
+                                m_coral.slowIntakeReversal()
+                            ),
                             Commands.waitSeconds(0.05)
                         )
                     )
                 ).alongWith(takeCam1Snapshots())
             );
         
-        stateTrg_slowIntake
-            .whileTrue(m_intake.automaticIntake());
-        
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
+            .onTrue(
+                Commands.parallel(
+                    m_intake.stopIntakeMotorCmd(),
+                    m_coral.stopCoralMotorCmd()
+                ).alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
             .onTrue(

@@ -158,6 +158,11 @@ public class Constants {
          // public static final double kArmGearRatio = 2; //for arm pivot
  
          public static final double kCoralSpeed = 1;
+
+         public static final double kFastIntakeVolts = 12;
+         public static final double kSlowIntakeVolts = 3;
+         public static final double kScoreVolts = 4.5;
+         public static final double kFingerVolts = 4.7;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()

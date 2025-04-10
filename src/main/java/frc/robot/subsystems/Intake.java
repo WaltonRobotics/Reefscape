@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.IntakeK.*;
 
+import frc.robot.Constants.Coralk;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
 
@@ -73,10 +74,18 @@ public class Intake extends SubsystemBase{
         return runOnce(this::stopIntakeMotor);
     }
 
-    //double check voltage value
     public Command fastIntake() {
-        return setIntakeMotorActionCmd(12);
+        return setIntakeMotorActionCmd(Coralk.kFastIntakeVolts);
     }
+
+    public Command slowIntake() {
+        return setIntakeMotorActionCmd(Coralk.kSlowIntakeVolts);
+    }
+
+    public Command slowIntakeReversal() {
+        return setIntakeMotorActionCmd(-Coralk.kScoreVolts);
+    }
+
     @Override
     public void periodic() {
         log_intakeBeamBreak.accept(trg_intakeBeamBreak);
