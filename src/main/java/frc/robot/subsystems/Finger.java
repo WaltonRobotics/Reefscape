@@ -7,7 +7,9 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.BooleanLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
+import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Constants.FingerK.*;
 
 import java.util.function.BooleanSupplier;
@@ -26,16 +28,18 @@ public class Finger extends SubsystemBase {
     private VoltageOut m_voltOutReq = new VoltageOut(0);
     private PositionVoltage m_PosVoltReq = new PositionVoltage(0).withEnableFOC(false);
 
-
     private BooleanSupplier m_currentSpike = () -> m_motor.getStatorCurrent().getValueAsDouble() > 5.0; 
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_motor.getVelocity().getValueAsDouble()) < 0.005;
 
     private Debouncer m_currentDebouncer = new Debouncer(0.25, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
 
-    private BooleanLogger log_fingerOut = WaltLogger.logBoolean(kLogTab, "finger out");
+    private DoubleLogger log_desiredAngle = WaltLogger.logDouble(kLogTab, "finger desired angle rots");
+    private DoubleLogger log_actualAngleRots = WaltLogger.logDouble(kLogTab, "finger actual angle rots");
+    private BooleanLogger log_isHomed = WaltLogger.logBoolean(kLogTab, "finger is homed");
     
     private boolean m_isHomed = false;
+    private double m_desiredAngleRots = 0;
 
     public Finger() {
         m_motor.getConfigurator().apply(kTalonFXSConfig);
@@ -43,32 +47,21 @@ public class Finger extends SubsystemBase {
         setDefaultCommand(currentSenseHoming());
     }
 
-    private void setFingerPos(double rotations) {
-        m_motor.setControl(m_PosVoltReq.withPosition(rotations));
-    }
-
-    public void fingerOut() {
-        log_fingerOut.accept(true);
-        System.out.println("Finger Requested out");
-        m_motor.setControl(m_PosVoltReq.withPosition(kParallelToGroundRotations));
+    public void setFingerPos(FingerPos fingerPos) {
+        m_desiredAngleRots = fingerPos.angleRots;
+        m_motor.setControl(m_PosVoltReq.withPosition(m_desiredAngleRots));
     }
 
     public Command fingerOutCmd() {
-        return runOnce(this::fingerOut);
-    }
-
-    public Command fingerPrepareForClimbCmd() {
-        return runOnce(() -> setFingerPos(kClimbRotations)); // idk if the climb rots r right. we gotta test this
-    }
-
-    public void fingerIn() {
-        log_fingerOut.accept(false);
-        System.out.println("Finger Requested In");
-        m_motor.setControl(m_PosVoltReq.withPosition(kDefaultPos));
+        return runOnce(() -> setFingerPos(FingerPos.ALGAE));
     }
 
     public Command fingerInCmd() {
-        return runOnce(this::fingerIn);
+        return runOnce(() -> setFingerPos(FingerPos.IN));
+    }
+
+    public Command toIdle() {
+        return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
 
     public Command testFingerVoltageControl(DoubleSupplier stick) {
@@ -105,5 +98,24 @@ public class Finger extends SubsystemBase {
             m_velocityDebouncer.calculate(m_veloIsNearZero.getAsBoolean());
 
         return new FunctionalCommand(init, execute, onEnd, isFinished, this);
+    }
+
+    @Override
+    public void periodic() {
+        log_desiredAngle.accept(m_desiredAngleRots);
+        log_actualAngleRots.accept(m_motor.getPosition().getValue().in(Rotations));
+        log_isHomed.accept(m_isHomed);
+    }
+
+    public enum FingerPos {
+        INTAKE_HOLDING(-0.383),
+        NEAR_HOME(-0.1),
+        ALGAE(-0.914),
+        IN(-0.294);
+
+        public double angleRots;
+        private FingerPos(double rots) {
+            angleRots = rots;
+        }
     }
 }

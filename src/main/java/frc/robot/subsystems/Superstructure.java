@@ -435,14 +435,6 @@ public class Superstructure {
                 )
             );
 
-        stateTrg_eleToClimb
-            .onTrue(
-                Commands.parallel(
-                    m_ele.toHeightCoral(() -> CLIMB_UP),
-                    m_finger.fingerPrepareForClimbCmd()
-                )
-            );
-
         trg_climbBumpButton.and(stateTrg_climbReady)
             .onTrue(
                 Commands.sequence(
@@ -535,10 +527,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.fingerOut();
+                m_finger.fingerOutCmd();
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.fingerIn();
+                m_finger.fingerInCmd();
                 m_coral.stopCoralMotor();
             }
         );
