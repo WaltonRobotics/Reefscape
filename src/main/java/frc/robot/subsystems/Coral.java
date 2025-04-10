@@ -6,10 +6,10 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.Coralk.*;
@@ -19,6 +19,7 @@ import frc.util.WaltLogger.BooleanLogger;
 
 public class Coral extends SubsystemBase {
     private final TalonFX m_motor = new TalonFX(kCoralMotorCANID);
+    private final Servo m_coralStopper = new Servo(kServoChannel);
     private VoltageOut m_voltOutReq = new VoltageOut(0);
     private NeutralOut m_neutralOut = new NeutralOut();
 
@@ -38,6 +39,8 @@ public class Coral extends SubsystemBase {
 
     public Coral() {
         m_motor.getConfigurator().apply(kCoralMotorTalonFXConfiguration);
+
+        setDefaultCommand(coralUnstopper());
     }
 
     // good method
@@ -71,6 +74,14 @@ public class Coral extends SubsystemBase {
 
     public Command fastIntake() {
         return setCoralMotorActionCmd(kFastIntakeVolts);
+    }
+
+    public Command coralStopper() {
+        return Commands.runOnce(() -> m_coralStopper.set(kStopperPos));
+    }
+
+    public Command coralUnstopper() {
+        return Commands.runOnce(() -> m_coralStopper.set(kUnstopperPos));
     }
 
     /*

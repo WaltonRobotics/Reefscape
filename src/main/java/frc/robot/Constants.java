@@ -150,6 +150,7 @@ public class Constants {
          // coral things
          public static final String kLogTab = "CoralSubsys";
          public static final int kCoralMotorCANID = 30; 
+         public static final int kServoChannel = 0;
          public static final int kTopBeamBreakChannel = 1;
          public static final int kBotBeamBreakChannel = 0;
  
@@ -163,6 +164,9 @@ public class Constants {
          public static final double kSlowIntakeVolts = 3;
          public static final double kScoreVolts = 4.5;
          public static final double kFingerVolts = 4.7;
+
+         public static final double kStopperPos = 0;
+         public static final double kUnstopperPos = 0.5;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()

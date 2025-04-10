@@ -370,7 +370,8 @@ public class Robot extends TimedRobot {
         Commands.parallel(
           elevator.currentSenseHoming(),
           finger.currentSenseHoming(),
-          algae.currentSenseHoming()
+          algae.currentSenseHoming(),
+          coral.coralUnstopper()
         ).andThen(superstructure.forceIdle())
       );
 
@@ -565,6 +566,7 @@ public class Robot extends TimedRobot {
           Commands.print("running autonCmdBuilder"),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
+          coral.coralUnstopper(),
           superstructure.simHasCoralToggle(),
           chooserCommand          
       );
