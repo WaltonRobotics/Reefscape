@@ -216,6 +216,8 @@ public class Superstructure {
         (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+        // sim auton fix
+        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
             .onTrue(changeStateCmd(State.INTAKING));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
@@ -241,12 +243,16 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.CLIMBED));
         /* TODO: make debouncer time faster */
         (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL2.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL3.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_eleToL4.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
             .onTrue(changeStateCmd(State.SCORE_READY)); 
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
@@ -285,7 +291,7 @@ public class Superstructure {
         //     .onTrue(
         //         Commands.runOnce(() -> m_eleToHPStateTransReq = true)
         //     );
-        (stateTrg_intaking.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        (stateTrg_intaking.and(() -> Utils.isSimulation())).debounce(0.5)
             .onTrue(simIntook());
         // (stateTrg_intook.and(() -> Utils.isSimulation())).debounce(1)
         //     .onTrue(
@@ -293,7 +299,7 @@ public class Superstructure {
         //             Commands.runOnce(() -> m_eleToL4Req = true)
         //         )
         //     );
-        (stateTrg_scoreReady.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
+        (stateTrg_scoreReady.and(() -> Utils.isSimulation())).debounce(0.5)
             .onTrue(simScored());
         // (stateTrg_scoring.and(() -> Utils.isSimulation()).and(RobotModeTriggers.teleop())).debounce(0.5)
         //     .onTrue(simScored());

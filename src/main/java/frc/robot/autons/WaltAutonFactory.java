@@ -135,6 +135,10 @@ public class WaltAutonFactory {
         return name;
     }
 
+    public void startAutonTimer() {
+       autonTimer.start();
+    }
+
     private boolean doNothing() {
         if (m_scoreLocs.size() == 0 && m_heights.size() == 0 && m_hpStations.size() == 0) {
             return true;
@@ -176,12 +180,13 @@ public class WaltAutonFactory {
                 String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
                 trajsList.add(
                     new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(rToH), Optional.empty()));
+                System.out.println("Adding RtoH Path: " + rToH);
                 if (i < m_scoreLocs.size() - 1) {
                     var reefLoc = m_scoreLocs.get(i + 1);
                     String hToR = HPToReefShortTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), reefLoc));
                     trajsList.add(
                         new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(hToR), Optional.of(reefLoc)));
-                    System.out.println(rToH);
+                        System.out.println("Adding HtoR Path: " + hToR + " with score: " + reefLoc);
                 }
             }
 
@@ -286,7 +291,7 @@ public class WaltAutonFactory {
 
         var theTraj = StartToReefShortTrajs.get(new Pair<StartingLocs , ReefLocs>(m_startLoc, m_scoreLocs.get(0)));
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
-        System.out.println("Running Path: " + theTraj);
+        System.out.println("Running Initial Path: " + theTraj);
 
         Command firstCmd = firstScoreTraj.cmd();
         if (RobotBase.isSimulation()) {

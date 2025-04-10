@@ -244,7 +244,6 @@ public class Robot extends TimedRobot {
   }
 
   private void configureTestBindings() {
-
     drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
@@ -486,9 +485,9 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
-          List.of(REEF_J, REEF_K, REEF_L, REEF_A),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+          List.of(REEF_J, REEF_K, REEF_L, REEF_A, REEF_A),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L2),
+          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
         // autonName = "Left 3 Piece: ";
@@ -573,6 +572,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
+    if (waltAutonFactory.isPresent()) {
+      waltAutonFactory.get().startAutonTimer();
+    }
     Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
     m_autonomousCommand = autonCmdBuilder(chosen);
 
