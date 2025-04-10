@@ -327,7 +327,6 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> HP),
-                    m_coral.coralStopper(),
                     Commands.runOnce(() -> m_autonEleToHPReq = false)
                 )
             );
@@ -367,13 +366,10 @@ public class Superstructure {
         
         stateTrg_intook
             .onTrue(
-                Commands.sequence(
-                    Commands.parallel(
+                Commands.parallel(
                     m_intake.stopIntakeMotorCmd(),
                     m_coral.stopCoralMotorCmd()
-                ).alongWith(Commands.print("in intook the state")),
-                m_coral.coralUnstopper())
-            );
+                ).alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
             .onTrue(
