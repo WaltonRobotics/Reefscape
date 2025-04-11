@@ -105,7 +105,8 @@ public class Robot extends TimedRobot {
   // sameer wanted b to be his ele override button also, so i created a trigger to check that he didnt mean to press any other override when using b
   // private final Trigger trg_eleOverride;
 
-  private final Trigger trg_intakeReq = manipulator.rightBumper();
+  private final Trigger trg_toHPReq = manipulator.rightBumper();
+  private final Trigger trg_intakeReq = manipulator.rightTrigger();
   
   private final Trigger trg_toL1 = manipulator.povDown();
   private final Trigger trg_toL2 = manipulator.povRight();
@@ -158,6 +159,7 @@ public class Robot extends TimedRobot {
       elevator,
       Optional.of(eleForwardsCam),
       intake,
+      trg_toHPReq,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -180,6 +182,7 @@ public class Robot extends TimedRobot {
       elevator,
       Optional.empty(),
       intake,
+      trg_toHPReq,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
