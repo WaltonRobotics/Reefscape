@@ -66,8 +66,8 @@ public class Superstructure {
     private final Trigger trg_teleopL3Req; 
     private final Trigger trg_teleopL4Req; 
     private final Trigger trg_teleopScoreReq;
-    private final Trigger trg_algaeRemovalL2Req;
-    private final Trigger trg_algaeRemovalL3Req;
+    private final Trigger trg_dealgaeL2Req;
+    private final Trigger trg_dealgaeL3Req;
     private final Trigger trg_climbPrepReq;
     private final Trigger trg_climbBumpButton;
     private final Trigger trg_climbingReq;
@@ -196,8 +196,8 @@ public class Superstructure {
         trg_teleopL3Req = L3Req;
         trg_teleopL4Req = L4Req;
         trg_teleopScoreReq = scoreReq;
-        trg_algaeRemovalL2Req = algaeRemovalL2Req;
-        trg_algaeRemovalL3Req = algaeRemovalL3Req;
+        trg_dealgaeL2Req = algaeRemovalL2Req;
+        trg_dealgaeL3Req = algaeRemovalL3Req;
         trg_climbPrepReq = climbPrepReq;
         trg_climbBumpButton = climbBump;
         trg_climbingReq = climbingNowReq;
@@ -267,13 +267,13 @@ public class Superstructure {
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous())) 
             .onTrue(changeStateCmd(State.SCORING));
 
-        (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
+        (trg_hasCoral.negate().and(trg_dealgaeL2Req)).and(RobotModeTriggers.teleop())
             .onTrue(changeStateCmd(State.ALGAE_FINGER_L2));
-        (trg_hasCoral.negate().and(trg_algaeRemovalL3Req)).and(RobotModeTriggers.teleop())
+        (trg_hasCoral.negate().and(trg_dealgaeL3Req)).and(RobotModeTriggers.teleop())
             .onTrue(changeStateCmd(State.ALGAE_FINGER_L3));
-        (stateTrg_algaeRemovalL2.and(trg_algaeRemovalL2Req.negate()).and(RobotModeTriggers.teleop()))
+        (stateTrg_algaeRemovalL2.and(trg_dealgaeL2Req.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_algaeRemovalL3.and(trg_algaeRemovalL3Req.negate()).and(RobotModeTriggers.teleop()))
+        (stateTrg_algaeRemovalL3.and(trg_dealgaeL3Req.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
         /*
@@ -645,7 +645,7 @@ public class Superstructure {
         log_eleToL3Req.accept(trg_teleopL3Req);
         log_eleToL4Req.accept(trg_teleopL4Req);
 
-        log_algaeRemovalButton.accept(trg_algaeRemovalL2Req.or(trg_algaeRemovalL3Req));
+        log_algaeRemovalButton.accept(trg_dealgaeL2Req.or(trg_dealgaeL3Req));
     }
 
     public void logStateChangeReqs() {
