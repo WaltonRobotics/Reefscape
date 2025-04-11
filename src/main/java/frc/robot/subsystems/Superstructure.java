@@ -243,7 +243,7 @@ public class Superstructure {
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         /* TODO: make debouncer time faster */
-        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.05).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY));
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
