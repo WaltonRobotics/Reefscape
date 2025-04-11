@@ -211,6 +211,7 @@ public class WaltAutonFactory {
             m_superstructure.autonScoreReq(),
             logTimer("CoralScored", () -> autonTimer),
             Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
+            //Commands.waitUntil(m_superstructure.getSimScored())
         );
     }
 
@@ -323,13 +324,23 @@ public class WaltAutonFactory {
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
             }
 
-            allTheTrajs.get(allTrajIdx).getFirst().done()
-                .onTrue(Commands.sequence(
-                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
-                    trajCmd,
-                    m_drivetrain.stopCmd(),
-                    Commands.print("Running Path: " + trajCmd)
+            if (RobotBase.isSimulation()){
+                allTheTrajs.get(allTrajIdx).getFirst().done()
+                    .onTrue(Commands.sequence(
+                        Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.INTOOK),
+                        trajCmd,
+                        m_drivetrain.stopCmd(),
+                        Commands.print("Running Path: " + trajCmd)
                 ));
+            } else {
+                allTheTrajs.get(allTrajIdx).getFirst().done()
+                    .onTrue(Commands.sequence(
+                        Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
+                        trajCmd,
+                        m_drivetrain.stopCmd(),
+                        Commands.print("Running Path: " + trajCmd)
+                ));
+            }
 
             allTrajIdx++;
 
@@ -352,20 +363,37 @@ public class WaltAutonFactory {
                 // afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.3);
             }
 
-            var pathDoneCmd = Commands.sequence(
-                Commands.parallel(
-                    autoAlign,
-                    m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
-                ),
-                Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                scoreCmd(m_heights.get(heightCounter++)),
-                nextTrajCmd,
-                m_drivetrain.stopCmd()
-            );
+            if (RobotBase.isSimulation()) {
+                var pathDoneCmd = Commands.sequence(
+                    Commands.parallel(
+                        autoAlign,
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                    ),
+                    Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
+                    scoreCmd(m_heights.get(heightCounter++)),
+                    nextTrajCmd,
+                    m_drivetrain.stopCmd()
+                );
 
-           afterPathTrg.onTrue(
-                pathDoneCmd
-            );
+                afterPathTrg.onTrue(
+                    pathDoneCmd
+                );
+            } else {
+                var pathDoneCmd = Commands.sequence(
+                    Commands.parallel(
+                        autoAlign,
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                    ),
+                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
+                    scoreCmd(m_heights.get(heightCounter++)),
+                    nextTrajCmd,
+                    m_drivetrain.stopCmd()
+                );
+
+                afterPathTrg.onTrue(
+                    pathDoneCmd
+                );
+            }
 
             allTrajIdx++;
         }
