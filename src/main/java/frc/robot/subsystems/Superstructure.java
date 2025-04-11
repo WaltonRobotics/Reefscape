@@ -31,7 +31,7 @@ public class Superstructure {
     private final Finger m_finger;
     private final Elevator m_ele;
     private final Optional<Vision> m_cam1;
-    private final Intake m_intake;
+    private final Funnel m_funnel;
 
     public final EventLoop stateEventLoop = new EventLoop();
     public State m_state = State.IDLE;
@@ -150,7 +150,7 @@ public class Superstructure {
         Finger finger,
         Elevator ele,
         Optional<Vision> cam1,
-        Intake intake,
+        Funnel intake,
         Trigger eleToHPReq,
         Trigger L1Req,
         Trigger L2Req,
@@ -171,7 +171,7 @@ public class Superstructure {
         m_finger = finger;
         m_ele = ele;
         m_cam1 = cam1;
-        m_intake = intake;
+        m_funnel = intake;
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
@@ -335,7 +335,7 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     Commands.parallel(
-                        m_intake.fastIntake(),
+                        m_funnel.fast(),
                         m_coral.fastIntake()
                     ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
@@ -362,12 +362,13 @@ public class Superstructure {
                         )
                     )
                 ).alongWith(takeCam1Snapshots())
+                .alongWith(m_funnel.stopCmd())
             );
         
         stateTrg_intook
             .onTrue(
                 Commands.parallel(
-                    m_intake.stopIntakeMotorCmd(),
+                    m_funnel.stopCmd(),
                     m_coral.stopCoralMotorCmd()
                 ).alongWith(Commands.print("in intook the state")));
         

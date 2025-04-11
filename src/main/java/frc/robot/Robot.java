@@ -80,7 +80,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
-  private final Intake intake = new Intake();
+  private final Funnel intake = new Funnel();
   private final Algae algae;
   private final Superstructure superstructure;
 
