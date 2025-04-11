@@ -26,6 +26,7 @@ public class Funnel extends SubsystemBase{
     public DigitalInput m_intakeBeamBreak = new DigitalInput(kBeamBreakChannel);
 
     public final Trigger trg_intakeBeamBreak = new Trigger(() -> !m_intakeBeamBreak.get());
+    public final Trigger trg_funnelVoltage = new Trigger (() -> m_motor.getStatorCurrent().getValueAsDouble() > 25);
 
     private final BooleanLogger log_intakeBeamBreak = WaltLogger.logBoolean(kLogTab, "intakeBeamBreak");
     
