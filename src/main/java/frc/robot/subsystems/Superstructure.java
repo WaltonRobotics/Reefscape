@@ -99,6 +99,8 @@ public class Superstructure {
     public final Trigger stateTrg_scoring = new Trigger(stateEventLoop, () -> m_state == State.SCORING);
     public final Trigger stateTrg_scored = new Trigger(stateEventLoop, () -> m_state == State.SCORED);
 
+    public final Trigger trg_toScoreHeight = stateTrg_eleToL1.or(stateTrg_eleToL2).or(stateTrg_eleToL3).or(stateTrg_eleToL4);
+
     public final Trigger stateTrg_algaeRemovalL2 = new Trigger(stateEventLoop, () -> m_state == State.ALGAE_FINGER_L2);
     public final Trigger stateTrg_algaeRemovalL3 = new Trigger(stateEventLoop, () -> m_state == State.ALGAE_FINGER_L3);
 
@@ -240,41 +242,14 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
-        (stateTrg_idle.and(trg_climbPrepReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
-            .onTrue(changeStateCmd(State.ELE_TO_CLIMB));
-        (stateTrg_eleToClimb.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
-            .onTrue(changeStateCmd(State.CLIMB_READY));
-        (stateTrg_climbReady.and(trg_inOverride.negate()).and(trg_climbingReq).and(RobotModeTriggers.teleop()))
-            .onTrue(changeStateCmd(State.CLIMBING));
-        (stateTrg_climbing.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
-            .onTrue(changeStateCmd(State.CLIMBED));
         /* TODO: make debouncer time faster */
-        (stateTrg_eleToL1.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
-        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
-            .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL2.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
-        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
-            .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL3.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
-        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
-            .onTrue(changeStateCmd(State.SCORE_READY)); 
-        (stateTrg_eleToL4.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
-        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
-            .onTrue(changeStateCmd(State.SCORE_READY)); 
+        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.5).and(transTrg_eleNearSetpt))
+            .onTrue(changeStateCmd(State.SCORE_READY));
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate())) 
             .onTrue(changeStateCmd(State.SCORED));
         (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.2))
-            .onTrue(changeStateCmd(State.ELE_TO_HP));
-        
-        (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
-            .onTrue(changeStateCmd(State.ALGAE_FINGER_L2));
-        (trg_hasCoral.negate().and(trg_algaeRemovalL3Req)).and(RobotModeTriggers.teleop())
-            .onTrue(changeStateCmd(State.ALGAE_FINGER_L3));
-        (stateTrg_algaeRemovalL2.and(trg_algaeRemovalL2Req.negate()).and(RobotModeTriggers.teleop()))
-            .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_algaeRemovalL3.and(trg_algaeRemovalL3Req.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
@@ -291,6 +266,29 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous())) 
             .onTrue(changeStateCmd(State.SCORING));
+
+        (trg_hasCoral.negate().and(trg_algaeRemovalL2Req)).and(RobotModeTriggers.teleop())
+            .onTrue(changeStateCmd(State.ALGAE_FINGER_L2));
+        (trg_hasCoral.negate().and(trg_algaeRemovalL3Req)).and(RobotModeTriggers.teleop())
+            .onTrue(changeStateCmd(State.ALGAE_FINGER_L3));
+        (stateTrg_algaeRemovalL2.and(trg_algaeRemovalL2Req.negate()).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
+        (stateTrg_algaeRemovalL3.and(trg_algaeRemovalL3Req.negate()).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.ELE_TO_HP));
+
+        /*
+         * rip climber.
+         * truly was a concept of all time.
+         * hopefully yall have a better climber by grits though and will need to rewrite this logic cuz the bouncy thing was super goofy
+         */
+        // (stateTrg_idle.and(trg_climbPrepReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
+        //     .onTrue(changeStateCmd(State.ELE_TO_CLIMB));
+        // (stateTrg_eleToClimb.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+        //     .onTrue(changeStateCmd(State.CLIMB_READY));
+        // (stateTrg_climbReady.and(trg_inOverride.negate()).and(trg_climbingReq).and(RobotModeTriggers.teleop()))
+        //     .onTrue(changeStateCmd(State.CLIMBING));
+        // (stateTrg_climbing.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
+        //     .onTrue(changeStateCmd(State.CLIMBED));
     }
 
     // cuz i dont have a joystick myself and ill usually use sim at home, im going to automate everything
