@@ -324,7 +324,7 @@ public class WaltAutonFactory {
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
             }
 
-            if (RobotBase.isSimulation()){
+            if (RobotBase.isSimulation()) {
                 allTheTrajs.get(allTrajIdx).getFirst().done()
                     .onTrue(Commands.sequence(
                         Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.INTOOK),
