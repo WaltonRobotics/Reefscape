@@ -21,9 +21,9 @@ public class Coral extends SubsystemBase {
     private VoltageOut m_voltOutReq = new VoltageOut(0);
     private NeutralOut m_neutralOut = new NeutralOut();
 
-    private final double m_slowIntakeSpeed = 3;
-    private final double m_scoreSpeed = 4.5;
-    private final double m_fingerSpeed = 4.7;
+    private final double m_slowIntakeSpeed = kSlowIntakeVolts;
+    private final double m_scoreSpeed = kScoreVolts;
+    private final double m_fingerSpeed = kFingerVolts;
 
     // true when beam break broken
     public DigitalInput m_topBeamBreak = new DigitalInput(kTopBeamBreakChannel);
@@ -69,7 +69,7 @@ public class Coral extends SubsystemBase {
     }
 
     public Command fastIntake() {
-        return setCoralMotorActionCmd(12);
+        return setCoralMotorActionCmd(kFastIntakeVolts);
     }
 
     /*

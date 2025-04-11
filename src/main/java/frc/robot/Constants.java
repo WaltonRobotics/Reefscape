@@ -26,6 +26,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
+import com.ctre.phoenix6.signals.AdvancedHallSupportValue;
 import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
 import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -40,6 +41,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import org.photonvision.simulation.SimCameraProperties;
 
@@ -50,6 +52,7 @@ public class Constants {
  
      public static final double kRumbleIntensity = 1.0;
      public static final double kRumbleTimeoutSecs = 0.5;
+
      public static class AlgaeK {
          public static final String kLogTab = "AlgaeSubsys";
          
@@ -142,11 +145,44 @@ public class Constants {
          // public static final double kArmGearRatio = 2; //for arm pivot
  
          public static final double kCoralSpeed = 1;
+
+         public static final double kFastIntakeVolts = 12;
+         public static final double kSlowIntakeVolts = 3;
+         public static final double kScoreVolts = 4.5;
+         public static final double kFingerVolts = 4.7;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
                 .withNeutralMode(NeutralModeValue.Brake));
+     }
+
+     public class FunnelK {
+        //motorized intake schtuff
+        public static final String kLogTab = "FunnelSubsys";
+        /* HIGHKEY TEMPORARY          | TODO: change when we assign the canid to actual canid :D 
+        * ALSO APPLIES TO BEAM BREAK | TODO: change when we figure out beambreak channel :D
+        */
+        public static final int kFunnelMotorCANID = 32; 
+        public static final int kBeamBreakChannel = 2;
+    
+        // dont see why the configs would need to be different than what the coral intake has
+        private static final MotorOutputConfigs kMotorOutCfg = new MotorOutputConfigs()
+        .withNeutralMode(NeutralModeValue.Coast);
+        private static final CommutationConfigs kCommutCfg = new CommutationConfigs()
+            .withAdvancedHallSupport(AdvancedHallSupportValue.Enabled)
+            .withMotorArrangement(MotorArrangementValue.NEO550_JST);
+        private static final CurrentLimitsConfigs kCurrLimCfg = new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(30)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(40)
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLowerLimit(20)
+            .withSupplyCurrentLowerTime(1);
+        public static final TalonFXSConfiguration kFunnelConfig = new TalonFXSConfiguration()
+            .withMotorOutput(kMotorOutCfg)
+            .withCommutation(kCommutCfg)
+            .withCurrentLimits(kCurrLimCfg);
      }
  
      public final class FingerK {
@@ -312,7 +348,7 @@ public class Constants {
             .withCurrentLimits(kCurrentLimitConfigs)
             .withMotorOutput(kMotorOutputConfigs);
      }
- 
+
      public class RobotK {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this

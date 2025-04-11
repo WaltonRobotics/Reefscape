@@ -30,6 +30,7 @@ public class Superstructure {
     private final Finger m_finger;
     private final Elevator m_ele;
     private final Optional<Vision> m_cam1;
+    private final Funnel m_funnel;
 
     public final EventLoop stateEventLoop = new EventLoop();
     public State m_state = State.IDLE;
@@ -59,6 +60,7 @@ public class Superstructure {
     private final Trigger trg_autonScoreReq = new Trigger(() -> m_autonScoreReq);
     /* teleopTrgs */
     private final Trigger trg_teleopEleToHPReq;
+    private final Trigger trg_teleopIntakeReq;
     private final Trigger trg_teleopL1Req; 
     private final Trigger trg_teleopL2Req; 
     private final Trigger trg_teleopL3Req; 
@@ -85,6 +87,7 @@ public class Superstructure {
     /* states */
     public final Trigger stateTrg_idle = new Trigger(stateEventLoop, () -> m_state == State.IDLE);
     public final Trigger stateTrg_eleToHP = new Trigger(stateEventLoop, () -> m_state == State.ELE_TO_HP);
+    public final Trigger stateTrg_preIntaking = new Trigger(stateEventLoop, () -> m_state == State.PRE_INTAKE);
     public final Trigger stateTrg_intaking = new Trigger(stateEventLoop, () -> m_state == State.INTAKING);
     public final Trigger stateTrg_slowIntake = new Trigger(stateEventLoop, () -> m_state == State.SLOW_INTAKE);
     public final Trigger stateTrg_intook = new Trigger(stateEventLoop, () -> m_state == State.INTOOK);
@@ -117,6 +120,7 @@ public class Superstructure {
     private BooleanLogger log_autonScoreReq = WaltLogger.logBoolean(kLogTab, "AUTON score req");
 
     private BooleanLogger log_teleopToHPReq = WaltLogger.logBoolean(kLogTab, "TELEOP to HP req");
+    private BooleanLogger log_teleopIntakeReq = WaltLogger.logBoolean(kLogTab, "TELEOP intake req");
     private BooleanLogger log_teleopScoreReq = WaltLogger.logBoolean(kLogTab, "TELEOP score req");
    
     private BooleanLogger log_eleAtSetpt = WaltLogger.logBoolean(kLogTab, "ele at setpoint");
@@ -148,7 +152,9 @@ public class Superstructure {
         Finger finger,
         Elevator ele,
         Optional<Vision> cam1,
+        Funnel intake,
         Trigger eleToHPReq,
+        Trigger intakeReq,
         Trigger L1Req,
         Trigger L2Req,
         Trigger L3Req,
@@ -168,6 +174,7 @@ public class Superstructure {
         m_finger = finger;
         m_ele = ele;
         m_cam1 = cam1;
+        m_funnel = intake;
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
@@ -181,6 +188,7 @@ public class Superstructure {
 
         /* teleop trigs */
         trg_teleopEleToHPReq = eleToHPReq;
+        trg_teleopIntakeReq = intakeReq;
         trg_teleopL1Req = L1Req;
         trg_teleopL2Req = L2Req;
         trg_teleopL3Req = L3Req;
@@ -214,11 +222,11 @@ public class Superstructure {
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt))
-        // sim auton fix
-        .or(stateTrg_eleToHP.debounce(0.25).and(RobotModeTriggers.autonomous()).and(() -> Robot.isSimulation()))
+        (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt).and(RobotModeTriggers.teleop()))
+            .onTrue(changeStateCmd(State.PRE_INTAKE));
+        (stateTrg_preIntaking.and(trg_inOverride.negate().and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop())))
             .onTrue(changeStateCmd(State.INTAKING));
-        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
+        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor.debounce(0.125)))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
@@ -271,6 +279,8 @@ public class Superstructure {
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
+        (stateTrg_eleToHP.debounce(0.04).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.INTAKING));
         (trg_hasCoral.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
         (trg_hasCoral.and(trg_autonL2Req).and(RobotModeTriggers.autonomous()))
@@ -336,7 +346,10 @@ public class Superstructure {
         stateTrg_intaking
             .onTrue(
                 Commands.sequence(
-                    m_coral.fastIntake(),
+                    Commands.parallel(
+                        m_funnel.fast(),
+                        m_coral.fastIntake()
+                    ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
                     Commands.print("RUMBLE coming to a controller near you soon...")
                     // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
@@ -348,17 +361,26 @@ public class Superstructure {
                 Commands.sequence(
                     Commands.deadline(Commands.waitUntil(m_coral.trg_botBeamBreak),
                         Commands.repeatingSequence(
-                            m_coral.slowIntake(),
+                            Commands.parallel(
+                                m_coral.slowIntake()
+                            ),
                             Commands.waitSeconds(1),
-                            m_coral.slowIntakeReversal(),
+                            Commands.parallel(
+                                m_coral.slowIntakeReversal()
+                            ),
                             Commands.waitSeconds(0.05)
                         )
                     )
                 ).alongWith(takeCam1Snapshots())
+                .alongWith(m_funnel.stopCmd())
             );
         
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
+            .onTrue(
+                Commands.parallel(
+                    m_funnel.stopCmd(),
+                    m_coral.stopCoralMotorCmd()
+                ).alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
             .onTrue(
@@ -424,14 +446,6 @@ public class Superstructure {
                 )
             );
 
-        stateTrg_eleToClimb
-            .onTrue(
-                Commands.parallel(
-                    m_ele.toHeightCoral(() -> CLIMB_UP),
-                    m_finger.fingerPrepareForClimbCmd()
-                )
-            );
-
         trg_climbBumpButton.and(stateTrg_climbReady)
             .onTrue(
                 Commands.sequence(
@@ -442,7 +456,7 @@ public class Superstructure {
         stateTrg_climbing
             .onTrue(
                 Commands.sequence(
-                    m_finger.fingerOutCmd(),
+                    m_finger.algaeDescoreCmd(),
                     m_ele.climbTime()
                 )
             );
@@ -511,6 +525,7 @@ public class Superstructure {
     public Command resetEverything() {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
+            m_funnel.stopCmd(),
             Commands.print("in reset everything"),
             m_ele.toHeightCoral(() -> HOME),
             driverRumble(0, kRumbleTimeoutSecs)
@@ -524,10 +539,10 @@ public class Superstructure {
     public Command baseAlgaeRemoval() {
         return Commands.startEnd(
             () -> {
-                m_finger.fingerOut();
+                m_finger.algaeDescoreCmd();
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.fingerIn();
+                m_finger.toIdleCmd();
                 m_coral.stopCoralMotor();
             }
         );
@@ -624,6 +639,7 @@ public class Superstructure {
         log_autonScoreReq.accept(trg_autonScoreReq);
 
         log_teleopToHPReq.accept(trg_teleopEleToHPReq);
+        log_teleopIntakeReq.accept(trg_teleopIntakeReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
 
         log_eleToL1Req.accept(trg_teleopL1Req);
@@ -664,24 +680,25 @@ public class Superstructure {
     public static enum State {
         IDLE(0, "idle"),
         ELE_TO_HP(1, "ele to intake"),
-        INTAKING(2, "intaking"),
-        SLOW_INTAKE(3, "slow intake"),
-        INTOOK(4, "intook"),
-        ELE_TO_L1(5.1, "ele to L1"),
-        ELE_TO_L2(5.2, "ele to L2"),
-        ELE_TO_L3(5.3, "ele to L3"),
-        ELE_TO_L4(5.4, "ele to L4"),
-        SCORE_READY(6, "score ready"),
-        SCORING(7, "scoring"),
-        SCORED(8, "scored"),
+        PRE_INTAKE(2, "pre intake"),
+        INTAKING(3, "intaking"),
+        SLOW_INTAKE(4, "slow intake"),
+        INTOOK(5, "intook"),
+        ELE_TO_L1(6.1, "ele to L1"),
+        ELE_TO_L2(6.2, "ele to L2"),
+        ELE_TO_L3(6.3, "ele to L3"),
+        ELE_TO_L4(6.4, "ele to L4"),
+        SCORE_READY(7, "score ready"),
+        SCORING(8, "scoring"),
+        SCORED(9, "scored"),
         
-        ALGAE_FINGER_L2(9.2, "algae finger"),
-        ALGAE_FINGER_L3(9.3, "algae finger"),
+        ALGAE_FINGER_L2(10.2, "algae finger"),
+        ALGAE_FINGER_L3(10.3, "algae finger"),
 
-        ELE_TO_CLIMB(10, "ele to climb"),
-        CLIMB_READY(11, "climb ready"),
-        CLIMBING(12.1, "climbing finger"),
-        CLIMBED(13, "climbed");
+        ELE_TO_CLIMB(11, "ele to climb"),
+        CLIMB_READY(12, "climb ready"),
+        CLIMBING(13.1, "climbing finger"),
+        CLIMBED(14, "climbed");
 
         public final double idx;
         public final String name;
