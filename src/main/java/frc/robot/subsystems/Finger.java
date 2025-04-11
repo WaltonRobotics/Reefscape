@@ -44,7 +44,7 @@ public class Finger extends SubsystemBase {
     public Finger() {
         m_motor.getConfigurator().apply(kTalonFXSConfig);
 
-        setDefaultCommand(currentSenseHoming());
+        setDefaultCommand(currentSenseHoming().andThen(toIdleCmd()));
     }
 
     public void setFingerPos(FingerPos fingerPos) {
