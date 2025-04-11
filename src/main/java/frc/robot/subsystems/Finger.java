@@ -56,10 +56,6 @@ public class Finger extends SubsystemBase {
         return runOnce(() -> setFingerPos(FingerPos.ALGAE));
     }
 
-    public Command inCmd() {
-        return runOnce(() -> setFingerPos(FingerPos.IN));
-    }
-
     public Command toIdleCmd() {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
@@ -108,10 +104,8 @@ public class Finger extends SubsystemBase {
     }
 
     public enum FingerPos {
-        INTAKE_HOLDING(-0.383),
         NEAR_HOME(-0.1),
-        ALGAE(-0.914),
-        IN(-0.294);
+        ALGAE(-0.914);
 
         public double angleRots;
         private FingerPos(double rots) {

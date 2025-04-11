@@ -522,6 +522,7 @@ public class Superstructure {
     public Command resetEverything() {
         return Commands.sequence(
             m_coral.stopCoralMotorCmd(),
+            m_funnel.stopCmd(),
             Commands.print("in reset everything"),
             m_ele.toHeightCoral(() -> HOME),
             driverRumble(0, kRumbleTimeoutSecs)
@@ -538,7 +539,7 @@ public class Superstructure {
                 m_finger.algaeDescoreCmd();
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.inCmd();
+                m_finger.toIdleCmd();
                 m_coral.stopCoralMotor();
             }
         );
