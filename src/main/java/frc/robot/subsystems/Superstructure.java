@@ -78,7 +78,7 @@ public class Superstructure {
     private final Trigger simTransTrg_intook = new Trigger(() -> m_simIntook);
     private final Trigger simTransTrg_scored = new Trigger(() -> m_simScored);
     /* Frsies Transition Trigs */
-   private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
+    private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
 
