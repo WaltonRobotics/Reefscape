@@ -350,12 +350,10 @@ public class Superstructure {
                     Commands.deadline(Commands.waitUntil(m_coral.trg_botBeamBreak),
                         Commands.repeatingSequence(
                             Commands.parallel(
-                                m_intake.slowIntake(),
                                 m_coral.slowIntake()
                             ),
                             Commands.waitSeconds(1),
                             Commands.parallel(
-                                m_intake.slowIntakeReversal(),
                                 m_coral.slowIntakeReversal()
                             ),
                             Commands.waitSeconds(0.05)
