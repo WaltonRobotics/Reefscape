@@ -435,7 +435,7 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     m_coral.slowScore(),
-                    Commands.waitSeconds(0.37),
+                    Commands.waitSeconds(0.1845),
                     m_ele.toHeightCoral(() -> L2)
                 )
             );
