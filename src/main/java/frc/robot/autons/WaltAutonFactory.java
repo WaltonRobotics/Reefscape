@@ -246,10 +246,9 @@ public class WaltAutonFactory {
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
         Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
 
-        return m_drivetrain.autoAlignWithIntermediatePose(
-                () -> destinationPose,
-                new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)
-            ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
+        return m_drivetrain.directAutoAlignEleUp(
+            () -> destinationPose
+        ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
     }
 
     public AutoRoutine midAuton() {

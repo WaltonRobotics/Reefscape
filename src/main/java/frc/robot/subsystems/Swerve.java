@@ -36,6 +36,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -451,6 +452,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
+    public Command directAutoAlignEleUp(
+        Supplier<Pose2d> end) {
+        return moveToPose(this, end, ChassisSpeeds::new, () -> AutoAlignmentK.kXYConstraintsEleUp);
+    }
+
     // transform2d will have to be put in a supplier if you want to ever change it after the program starts running
     // i know it will always be the same offset so i don't have to worry about that though
     public Command autoAlignWithIntermediatePose(
@@ -492,6 +498,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return moveToPose(this, () -> destinationPose, () -> new ChassisSpeeds());
     }
 
+    public static Command moveToPose(
+            Swerve swerve,
+            Supplier<Pose2d> target,
+            Supplier<ChassisSpeeds> speedsModifier) {
+        return moveToPose(swerve, target, speedsModifier, () -> AutoAlignmentK.kXYConstraints);
+    }
+
     // these parameters are suppliers because even though this method only uses each once
     // the returned command might be used multiple times
     // the stuff at the beginning is just stuff that can be initialized when the command is bound
@@ -499,7 +512,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public static Command moveToPose(
             Swerve swerve,
             Supplier<Pose2d> target,
-            Supplier<ChassisSpeeds> speedsModifier) {
+            Supplier<ChassisSpeeds> speedsModifier,
+            Supplier<TrapezoidProfile.Constraints> xyConstraints) {
         // This feels like a horrible way of getting around lambda final requirements
         // Is there a cleaner way of doing this?
         final Pose2d cachedTarget[] = {Pose2d.kZero};
@@ -512,12 +526,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         // ok, use passed constraints on X controller
         final ProfiledPIDController vxController =
-            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
+            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.00, 0.02, xyConstraints.get());
         // use constraints from constants for y controller?
         // why define them with different constraints?? it's literally field relative
         // the difference in x and y dimensions almost definitely do not mean anything to robot movement
         final ProfiledPIDController vyController =
-            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
+            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.00, 0.02, xyConstraints.get());
 
         // this is created at trigger binding, not created every time the command is scheduled
         final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
