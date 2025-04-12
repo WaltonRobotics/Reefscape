@@ -331,7 +331,7 @@ public class WaltAutonFactory {
             if (RobotBase.isSimulation()) {
                 allTheTrajs.get(allTrajIdx).getFirst().done()
                     .onTrue(Commands.sequence(
-                        Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.INTOOK),
+                        Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
                         trajCmd,
                         m_drivetrain.stopCmd(),
                         Commands.print("Running Path: " + trajCmd)
