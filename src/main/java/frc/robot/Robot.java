@@ -236,8 +236,7 @@ public class Robot extends TimedRobot {
 
   Command autoAlignCmd(boolean rightReef) {
     return drivetrain.autoAlignWithIntermediatePose(() -> Vision.getMostRealisticScorePose(drivetrain.getState(), rightReef),
-      new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero))
-      .andThen(Commands.print("finished true auto align"));
+      new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero));
   }
 
   // checks for finger in unsafe place

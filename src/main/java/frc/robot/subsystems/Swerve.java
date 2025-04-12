@@ -137,8 +137,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic(kTopicPrefix + "actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "desiredRobotPose", Pose2d.struct).publish();
-    StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
-        .getStructTopic(kTopicPrefix + "autoAlignDestinationPose", Pose2d.struct).publish();
+    private static String staticKTopicPrefix = "Robot/Swerve/";
+    private static StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
+        .getStructTopic(staticKTopicPrefix + "autoAlignDestinationPose", Pose2d.struct).publish();
 
     StructPublisher<Pose2d> log_trajStartPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "activeTrajStart", Pose2d.struct).publish();
@@ -536,6 +537,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return Commands.runOnce(
             () -> {                
                 cachedTarget[0] = target.get();
+                log_autoAlignDestinationPose.accept(cachedTarget[0]);
                 Robot.robotField.getObject("auto align destination").setPose(cachedTarget[0]);
 
                 SwerveDriveState curState = swerve.getState();

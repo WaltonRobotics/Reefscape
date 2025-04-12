@@ -353,7 +353,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(3); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(2.5); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -451,7 +451,7 @@ public class Constants {
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
-        public static final double kFieldTranslationTolerance = 0.05; // meters
+        public static final double kFieldTranslationTolerance = 0.025; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
@@ -467,7 +467,7 @@ public class Constants {
         public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
             = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 
-        public static final double kMaxThetaVel = 3; // rad/s
+        public static final double kMaxThetaVel = 4; // rad/s
         public static final double kMaxThetaAccel = 8; // rad/s^2
         public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
         
