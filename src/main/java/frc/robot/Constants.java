@@ -353,7 +353,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(2.75); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(3); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -446,15 +446,15 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static double kXKP = 7;
-        public static double kYKP = 7;
+        public static double kXKP = 6;
+        public static double kYKP = 6;
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
         public static final double kFieldTranslationTolerance = 0.05; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
-        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
 
         // TODO: these will really need tuning
         public static final double kMaxDimensionVel = 1.25; // m/s
