@@ -446,8 +446,8 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static double kXKP = 6;
-        public static double kYKP = 6;
+        public static double kXKP = 7;
+        public static double kYKP = 7;
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
@@ -457,9 +457,11 @@ public class Constants {
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
 
         // TODO: these will really need tuning
-        public static final double kMaxDimensionVel = 1.25; // m/s
+        // teleop speeds below
+        public static final double kMaxDimensionVel = 1.65; // m/s
         public static final double kMaxDimensionAccel = 6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
+        // Auton speeds below
         public static final double kMaxDimensionVelEleUp = 2; // m/s
         public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
