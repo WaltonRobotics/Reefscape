@@ -35,12 +35,10 @@ public class Funnel extends SubsystemBase{
     
     public Funnel() {
         m_motor.getConfigurator().apply(kFunnelConfig);
-        
-        setDefaultCommand(ejectFlap().withTimeout(1));
     }
 
     public Command automaticIntake() {
-        return Commands.startEnd(() -> fast(),() -> stopCmd());
+        return startEnd(() -> fast(), () -> stopCmd());
     }
 
     private void setIntakeMotorAction(double voltage) {
@@ -64,7 +62,15 @@ public class Funnel extends SubsystemBase{
     }
 
     public Command ejectFlap() {
-        return setMotorVoltageCmd(-12);
+        return startEnd(
+            () -> {
+                setIntakeMotorAction(-12);
+                System.out.println("starting eject flap");
+            }, 
+            () -> {
+                setIntakeMotorAction(0);
+                System.out.println("ending eject flap");
+            });
     }
 
     @Override

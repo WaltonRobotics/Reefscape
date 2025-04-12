@@ -7,6 +7,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,6 +37,7 @@ import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
+import frc.util.WaltLogger.StringLogger;
 
 public class WaltAutonFactory {
     private final AutoFactory m_autoFactory;
@@ -52,7 +54,8 @@ public class WaltAutonFactory {
     private ArrayList<HPStation> m_hpStations; // needs to either have same size or one les than m_scoreLocs
 
     public Timer autonTimer = new Timer();
-    private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer");
+    private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer", PubSubOption.sendAll(true));
+    private StringLogger log_currentPath = WaltLogger.logString(RobotK.kLogTab, "curPath", PubSubOption.sendAll(true));
 
     private static Command printLater(Supplier<String> stringSup) {
 		return Commands.defer(() -> {
@@ -255,9 +258,9 @@ public class WaltAutonFactory {
         System.out.println("Running Path: " + theTraj);
 
         Command firstCmd = firstScoreTraj.cmd();
-        if (RobotBase.isSimulation()) {
-            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
-        }
+        // if (RobotBase.isSimulation()) {
+            // firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+        // }
 
         m_routine.active().onTrue(
             firstCmd
@@ -296,13 +299,17 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Initial Path: " + theTraj);
 
-        Command firstCmd = firstScoreTraj.cmd();
-        if (RobotBase.isSimulation()) {
-            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
-        }
+        Command firstCmd = firstScoreTraj.cmd().alongWith(Commands.print("FirstScoreTraj->Running"));
+        // if (RobotBase.isSimulation()) {
+            // firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+        // }
 
         m_routine.active().onTrue(
             firstCmd
+        );
+
+        m_routine.active().debounce(0.25).onTrue(
+            m_funnel.ejectFlap().asProxy().withTimeout(0.25)
         );
 
         // normal cycle logic down here
@@ -328,25 +335,25 @@ public class WaltAutonFactory {
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
             }
 
-            if (RobotBase.isSimulation()) {
-                allTheTrajs.get(allTrajIdx).getFirst().done()
-                    .onTrue(Commands.sequence(
-                        Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
-                        trajCmd,
-                        m_drivetrain.stopCmd(),
-                        Commands.print("Running Path: " + trajCmd)
-                ));
-            } else {
-                allTheTrajs.get(allTrajIdx).getFirst().done()
-                    .onTrue(Commands.sequence(
-                        // Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
-                        Commands.waitUntil(m_funnel.trg_atCurrLim)
-                            .alongWith(Commands.print("funnel detected coral")),
-                        trajCmd,
-                        m_drivetrain.stopCmd(),
-                        Commands.print("Running Path: " + trajCmd)
-                ));
-            }
+            // if (RobotBase.isSimulation()) {
+            //     allTheTrajs.get(allTrajIdx).getFirst().done()
+            //         .onTrue(Commands.sequence(
+            //             Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
+            //             trajCmd,
+            //             m_drivetrain.stopCmd(),
+            //             Commands.print("Running Path: " + trajCmd)
+            //     ));
+            // } else {
+            allTheTrajs.get(allTrajIdx).getFirst().done()
+                .onTrue(Commands.sequence(
+                    // Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
+                    Commands.waitUntil(m_funnel.trg_atCurrLim.or(m_superstructure.getTopBeamBreak()))
+                        .alongWith(Commands.print("funnel detected coral")),
+                    trajCmd,
+                    m_drivetrain.stopCmd(),
+                    Commands.print("Running Path: " + trajCmd)
+            ));
+            //}
 
             allTrajIdx++;
 
@@ -369,22 +376,22 @@ public class WaltAutonFactory {
                 // afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.3);
             }
 
-            if (RobotBase.isSimulation()) {
-                var pathDoneCmd = Commands.sequence(
-                    Commands.parallel(
-                        autoAlign,
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
-                    ),
-                    Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
-                    scoreCmd(m_heights.get(heightCounter++)),
-                    nextTrajCmd,
-                    m_drivetrain.stopCmd()
-                );
+            // if (RobotBase.isSimulation()) {
+            //     var pathDoneCmd = Commands.sequence(
+            //         Commands.parallel(
+            //             autoAlign,
+            //             m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+            //         ),
+            //         Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
+            //         scoreCmd(m_heights.get(heightCounter++)),
+            //         nextTrajCmd,
+            //         m_drivetrain.stopCmd()
+            //     );
 
-                afterPathTrg.onTrue(
-                    pathDoneCmd
-                );
-            } else {
+            //     afterPathTrg.onTrue(
+            //         pathDoneCmd
+            //     );
+            // } else {
                 var pathDoneCmd = Commands.sequence(
                     Commands.parallel(
                         autoAlign,
@@ -399,7 +406,7 @@ public class WaltAutonFactory {
                 afterPathTrg.onTrue(
                     pathDoneCmd
                 );
-            }
+            //}
 
             allTrajIdx++;
         }

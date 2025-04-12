@@ -250,8 +250,8 @@ public class WaltLogger {
         public final StringPublisher ntPub;
         public final StringLogEntry logEntry;
 
-        public StringLogger(String subTable, String name) {
-            ntPub = NTPublisherFactory.makeStringPub(logTable.getSubTable(subTable), name);
+        public StringLogger(String subTable, String name, PubSubOption... options) {
+            ntPub = NTPublisherFactory.makeStringPub(logTable.getSubTable(subTable), name, options);
             logEntry = new StringLogEntry(DataLogManager.getLog(), "Robot/" + subTable + "/" + name);
         }
 
@@ -265,7 +265,7 @@ public class WaltLogger {
         }
     }
 
-    public static StringLogger logString(String table, String name) {
-        return new StringLogger(table, name);
+    public static StringLogger logString(String table, String name, PubSubOption... options) {
+        return new StringLogger(table, name, options);
     }
 }

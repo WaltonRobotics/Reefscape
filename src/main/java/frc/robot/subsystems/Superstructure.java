@@ -8,6 +8,8 @@ import java.util.function.DoubleConsumer;
 
 import com.ctre.phoenix6.Utils;
 
+import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.networktables.PubSubOptions;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -114,8 +116,8 @@ public class Superstructure {
     private final Trigger trg_hasCoral;
 
     /* loggin' */
-    private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx");
-    private StringLogger log_stateName = WaltLogger.logString(kLogTab, "state name");
+    private DoubleLogger log_stateIdx = WaltLogger.logDouble(kLogTab, "state idx", PubSubOption.sendAll(true));
+    private StringLogger log_stateName = WaltLogger.logString(kLogTab, "state name", PubSubOption.sendAll(true));
     
     /* logs: state trans */
     private BooleanLogger log_autonToHPReq = WaltLogger.logBoolean(kLogTab, "AUTON to HP req");
@@ -135,11 +137,6 @@ public class Superstructure {
     private BooleanLogger log_algaeRemovalButton = WaltLogger.logBoolean(kLogTab, "algae removal button");
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
 
-    private BooleanLogger log_eleToClimb = WaltLogger.logBoolean(kLogTab, "climb prep");
-    private BooleanLogger log_climbReady = WaltLogger.logBoolean(kLogTab, "ready to climb");
-    private BooleanLogger log_climbing = WaltLogger.logBoolean(kLogTab, "climbing");
-    private BooleanLogger log_climbed = WaltLogger.logBoolean(kLogTab, "climbed");
-
     private BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "has coral");
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
@@ -154,7 +151,7 @@ public class Superstructure {
         Finger finger,
         Elevator ele,
         Optional<Vision> cam1,
-        Funnel intake,
+        Funnel funnel,
         Trigger eleToHPReq,
         Trigger intakeReq,
         Trigger L1Req,
@@ -176,7 +173,7 @@ public class Superstructure {
         m_finger = finger;
         m_ele = ele;
         m_cam1 = cam1;
-        m_funnel = intake;
+        m_funnel = funnel;
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
@@ -234,14 +231,17 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.INTOOK));
         (stateTrg_slowIntake.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
+    
+        // Teleop Requests
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL1Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL2Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        ((trg_hasCoral).and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
+        (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL3Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
+
         /* TODO: make debouncer time faster */
         (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.05).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY));
@@ -370,7 +370,6 @@ public class Superstructure {
                         )
                     )
                 ).alongWith(takeCam1Snapshots())
-                .alongWith(m_funnel.stopCmd())
             );
         
         stateTrg_intook
