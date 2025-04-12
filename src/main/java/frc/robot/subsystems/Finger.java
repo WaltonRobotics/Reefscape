@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.util.WaltLogger;
@@ -53,7 +54,10 @@ public class Finger extends SubsystemBase {
     }
 
     public Command algaeDescoreCmd() {
-        return runOnce(() -> setFingerPos(FingerPos.ALGAE));
+        return startEnd(
+            () -> setFingerPos(FingerPos.ALGAE),
+            () -> setFingerPos(FingerPos.NEAR_HOME)
+        );
     }
 
     public Command toIdleCmd() {
@@ -105,7 +109,7 @@ public class Finger extends SubsystemBase {
 
     public enum FingerPos {
         NEAR_HOME(-0.1),
-        ALGAE(-0.914);
+        ALGAE(-0.66);
 
         public double angleRots;
         private FingerPos(double rots) {
