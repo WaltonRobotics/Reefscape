@@ -9,8 +9,6 @@ import static edu.wpi.first.units.Units.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-
 import org.photonvision.EstimatedRobotPose;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -24,6 +22,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -39,7 +38,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.VisionK;
-import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -80,7 +78,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
-  private final Funnel intake = new Funnel();
+  private final Funnel funnel = new Funnel();
   private final Algae algae;
   private final Superstructure superstructure;
 
@@ -97,6 +95,8 @@ public class Robot extends TimedRobot {
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
+  private final DoubleLogger log_fieldX = WaltLogger.logDouble("Swerve", "calculated field x speed");
+  private final DoubleLogger log_fieldY = WaltLogger.logDouble("Swerve", "calculate field y speed");
 
   private final Trigger trg_leftTeleopAutoAlign = driver.x();
   private final Trigger trg_rightTeleopAutoAlign = driver.a();
@@ -140,13 +140,19 @@ public class Robot extends TimedRobot {
 
   private boolean autonNotMade = true;
   private boolean readyToMakeAuton = false;
+  private boolean midAuton = false;
   private String autonName = "No Auton Made";
 
-  private final Field2d robotField = visionSim.getSimDebugField();
+  // istg if you touch this outside of updateStaticField
+  public static Field2d robotField = null;
   private final Timer lastGotTagMsmtTimer = new Timer();
   private final BooleanLogger log_visionSeenPastSecond = new BooleanLogger("Robot", "VisionSeenLastSec");
 
   private Optional<WaltAutonFactory> waltAutonFactory;
+
+  public void updateStaticField() {
+    Robot.robotField = visionSim.getSimDebugField();
+  }
 
   public Robot() {
     SignalLogger.start();
@@ -158,8 +164,8 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.of(eleForwardsCam),
-      intake,
-      trg_toHPReq,
+      funnel,
+      trg_toHPReq.and(trg_manipDanger.negate()),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -181,8 +187,8 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.empty(),
-      intake,
-      trg_toHPReq,
+      funnel,
+      trg_toHPReq.and(trg_manipDanger.negate()),
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -214,6 +220,7 @@ public class Robot extends TimedRobot {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
+    updateStaticField();
     configureBindings();
     // configureTestBindings();
   }
@@ -222,31 +229,18 @@ public class Robot extends TimedRobot {
     StartingLocs startLoc, List<ReefLocs> scoreLocs,
     List<EleHeight> heights, List<HPStation> hpStations) {
       return new WaltAutonFactory(
-        elevator, drivetrain.autoFactory, superstructure, drivetrain, 
+        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel, 
         startLoc, new ArrayList<>(scoreLocs), new ArrayList<>(heights), new ArrayList<>(hpStations)
       );
   }
 
   Command autoAlignCmd(boolean rightReef) {
-    return Commands.defer(() -> {
-      Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, rightReef);
-      if (scorePoseOptional.isEmpty()) {
-        return Commands.none();
-      }
-      Pose2d scorePose = scorePoseOptional.get();
-
-      var initialMove = drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField());
-      var closeInMove = drivetrain.moveToPose(scorePose, visionSim.getSimDebugField());
-      return Commands.sequence(
-        initialMove.withTimeout(0.5),
-        Commands.print("intermediate pose"),
-        closeInMove,
-        Commands.print("auto align truly finish")
-      );
-    }, Set.of(drivetrain)); 
+    return drivetrain.autoAlignWithIntermediatePose(() -> Vision.getMostRealisticScorePose(drivetrain.getState(), rightReef),
+      new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero));
   }
 
   // checks for finger in unsafe place
+  // no it doesnt lol. it prolly should tho.
   private Command resetEverythingCheck() {
     return Commands.parallel(
         algae.toIdleCmd(),
@@ -255,7 +249,6 @@ public class Robot extends TimedRobot {
   }
 
   private void configureTestBindings() {
-
     drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
@@ -394,6 +387,9 @@ public class Robot extends TimedRobot {
 
     manipulator.y()
       .onTrue(algae.changeStateCmd(State.HOME));
+    
+    trg_manipDanger.and(trg_toHPReq)
+      .whileTrue(funnel.ejectFlap());
 
   }
 
@@ -439,6 +435,11 @@ public class Robot extends TimedRobot {
     double rio6VCurrent = RobotController.getCurrent6V();
     log_rio6VRailCurrent.accept(rio6VCurrent);
 
+    // TODO: remove this before comp
+    ChassisSpeeds fieldRelativeSpeeds = drivetrain.getFieldRelativeChassisSpeeds();
+    log_fieldX.accept(fieldRelativeSpeeds.vxMetersPerSecond);
+    log_fieldY.accept(fieldRelativeSpeeds.vyMetersPerSecond);
+
     // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
 
@@ -453,8 +454,6 @@ public class Robot extends TimedRobot {
         List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
       )
     );
-
-    AutonChooser.addPathsAndCmds(waltAutonFactory.get());
   }
 
   @Override
@@ -464,19 +463,6 @@ public class Robot extends TimedRobot {
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);
 
       // --- PRESET AUTONS
-      if (WaltAutonBuilder.nte_taxiOnly.getBoolean(false)) {
-        waltAutonFactory = Optional.of(autonFactoryFactory(
-          StartingLocs.SUPER_LEFT, 
-          new ArrayList<>(List.of()), 
-          new ArrayList<>(List.of()), 
-          new ArrayList<>(List.of(HPStation.HP_LEFT))  // uses an hp station as a flag that its leaving and not doing nothing
-        ));
-
-        autonName = "Taxi";
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Taxi Time!"));
-        WaltAutonBuilder.nte_taxiOnly.setBoolean(false);
-      }
-
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT, 
@@ -492,9 +478,9 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
-          List.of(REEF_J, REEF_K, REEF_L),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+          List.of(REEF_J, REEF_K, REEF_L, REEF_A),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
         // autonName = "Left 3 Piece: ";
@@ -502,27 +488,28 @@ public class Robot extends TimedRobot {
         WaltAutonBuilder.nte_leftThreePiece.setBoolean(false);
       }
 
-      // MID G IS BROKEN
-      // if (WaltAutonBuilder.nte_midGOnly.getBoolean(false)) {
-      //   waltAutonFactory = Optional.of(autonFactoryFactory(
-      //     StartingLocs.MID_G, 
-      //     List.of(REEF_G), 
-      //     List.of(EleHeight.L4), 
-      //     List.of()
-      //   ));
+      if(WaltAutonBuilder.nte_midOnePiece.getBoolean(false)) {
+        midAuton = true;
+        // tbh none of these values get used lol
+        waltAutonFactory = Optional.of(autonFactoryFactory(
+          StartingLocs.MID_G,
+          List.of(REEF_G),
+          List.of(EleHeight.L4),
+          List.of(HPStation.HP_RIGHT)
+        ));
 
-      //   // autonName = "Mid G-L4";
-      //   Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid G Only auton generated"));
-      //   WaltAutonBuilder.nte_midGOnly.setBoolean(false);
-      // }
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
+        WaltAutonBuilder.nte_midOnePiece.setBoolean(false);
+      }
 
+    
       // fail-case (no auton selected) - do nothing (its no longer that now)
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.RIGHT,
-          List.of(REEF_E, REEF_D, REEF_C),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+          List.of(REEF_E, REEF_D, REEF_C, REEF_B),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
 
         // autonName = "Right 3 Piece: E-L2, D-L4, C-L4";
@@ -531,11 +518,15 @@ public class Robot extends TimedRobot {
 
       // ---- SETS THE AUTON
       if (readyToMakeAuton && waltAutonFactory.isPresent()) {
-        AutonChooser.resetAutoChooser();  // to remove the default pathing
-        AutonChooser.addPathsAndCmds(waltAutonFactory.get());
+        if (midAuton) {
+          m_autonomousCommand = autonCmdBuilder(waltAutonFactory.get().midAuton().cmd());
+        } else {
+          m_autonomousCommand = autonCmdBuilder(waltAutonFactory.get().generateAuton().cmd());
+        }
+
         autonNotMade = false;
-        WaltAutonBuilder.nte_autonEntry.setBoolean(false);
         autonName = waltAutonFactory.get().toString();
+        WaltAutonBuilder.nte_autonEntry.setBoolean(false);
         WaltAutonBuilder.nte_autonReadyToGo.setBoolean(!autonNotMade);
         WaltAutonBuilder.nte_autonName.setString(autonName);
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CREATED", "Ready for Autonomous!"));
@@ -546,14 +537,17 @@ public class Robot extends TimedRobot {
     // if user hits clearAll button, the auton process resets
     if (WaltAutonBuilder.nte_clearAll.getBoolean(false)) {
       waltAutonFactory = Optional.empty();
+      m_autonomousCommand = Commands.print("========== No Auton Command Selected ==========");
+
       autonNotMade = true;
       autonName = "No Auton Made";
       WaltAutonBuilder.nte_autonEntry.setBoolean(false);
-      AutonChooser.resetAutoChooser();
       WaltAutonBuilder.nte_clearAll.setBoolean(false);
 
       WaltAutonBuilder.nte_autonReadyToGo.setBoolean(!autonNotMade);
       WaltAutonBuilder.nte_autonName.setString(autonName);
+
+
       Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path CLEARED", "Remake your auton!"));
     }
   }
@@ -566,6 +560,7 @@ public class Robot extends TimedRobot {
   private Command autonCmdBuilder(Command chooserCommand) {
     return Commands.parallel(
           Commands.print("running autonCmdBuilder"),
+          // funnel.ejectFlap(),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
           superstructure.simHasCoralToggle(),
@@ -575,8 +570,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    Command chosen = AutonChooser.autoChooser.selectedCommandScheduler();
-    m_autonomousCommand = autonCmdBuilder(chosen);
+    if (waltAutonFactory.isPresent()) {
+      waltAutonFactory.get().startAutonTimer();
+    }
 
     if(m_autonomousCommand != null) {
       m_autonomousCommand.schedule();

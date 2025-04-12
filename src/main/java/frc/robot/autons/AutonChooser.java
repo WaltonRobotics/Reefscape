@@ -10,10 +10,14 @@ public class AutonChooser {
         autoChooser = new AutoChooser();
     }
 
-    public static void addPathsAndCmds(WaltAutonFactory autonFactory) {
+    public static void addPathsAndCmds(WaltAutonFactory autonFactory, boolean isMid) {
         autoChooser.addRoutine("auton", () -> autonFactory.generateAuton());
-        autoChooser.addRoutine("leave-only", () -> autonFactory.leaveOnly());
-        autoChooser.select("auton");
+        autoChooser.addRoutine("mid-1", () -> autonFactory.midAuton());
+        if(isMid) {
+            autoChooser.select("mid-1");
+        } else {
+            autoChooser.select("auton");
+        }
 
         SmartDashboard.putData("AutonChooser", autoChooser);
     }

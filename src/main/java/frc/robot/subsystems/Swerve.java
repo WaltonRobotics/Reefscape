@@ -24,10 +24,10 @@ import choreo.Choreo;
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
-import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,16 +41,12 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -61,7 +57,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import static frc.robot.Constants.AutoAlignmentK.*;
+import frc.robot.Robot;
+import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -454,6 +451,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
+    // transform2d will have to be put in a supplier if you want to ever change it after the program starts running
+    // i know it will always be the same offset so i don't have to worry about that though
+    public Command autoAlignWithIntermediatePose(
+        Supplier<Pose2d> end,
+        Transform2d translationToIntermediate) {
+        return autoAlignWithIntermediatePose(() -> end.get().transformBy(translationToIntermediate) , end);
+    }   
+
+    public Command autoAlignWithIntermediatePose(
+        Supplier<Pose2d> intermediate,
+        Supplier<Pose2d> end) {
+        return moveToPose(this, intermediate, ChassisSpeeds::new)
+            .until(() -> isInTolerance(getState().Pose, intermediate.get()))
+            .andThen(moveToPose(this, end, ChassisSpeeds::new));
+    }
+
+
     /**
      * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
      * @param destinationPose Give it a destination to go to
@@ -475,30 +489,135 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         }
         log_autoAlignDestinationPose.accept(destinationPose);
 
-        return Commands.run(
-            () -> {
-                Pose2d curPose = getState().Pose;
-
-                double xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
-
-                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
-                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
-                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
-            }
-        ).until(nearPose(destinationPose, kTranslationTolerance, kFieldRotationTolerance));
+        return moveToPose(this, () -> destinationPose, () -> new ChassisSpeeds());
     }
 
-    private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
-        return () -> {
-            Pose2d drivetrainPose = getState().Pose;
-            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
-        };
+    // these parameters are suppliers because even though this method only uses each once
+    // the returned command might be used multiple times
+    // the stuff at the beginning is just stuff that can be initialized when the command is bound
+    // unfortunately though you need to use final shenanigans to screw with lambdas
+    public static Command moveToPose(
+            Swerve swerve,
+            Supplier<Pose2d> target,
+            Supplier<ChassisSpeeds> speedsModifier) {
+        // This feels like a horrible way of getting around lambda final requirements
+        // Is there a cleaner way of doing this?
+        final Pose2d cachedTarget[] = {Pose2d.kZero};
+        // interestingly no kD in the heading controller
+        final ProfiledPIDController headingController =
+            // assume we can accelerate to max in 2/3 of a second
+            new ProfiledPIDController(
+                AutoAlignmentK.kThetaKP, 0.0, 0.0, 
+                AutoAlignmentK.kThetaConstraints);
+        headingController.enableContinuousInput(-Math.PI, Math.PI);
+        // ok, use passed constraints on X controller
+        final ProfiledPIDController vxController =
+            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
+        // use constraints from constants for y controller?
+        // why define them with different constraints?? it's literally field relative
+        // the difference in x and y dimensions almost definitely do not mean anything to robot movement
+        final ProfiledPIDController vyController =
+            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.00, 0.02, AutoAlignmentK.kXYConstraints);
+
+        // this is created at trigger binding, not created every time the command is scheduled
+        final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
+
+        return Commands.runOnce(
+            () -> {                
+                cachedTarget[0] = target.get();
+                Robot.robotField.getObject("auto align destination").setPose(cachedTarget[0]);
+
+                SwerveDriveState curState = swerve.getState();
+                Pose2d curPose = curState.Pose;
+                ChassisSpeeds fieldRelativeChassisSpeeds = Swerve.getFieldRelativeChassisSpeeds(curState);
+                // for some reason only do logging in simulation?
+                // very smart of them to cache whether the robot is in simulation though rather than
+                // checking every time though
+                // reset profiled PIDs to have the correct speeds
+                // we can likely use the Swerve::getVelocityFieldRelative i stuck in there previously
+                // stolen from someone elses code
+                // this code sets all the setpoints of the controllers
+
+                headingController.reset(
+                    curPose.getRotation().getRadians(),
+                    fieldRelativeChassisSpeeds.omegaRadiansPerSecond);
+                vxController.reset(
+                    curPose.getX(), fieldRelativeChassisSpeeds.vxMetersPerSecond);
+                vyController.reset(
+                    curPose.getY(), fieldRelativeChassisSpeeds.vyMetersPerSecond);
+            })
+        .andThen(
+            // so does this keep running over and over again?
+            // i assume it has to make sure that the speeds actually update as
+            swerve.applyRequest(
+                () -> {
+                // get difference between target pose and current pose
+                // (this is the transform that maps current pose to target pose)
+                // this is only used for tolerances right here.
+                final Pose2d curPose = swerve.getState().Pose;
+                final Transform2d diff = curPose.minus(cachedTarget[0]);
+                final ChassisSpeeds speeds =
+                    // for some reason not using tolerance constatnts?? who knows why
+                    MathUtil.isNear(0.0, diff.getX(), Units.inchesToMeters(0.75))
+                        && MathUtil.isNear(0.0, diff.getY(), Units.inchesToMeters(0.75))
+                        && MathUtil.isNear(0.0, diff.getRotation().getDegrees(), 0.5)
+                    // there is no case in code where speedsModifier is nonzero
+                    ? new ChassisSpeeds().plus(speedsModifier.get())
+                    : new ChassisSpeeds(
+                        // these add the setpoint to velocity for some reason?
+                        // i just trust that they know how motion profiles work better
+                        // than i do
+                        // also why do they include the goal in every call? they shouldn't
+                        // have to
+                        vxController.calculate(
+                                curPose.getX(), cachedTarget[0].getX())
+                            + vxController.getSetpoint().velocity,
+                        vyController.calculate(
+                                curPose.getY(), cachedTarget[0].getY())
+                            + vyController.getSetpoint().velocity,
+                        headingController.calculate(
+                                curPose.getRotation().getRadians(),
+                                cachedTarget[0].getRotation().getRadians())
+                            + headingController.getSetpoint().velocity)
+                        // again there is no case existing in code speedsModifier is nonzero
+                    .plus(speedsModifier.get());
+                // these people hate logging when the robot is real. do they just go to comp and
+                // say screw it we ball?????
+                // gng why
+                //   if (Robot.ROBOT_TYPE != RobotType.REAL)
+                //     Logger.recordOutput(
+                //         "AutoAim/Target Pose",
+                //         new Pose2d(
+                //             vxController.getSetpoint().position,
+                //             vyController.getSetpoint().position,
+                //             Rotation2d.fromRadians(headingController.getSetpoint().position)));
+                  return swreq_driveFieldSpeeds.withSpeeds(speeds);
+                }));
+  }
+
+    // highlander robotics implementation of nearPose is much cooler
+    public static boolean isInTolerance(Pose2d pose, Pose2d pose2) {
+        final Transform2d diff = pose.minus(pose2);
+        return MathUtil.isNear(
+                0.0, Math.hypot(diff.getX(), diff.getY()), AutoAlignmentK.kFieldTranslationTolerance)
+            && MathUtil.isNear(
+                0.0, diff.getRotation().getRadians(), AutoAlignmentK.kFieldRotationTolerance);
+    }
+
+    public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
+        Pose2d pose = swerveDriveState.Pose;
+        ChassisSpeeds robotRelChassisSpeeds = swerveDriveState.Speeds;
+
+        return new ChassisSpeeds(
+                robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getCos()
+                        - robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getCos()
+                        + robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.omegaRadiansPerSecond);
+    }
+
+    public ChassisSpeeds getFieldRelativeChassisSpeeds() {
+        return getFieldRelativeChassisSpeeds(getState());
     }
 
     /**

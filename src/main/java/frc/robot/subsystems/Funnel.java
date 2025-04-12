@@ -26,15 +26,19 @@ public class Funnel extends SubsystemBase{
     public DigitalInput m_intakeBeamBreak = new DigitalInput(kBeamBreakChannel);
 
     public final Trigger trg_intakeBeamBreak = new Trigger(() -> !m_intakeBeamBreak.get());
+    public final Trigger trg_atCurrLim = new Trigger(() -> m_motor.getFault_StatorCurrLimit().refresh().getValue());
 
     private final BooleanLogger log_intakeBeamBreak = WaltLogger.logBoolean(kLogTab, "intakeBeamBreak");
+    private final BooleanLogger log_veloDrop = WaltLogger.logBoolean(kLogTab, "veloDrop");
+    private final BooleanLogger log_currSpike = WaltLogger.logBoolean(kLogTab, "currSpike");
+    private final BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "hasCoral");
     
     public Funnel() {
         m_motor.getConfigurator().apply(kFunnelConfig);
     }
 
     public Command automaticIntake() {
-        return Commands.startEnd(() -> fast(),() -> stopCmd());
+        return startEnd(() -> fast(), () -> stopCmd());
     }
 
     private void setIntakeMotorAction(double voltage) {
@@ -57,8 +61,21 @@ public class Funnel extends SubsystemBase{
         return setMotorVoltageCmd(12);
     }
 
+    public Command ejectFlap() {
+        return startEnd(
+            () -> {
+                setIntakeMotorAction(-12);
+                System.out.println("starting eject flap");
+            }, 
+            () -> {
+                setIntakeMotorAction(0);
+                System.out.println("ending eject flap");
+            });
+    }
+
     @Override
     public void periodic() {
         log_intakeBeamBreak.accept(trg_intakeBeamBreak);
+        log_hasCoral.accept(trg_atCurrLim);
     }
 }

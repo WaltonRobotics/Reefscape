@@ -1,12 +1,6 @@
 package frc.robot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static edu.wpi.first.units.Units.*;
-
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -21,19 +15,14 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
@@ -54,9 +43,6 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.util.AllianceFlipUtil;
-
 import org.photonvision.simulation.SimCameraProperties;
 
 
@@ -205,7 +191,7 @@ public class Constants {
  
          public static final int kFingerMotorCANID = 31;
  
-         public static final double kMaxAngleRotations = 0;
+         public static final double kMaxAngleRotations = -0.1;
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
@@ -367,7 +353,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(2.75); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(3); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -406,7 +392,7 @@ public class Constants {
         public static final String kElevatorForwardsCamName = "EleFrontCam";
         public static final Transform3d kElevatorForwardsCamRoboToCam = new Transform3d(
             Units.inchesToMeters(8.238), Units.inchesToMeters(4.81), Units.inchesToMeters(32), 
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
+            new Rotation3d(Units.degreesToRadians(180), Units.degreesToRadians(40), Units.degreesToRadians(-10))
         );
         public static final String kElevatorForwardsCamSimVisualName = "EleForwardsVisionEstimation";
 
@@ -460,47 +446,32 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-
-        public static double kXKP = 7;
-        public static double kYKP = 7;
+        public static double kXKP = 6;
+        public static double kYKP = 6;
         public static double kThetaKP = 10;
-        
-        private static final TrapezoidProfile.Constraints kAutoAlignConstraints = new TrapezoidProfile.Constraints(3, 12);
-        public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
-        public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0);
-        public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0);
-        // we need to do this so the PIDController works properly
-        static {
-            kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
-        }
 
-        public static final double kTranslationTolerance = 0.005; // meters
+        // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
+        public static final double kFieldTranslationTolerance = 0.05; // meters
         public static final double kFieldRotationTolerance = 1; // degrees
 
-        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
 
         // TODO: these will really need tuning
-        public static final double kXMaxVelocity = 3; // m/s
-        public static final double kXMaxAccel = 3; // m/s^2
+        public static final double kMaxDimensionVel = 1.25; // m/s
+        public static final double kMaxDimensionAccel = 6; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
 
-        public static final double kYMaxVelocity = 3; // m/s
-        public static final double kYMaxAccel = 3; // m/s^2
-
-        public static final double kThetaMaxVelocity = 45; // deg/s
-        public static final double kThetaMaxAccel = 45; // deg/s^2
+        public static final double kMaxThetaVel = 3; // rad/s
+        public static final double kMaxThetaAccel = 8; // rad/s^2
+        public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */
         public static final double kRotationWeight = 0.2;
-        
-        /**<p>[0, 1]. Controls weight of predicted future pose in velocity weighted tag selection.
-         * <p> 0 is no weight, 1 is 100% weight (no input from current state).
-         * <p> Impacts {@link #kCurrentWeight} */
-        public static final double kFutureWeight = 0.2;
-        /**<p>Equal to 1 - {@link #kFutureWeight}. Controls weight of the current pose in velocity weighted tag selection */
-        public static final double kCurrentWeight = 1 - kFutureWeight;
-        public static final double kFutureDelta = 0.1; // s
 
-        public static final double kMaxXYSpeedAutoalign = 1.5;
+        public static final double kFutureDelta = 0.3; // seconds, TODO: needs tuning
+
+        // ths 
+
     }
 }
