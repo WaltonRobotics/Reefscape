@@ -553,6 +553,7 @@ public class Robot extends TimedRobot {
   private Command autonCmdBuilder(Command chooserCommand) {
     return Commands.parallel(
           Commands.print("running autonCmdBuilder"),
+          intake.ejectFlap().withTimeout(1),
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
           superstructure.simHasCoralToggle(),

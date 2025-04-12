@@ -35,6 +35,8 @@ public class Funnel extends SubsystemBase{
     
     public Funnel() {
         m_motor.getConfigurator().apply(kFunnelConfig);
+        
+        setDefaultCommand(ejectFlap().withTimeout(1));
     }
 
     public Command automaticIntake() {
@@ -59,6 +61,10 @@ public class Funnel extends SubsystemBase{
 
     public Command fast() {
         return setMotorVoltageCmd(12);
+    }
+
+    public Command ejectFlap() {
+        return setMotorVoltageCmd(-12);
     }
 
     @Override
