@@ -339,8 +339,9 @@ public class WaltAutonFactory {
             } else {
                 allTheTrajs.get(allTrajIdx).getFirst().done()
                     .onTrue(Commands.sequence(
-                        //Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
-                        Commands.waitUntil(m_funnel.trg_funnelVoltage.debounce(0.08)),
+                        // Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
+                        Commands.waitUntil(m_funnel.trg_atCurrLim)
+                            .alongWith(Commands.print("funnel detected coral")),
                         trajCmd,
                         m_drivetrain.stopCmd(),
                         Commands.print("Running Path: " + trajCmd)

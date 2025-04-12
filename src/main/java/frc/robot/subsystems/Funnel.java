@@ -26,9 +26,12 @@ public class Funnel extends SubsystemBase{
     public DigitalInput m_intakeBeamBreak = new DigitalInput(kBeamBreakChannel);
 
     public final Trigger trg_intakeBeamBreak = new Trigger(() -> !m_intakeBeamBreak.get());
-    public final Trigger trg_funnelVoltage = new Trigger (() -> m_motor.getStatorCurrent().getValueAsDouble() > 25);
+    public final Trigger trg_atCurrLim = new Trigger(() -> m_motor.getFault_StatorCurrLimit().refresh().getValue());
 
     private final BooleanLogger log_intakeBeamBreak = WaltLogger.logBoolean(kLogTab, "intakeBeamBreak");
+    private final BooleanLogger log_veloDrop = WaltLogger.logBoolean(kLogTab, "veloDrop");
+    private final BooleanLogger log_currSpike = WaltLogger.logBoolean(kLogTab, "currSpike");
+    private final BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "hasCoral");
     
     public Funnel() {
         m_motor.getConfigurator().apply(kFunnelConfig);
@@ -61,5 +64,6 @@ public class Funnel extends SubsystemBase{
     @Override
     public void periodic() {
         log_intakeBeamBreak.accept(trg_intakeBeamBreak);
+        log_hasCoral.accept(trg_atCurrLim);
     }
 }
