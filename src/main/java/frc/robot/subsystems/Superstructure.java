@@ -376,7 +376,7 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_funnel.stopCmd(),
-                    m_coral.stopCoralMotorCmd()
+                    m_coral.stopCmd()
                 ).alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
@@ -422,7 +422,7 @@ public class Superstructure {
                 Commands.sequence(
                     m_coral.score(),
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
-                    m_coral.stopCoralMotorCmd(),
+                    m_coral.stopCmd(),
                     Commands.print("in scoring the state")
                 ).alongWith(takeCam1Snapshots())
             );
@@ -521,7 +521,7 @@ public class Superstructure {
     /* methods that Actually Do Things */
     public Command resetEverything() {
         return Commands.sequence(
-            m_coral.stopCoralMotorCmd(),
+            m_coral.stopCmd(),
             m_funnel.stopCmd(),
             Commands.print("in reset everything"),
             m_ele.toHeightCoral(() -> HOME),
@@ -530,18 +530,9 @@ public class Superstructure {
     }
 
     public Command algaeRemoval() {
-        return baseAlgaeRemoval();
-    }
-
-    public Command baseAlgaeRemoval() {
-        return Commands.startEnd(
-            () -> {
-                m_finger.algaeDescoreCmd();
-                m_coral.runWheelsAlgaeRemoval();
-            }, () -> {
-                m_finger.toIdleCmd();
-                m_coral.stopCoralMotor();
-            }
+        return Commands.parallel(
+            m_finger.algaeDescoreCmd(),
+            m_coral.runWheelsAlgaeRemoval()
         );
     }
 

@@ -375,13 +375,13 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-          superstructure.baseAlgaeRemoval()
+          superstructure.algaeRemoval()
         )
       );
       trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-          superstructure.baseAlgaeRemoval()
+          superstructure.algaeRemoval()
         )
       );    
 
