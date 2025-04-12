@@ -149,11 +149,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
     private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
-
-    private final DoubleLogger log_autoAlignErrorX = WaltLogger.logDouble("Swerve", "auto align x error");
-    private final DoubleLogger log_autoAlignErrorY = WaltLogger.logDouble("Swerve", "auto align y error");
-    private final DoubleLogger log_autoAlignErrorTheta = WaltLogger.logDouble("Swerve", "auto align theta error");
-
     private final DoubleLogger log_chassisSpeedVXError = WaltLogger.logDouble("Swerve", "vx speed error");
     private final DoubleLogger log_chassisSpeedVYError = WaltLogger.logDouble("Swerve", "vy speed error");
 
