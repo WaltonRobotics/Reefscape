@@ -463,8 +463,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public Command autoAlignWithIntermediatePose(
         Supplier<Pose2d> intermediate,
         Supplier<Pose2d> end) {
-        return moveToPose(this, intermediate, ChassisSpeeds::new)
+        return Commands.print("start auto align")
+            .andThen(moveToPose(this, intermediate, ChassisSpeeds::new))
             .until(() -> isInTolerance(getState().Pose, intermediate.get()))
+            .andThen(Commands.print("finished going to intermediate"))
             .andThen(moveToPose(this, end, ChassisSpeeds::new));
     }
 
