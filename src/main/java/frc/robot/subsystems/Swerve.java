@@ -449,7 +449,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     public Command directAutoAlignEleUp(
         Supplier<Pose2d> end) {
-        return moveToPose(this, end, ChassisSpeeds::new, () -> AutoAlignmentK.kXYConstraintsEleUp);
+        return moveToPose(this, end, ChassisSpeeds::new, () -> AutoAlignmentK.kXYConstraintsAuton);
     }
 
     // transform2d will have to be put in a supplier if you want to ever change it after the program starts running

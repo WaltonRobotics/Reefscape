@@ -460,9 +460,9 @@ public class Constants {
         public static final double kMaxDimensionVel = 1.25; // m/s
         public static final double kMaxDimensionAccel = 6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
-        public static final double kMaxDimensionVelEleUp = 1.25; // m/s
+        public static final double kMaxDimensionVelEleUp = 2; // m/s
         public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
-        public static final TrapezoidProfile.Constraints kXYConstraintsEleUp 
+        public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
             = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 
         public static final double kMaxThetaVel = 3; // rad/s
