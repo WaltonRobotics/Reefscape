@@ -224,11 +224,11 @@ public class Superstructure {
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.04).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt).and(RobotModeTriggers.teleop()))
+        (stateTrg_eleToHP.debounce(0.08).and(trg_inOverride.negate()).and(transTrg_eleNearSetpt).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.PRE_INTAKE));
         (stateTrg_preIntaking.and(trg_inOverride.negate().and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop())))
             .onTrue(changeStateCmd(State.INTAKING));
-        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor.debounce(0.125)))
+        (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_botSensor))
             .onTrue(changeStateCmd(State.INTOOK));
@@ -254,7 +254,7 @@ public class Superstructure {
 
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.04).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()))
+        (stateTrg_eleToHP.debounce(0.1).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.INTAKING));
         (trg_hasCoral.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
