@@ -317,7 +317,7 @@ public class Robot extends TimedRobot {
     // and Y is defined as to the left according to WPILib convention.
     // Drivetrain will execute this command periodically
     return drivetrain.applyRequest(() -> {
-      var angularRate = driver.rightStick().getAsBoolean() ? 
+      var angularRate = driver.leftTrigger().getAsBoolean() ? 
         kMaxHighAngularRate : kMaxAngularRate;
     
       var driverXVelo = -driver.getLeftY() * kMaxTranslationSpeed;
