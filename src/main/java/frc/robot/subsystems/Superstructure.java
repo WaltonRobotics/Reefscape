@@ -180,7 +180,7 @@ public class Superstructure {
         m_funnel = funnel;
         
         /* state change trigs */
-        transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
+        transTrg_eleNearSetpt = m_ele.remoteAtSetpointTrigger(stateEventLoop);
         if (!Robot.isSimulation()) {
             transTrg_topSensor = m_coral.trg_topBeamBreak;
             transTrg_botSensor = m_coral.trg_botBeamBreak;
@@ -247,7 +247,7 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L4));
 
         /* TODO: make debouncer time faster */
-        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.05).and(transTrg_eleNearSetpt))
+        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.08).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.SCORE_READY));
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop())) 
             .onTrue(changeStateCmd(State.SCORING));
@@ -449,7 +449,7 @@ public class Superstructure {
 
         stateTrg_scored
             .onTrue(
-                Commands.runOnce(() -> m_l1Toggle = false)
+                resetTriggers()
             );
 
         stateTrg_algaeRemovalL2
@@ -614,6 +614,17 @@ public class Superstructure {
         }
     }
 
+    public Command resetTriggers() {
+        return Commands.runOnce(() -> {
+             m_autonScoreReq = false;
+             m_autonEleToL1Req = false;
+             m_autonEleToL2Req = false;
+             m_autonEleToL3Req = false;
+             m_autonEleToL4Req = false;
+             m_l1Toggle = false;
+        });
+    }
+
     public Command autonPreloadReq() {
         return (changeStateCmd(State.INTOOK));
     }
@@ -664,10 +675,10 @@ public class Superstructure {
         log_teleopIntakeReq.accept(trg_teleopIntakeReq);
         log_teleopScoreReq.accept(trg_teleopScoreReq);
 
-        log_eleToL1Req.accept(trg_teleopL1Req);
-        log_eleToL2Req.accept(trg_teleopL2Req);
-        log_eleToL3Req.accept(trg_teleopL3Req);
-        log_eleToL4Req.accept(trg_teleopL4Req);
+        log_eleToL1Req.accept(trg_teleopL1Req.or(trg_autonL1Req));
+        log_eleToL2Req.accept(trg_teleopL2Req.or(trg_autonL2Req));
+        log_eleToL3Req.accept(trg_teleopL3Req.or(trg_autonL3Req));
+        log_eleToL4Req.accept(trg_teleopL4Req.or(trg_autonL4Req));
 
         log_algaeRemovalButton.accept(trg_dealgaeL2Req.or(trg_dealgaeL3Req));
 
