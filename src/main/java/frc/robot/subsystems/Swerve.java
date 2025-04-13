@@ -27,6 +27,7 @@ import choreo.auto.AutoRoutine;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -35,6 +36,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -133,8 +135,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         .getStructTopic(kTopicPrefix + "actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "desiredRobotPose", Pose2d.struct).publish();
-    static StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
-        .getStructTopic(kStaticTopicPrefix + "autoAlignDestinationPose", Pose2d.struct).publish();
 
     StructPublisher<Pose2d> log_trajStartPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "activeTrajStart", Pose2d.struct).publish();

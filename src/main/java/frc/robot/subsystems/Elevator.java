@@ -18,6 +18,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
@@ -98,9 +99,9 @@ public class Elevator extends SubsystemBase {
             new MechanismLigament2d("Elevator", m_elevatorSim.getPositionMeters(), 90, 6, new Color8Bit(Color.kRed))
         );
 
-    private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition");
+    private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition", PubSubOption.sendAll(true));
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
-    private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight");
+    private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight", PubSubOption.sendAll(true));
     private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
     private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "motorTemp");
 
@@ -199,7 +200,7 @@ public class Elevator extends SubsystemBase {
                 m_desiredHeight = rotations;
                 // double heightRots = ElevatorK.metersToRotation(Meters.of(rotations)).in(Rotations);
                 m_MMVRequest = m_MMVRequest.withPosition(rotations);
-                log_elevatorDesiredPosition.accept(rotations);
+                log_elevatorDesiredPosition.accept(m_MMVRequest.Position);
                 m_frontMotor.setControl(m_MMVRequest);
             }
         ).until(() -> nearSetpoint());
@@ -236,7 +237,7 @@ public class Elevator extends SubsystemBase {
                     m_frontMotor.getConfigurator().apply(kClimbCurrentLimitConfigs);
                     m_rearMotor.getConfigurator().apply(kClimbCurrentLimitConfigs);
                     m_desiredHeight = EleHeight.CLIMB_DOWN.rotations;
-                    log_elevatorDesiredPosition.accept(m_desiredHeight);
+                    log_elevatorDesiredPosition.accept(m_MMVRequest.Position);
                 }
             ),
             Commands.runOnce(() -> {
@@ -325,6 +326,7 @@ public class Elevator extends SubsystemBase {
         log_eleAtHeight.accept(nearSetpoint());
         log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
         log_eleMotorTemp.accept(m_frontMotor.getDeviceTemp().getValueAsDouble());
+        log_elevatorDesiredPosition.accept(m_MMVRequest.Position);
     }
 
     @Override
@@ -348,7 +350,7 @@ public class Elevator extends SubsystemBase {
 
     public enum EleHeight {
         HOME(0.3),
-        L1(5.590325),
+        L1(2 + (kInch * 9.25)),
         L2(5.653564 + kInch),
         L3(8.451660 + (kInch / 2)),
         L4(12.89),
@@ -366,7 +368,7 @@ public class Elevator extends SubsystemBase {
     }
 
     public enum AlgaeHeight {
-        L2(6.75097),
+        L2(6.75097 - kInch),
         L3(9.529046 - 0.17);
 
         public final double rotations;

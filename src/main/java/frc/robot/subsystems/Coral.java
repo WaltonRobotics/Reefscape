@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static frc.robot.Constants.Coralk.*;
@@ -23,6 +22,7 @@ public class Coral extends SubsystemBase {
     private NeutralOut m_neutralOut = new NeutralOut();
 
     private final double m_slowIntakeSpeed = 3;
+    private final double m_slowScoreSpeed = 4.5;
     private final double m_scoreSpeed = 4.5;
     private final double m_fingerSpeed = 4.7;
 
@@ -45,7 +45,7 @@ public class Coral extends SubsystemBase {
         return Commands.sequence(
             fastIntake().until(trg_topBeamBreak),
             slowIntake().until(trg_botBeamBreak),
-            stopCoralMotorCmd()
+            stopCmd()
         );
     }
 
@@ -53,43 +53,50 @@ public class Coral extends SubsystemBase {
         m_motor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
     }
 
-    private void setCoralMotorAction(double voltage) {
+    private void setVoltage(double voltage) {
         m_motor.setControl(m_voltOutReq.withOutput(voltage));
     }
 
-    public Command setCoralMotorActionCmd(double voltage) {
-        return runOnce(() -> setCoralMotorAction(voltage));
+    public Command setVoltageCmd(double voltage) {
+        return runOnce(() -> setVoltage(voltage));
     }
 
-    public void stopCoralMotor() {
+    private void stop() {
         m_motor.setControl(m_neutralOut);
     }
 
-    public Command stopCoralMotorCmd() {
-        return runOnce(this::stopCoralMotor);
+    public Command stopCmd() {
+        return runOnce(this::stop);
     }
 
     public Command fastIntake() {
-        return setCoralMotorActionCmd(12);
+        return setVoltageCmd(kFastIntakeVolts);
     }
 
     /*
      * This happens right after the Top Beam Break occurs so that we dont *woosh* the coral out
      */
     public Command slowIntake(){
-        return setCoralMotorActionCmd(m_slowIntakeSpeed);
+        return setVoltageCmd(m_slowIntakeSpeed);
     }
 
     public Command slowIntakeReversal(){
-        return setCoralMotorActionCmd(-m_scoreSpeed);
+        return setVoltageCmd(-m_scoreSpeed);
     }
 
     public Command score() {
-        return setCoralMotorActionCmd(m_scoreSpeed);
+        return setVoltageCmd(m_scoreSpeed);
     }
 
-    public void runWheelsAlgaeRemoval() {
-        setCoralMotorAction(-m_fingerSpeed);
+    public Command slowScore() {
+        return setVoltageCmd(m_slowScoreSpeed);
+    }
+
+    public Command runWheelsAlgaeRemoval() {
+        return startEnd(
+            () -> setVoltage(-m_fingerSpeed),
+            () -> setVoltage(0)
+        );
     }
 
     @Override

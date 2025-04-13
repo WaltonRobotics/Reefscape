@@ -2,20 +2,15 @@ package frc.robot.autons;
 
 import java.util.ArrayList;
 
-import choreo.auto.AutoFactory;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.autons.TrajsAndLocs.HPReefPair;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.robot.subsystems.Superstructure;
-import frc.robot.subsystems.Swerve;
 
 public class WaltAutonBuilder {
     public static GenericEntry nte_autonEntry;
@@ -30,6 +25,7 @@ public class WaltAutonBuilder {
     public static GenericEntry nte_taxiOnly;
     public static GenericEntry nte_rightThreePiece;
     public static GenericEntry nte_leftThreePiece;
+    public static GenericEntry nte_midOnePiece;
     // public static GenericEntry nte_midGOnly;
     
     // ---- Initial
@@ -101,10 +97,11 @@ public class WaltAutonBuilder {
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 
-        // nte_midGOnly = Shuffleboard.getTab("AutonChooser")
-        //         .add("Mid G Only", false)
-        //         .withWidget(BuiltInWidgets.kToggleSwitch)
-        //         .getEntry();
+        nte_midOnePiece = Shuffleboard.getTab("AutonChooser")
+                .add("Mid 1 Piece", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
+        
     }
 
     // adds the options

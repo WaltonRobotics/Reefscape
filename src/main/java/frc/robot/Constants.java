@@ -1,7 +1,6 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
-
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.CommutationConfigs;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -43,6 +42,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 
 import org.photonvision.simulation.SimCameraProperties;
@@ -53,6 +53,7 @@ public class Constants {
  
      public static final double kRumbleIntensity = 1.0;
      public static final double kRumbleTimeoutSecs = 0.5;
+
      public static class AlgaeK {
          public static final String kLogTab = "AlgaeSubsys";
          
@@ -145,6 +146,11 @@ public class Constants {
          // public static final double kArmGearRatio = 2; //for arm pivot
  
          public static final double kCoralSpeed = 1;
+
+         public static final double kFastIntakeVolts = 12;
+         public static final double kSlowIntakeVolts = 3.7;
+         public static final double kScoreVolts = 4.5;
+         public static final double kFingerVolts = 4.7;
  
          public static final TalonFXConfiguration kCoralMotorTalonFXConfiguration = new TalonFXConfiguration()
              .withMotorOutput(new MotorOutputConfigs()
@@ -186,11 +192,12 @@ public class Constants {
  
          public static final int kFingerMotorCANID = 31;
  
-         public static final double kMaxAngleRotations = 0;
+         public static final double kMaxAngleRotations = -0.1;
          public static final double kMinAngleRotations = -1;
          public static final double kParallelToGroundRotations = -0.64;
          public static final double kClimbRotations = -0.9;
-         public static final double kDefaultPos = -0.04; 
+         public static final double kL1GuideRotations = -0.8;
+         public static final double kDefaultPos = -0.1; 
  
          private static final MotorOutputConfigs kMotorOutputConfig = new MotorOutputConfigs()
              .withInverted(InvertedValue.Clockwise_Positive)
@@ -343,12 +350,12 @@ public class Constants {
             .withCurrentLimits(kCurrentLimitConfigs)
             .withMotorOutput(kMotorOutputConfigs);
      }
- 
+
      public class RobotK {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(2.75); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(2.9); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -463,14 +470,22 @@ public class Constants {
         }
 
         // TODO: these will really need tuning
-        public static final double kXMaxVelocity = 3; // m/s
-        public static final double kXMaxAccel = 3; // m/s^2
+        // teleop speeds below
+        public static final double kMaxDimensionVel = 1.65; // m/s
+        public static final double kMaxDimensionAccel = 6; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
+        // Auton speeds below
+        public static final double kMaxDimensionVelEleUp = 2; // m/s
+        public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
+            = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 
-        public static final double kYMaxVelocity = 3; // m/s
-        public static final double kYMaxAccel = 3; // m/s^2
 
-        public static final double kThetaMaxVelocity = 45; // deg/s
-        public static final double kThetaMaxAccel = 45; // deg/s^2
+        public static final double kFinishedVelTolerance = 0.1; // m/s
+
+        public static final double kMaxThetaVel = 4; // rad/s
+        public static final double kMaxThetaAccel = 8; // rad/s^2
+        public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
         
         /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
          * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */

@@ -1,8 +1,6 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -25,8 +23,6 @@ import frc.util.WaltLogger.DoubleLogger;
 import frc.util.WaltLogger.IntLogger;
 import frc.util.WaltLogger.StringLogger;
 
-import static frc.robot.Constants.kRumbleIntensity;
-import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.AlgaeK.*;
 
 import java.util.function.BooleanSupplier;
