@@ -60,13 +60,14 @@ import frc.robot.subsystems.Algae.State;
 
 public class Robot extends TimedRobot {
 
-  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
-  private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
-  private final Telemetry logger = new Telemetry(MaxSpeed);
+  private final double kMaxTranslationSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
+  private final double kMaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
+  private final double kMaxHighAngularRate = RotationsPerSecond.of(1.5).in(RadiansPerSecond);
+  private final Telemetry logger = new Telemetry(kMaxTranslationSpeed);
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-          .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+          .withDeadband(kMaxTranslationSpeed * 0.1).withRotationalDeadband(kMaxAngularRate * 0.1) // Add a 10% deadband
           .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -95,6 +96,7 @@ public class Robot extends TimedRobot {
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
+  private final DoubleLogger log_stickDesiredFieldZRot = WaltLogger.logDouble("Swerve", "stick desired teleop z rot");
   private final DoubleLogger log_fieldX = WaltLogger.logDouble("Swerve", "calculated field x speed");
   private final DoubleLogger log_fieldY = WaltLogger.logDouble("Swerve", "calculate field y speed");
 
@@ -252,9 +254,9 @@ public class Robot extends TimedRobot {
     drivetrain.setDefaultCommand(
           // Drivetrain will execute this command periodically
           drivetrain.applyRequest(() ->
-              drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-                  .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
-                  .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
+              drive.withVelocityX(-driver.getLeftY() * kMaxTranslationSpeed) // Drive forward with Y (forward)
+                  .withVelocityY(-driver.getLeftX() * kMaxTranslationSpeed) // Drive left with X (left)
+                  .withRotationalRate(-driver.getRightX() * kMaxAngularRate) // Drive counterclockwise with negative X (left)
           )
       );
     // driver.a().onTrue(
@@ -310,80 +312,87 @@ public class Robot extends TimedRobot {
     // driver.start().whileTrue(drivetrain.wheelRadiusCharacterization(1));
   }
 
+  private Command driveCommand() {
+    // Note that X is defined as forward according to WPILib convention,
+    // and Y is defined as to the left according to WPILib convention.
+    // Drivetrain will execute this command periodically
+    return drivetrain.applyRequest(() -> {
+      var angularRate = driver.leftTrigger().getAsBoolean() ? 
+        kMaxHighAngularRate : kMaxAngularRate;
+    
+      var driverXVelo = -driver.getLeftY() * kMaxTranslationSpeed;
+      var driverYVelo = -driver.getLeftX() * kMaxTranslationSpeed;
+      var driverYawRate = -driver.getRightX() * angularRate;
+
+      log_stickDesiredFieldX.accept(driverXVelo);
+      log_stickDesiredFieldY.accept(driverYVelo);
+      log_stickDesiredFieldZRot.accept(driverYawRate);
+        
+      return drive
+        .withVelocityX(driverXVelo) // Drive forward with Y (forward)
+        .withVelocityY(driverYVelo) // Drive left with X (left)
+        .withRotationalRate(driverYawRate); // Drive counterclockwise with negative X (left)
+    });
+  }
+
   private void configureBindings() {
-      // Note that X is defined as forward according to WPILib convention,
-      // and Y is defined as to the left according to WPILib convention.
-      drivetrain.setDefaultCommand(
-        // TODO: remember to remove this logging!
-        Commands.parallel(
-          // Drivetrain will execute this command periodically
-          drivetrain.applyRequest(() ->
-            drive.withVelocityX(-driver.getLeftY() * MaxSpeed) // Drive forward with Y (forward)
-              .withVelocityY(-driver.getLeftX() * MaxSpeed) // Drive left with X (left)
-              .withRotationalRate(-driver.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
-          ),
-          Commands.runOnce(() -> {
-            log_stickDesiredFieldX.accept(-driver.getLeftY() * MaxSpeed);
-            log_stickDesiredFieldY.accept(-driver.getLeftX() * MaxSpeed);
-          })
-        )
-      );
+    drivetrain.setDefaultCommand(driveCommand());
 
-      trg_driverDanger.and(driver.leftBumper()).whileTrue(
-        Commands.parallel(
-          drivetrain.applyRequest(() -> straightWheelsReq),
-          Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
-        ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
-      );
+    trg_driverDanger.and(driver.leftBumper()).whileTrue(
+      Commands.parallel(
+        drivetrain.applyRequest(() -> straightWheelsReq),
+        Commands.runOnce(() ->  drivetrain.setNeutralMode(NeutralModeValue.Coast)
+      ).finallyDo(() -> drivetrain.setNeutralMode(NeutralModeValue.Brake)))
+    );
 
-      // driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
-      // driver.y().whileTrue(drivetrain.applyRequest(() ->
-      //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
-      // ));
-      driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
+    // driver.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    // driver.y().whileTrue(drivetrain.applyRequest(() ->
+    //     point.withModuleDirection(new Rotation2d(-driver.getLeftY(), -driver.getLeftX()))
+    // ));
+    driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-      driver.rightBumper().onTrue(
-        Commands.parallel(
-          resetEverythingCheck()
-        )
-      );
+    driver.rightBumper().onTrue(
+      Commands.parallel(
+        resetEverythingCheck()
+      )
+    );
 
-      trg_leftTeleopAutoAlign.whileTrue(
-        autoAlignCmd(false)
-      );
-      trg_rightTeleopAutoAlign.whileTrue(
-        autoAlignCmd(true)
-      );
-      trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
-     
-      trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
-      trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
-      trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
-      trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
-      trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
+    trg_leftTeleopAutoAlign.whileTrue(
+      autoAlignCmd(false)
+    );
+    trg_rightTeleopAutoAlign.whileTrue(
+      autoAlignCmd(true)
+    );
+    trg_driverDanger.and(driver.rightTrigger()).onTrue(superstructure.forceShoot());
+    
+    trg_manipDanger.and(trg_intakeReq).onTrue(superstructure.forceStateToIntake());
+    trg_manipDanger.and(trg_toL1).onTrue(superstructure.forceL1());
+    trg_manipDanger.and(trg_toL2).onTrue(superstructure.forceL2());
+    trg_manipDanger.and(trg_toL3).onTrue(superstructure.forceL3());
+    trg_manipDanger.and(trg_toL4).onTrue(superstructure.forceL4());
 
-      trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
-        Commands.parallel(
-          elevator.currentSenseHoming(),
-          finger.currentSenseHoming(),
-          algae.currentSenseHoming()
-        ).andThen(superstructure.forceIdle())
-      );
+    trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
+      Commands.parallel(
+        elevator.currentSenseHoming(),
+        finger.currentSenseHoming(),
+        algae.currentSenseHoming()
+      ).andThen(superstructure.forceIdle())
+    );
 
-      manipulator.leftBumper().onTrue(superstructure.forceIdle());
+    manipulator.leftBumper().onTrue(superstructure.forceIdle());
 
-      trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
-        Commands.parallel(
-          elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-          superstructure.algaeRemoval()
-        )
-      );
-      trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
-        Commands.parallel(
-          elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-          superstructure.algaeRemoval()
-        )
-      );    
+    trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
+      Commands.parallel(
+        elevator.toHeightAlgae(() -> AlgaeHeight.L2),
+        superstructure.algaeRemoval()
+      )
+    );
+    trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
+      Commands.parallel(
+        elevator.toHeightAlgae(() -> AlgaeHeight.L3),
+        superstructure.algaeRemoval()
+      )
+    );    
 
     manipulator.y()
       .onTrue(algae.changeStateCmd(State.HOME));
@@ -436,13 +445,6 @@ public class Robot extends TimedRobot {
     log_visionSeenPastSecond.accept(visionSeenPastSec);
     double rio6VCurrent = RobotController.getCurrent6V();
     log_rio6VRailCurrent.accept(rio6VCurrent);
-
-    // TODO: remove this before comp
-    ChassisSpeeds fieldRelativeSpeeds = drivetrain.getFieldRelativeChassisSpeeds();
-    log_fieldX.accept(fieldRelativeSpeeds.vxMetersPerSecond);
-    log_fieldY.accept(fieldRelativeSpeeds.vyMetersPerSecond);
-
-    // robotField.getRobotObject().setPose(drivetrain.getStateCopy().Pose);
   }
 
   @Override
