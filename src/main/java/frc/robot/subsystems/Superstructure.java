@@ -277,6 +277,9 @@ public class Superstructure {
         (stateTrg_algaeRemovalL3.and(trg_dealgaeL3Req.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
+        (m_funnel.trg_atCurrLim).or(transTrg_topSensor)
+            .onTrue(driverRumble(kRumbleIntensity, kRumbleTimeoutSecs));
+
         /*
          * rip climber.
          * truly was a concept of all time.
@@ -350,8 +353,8 @@ public class Superstructure {
                         m_coral.fastIntake()
                     ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
-                    Commands.print("RUMBLE coming to a controller near you soon..."),
-                    driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                    Commands.print("RUMBLE coming to a controller near you soon...")
+                    //driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
                 )
             );
 
