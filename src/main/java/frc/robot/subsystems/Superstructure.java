@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import static frc.robot.Constants.kRumbleIntensity;
 import static frc.robot.Constants.kRumbleTimeoutSecs;
 import static frc.robot.Constants.RobotK.*;
 
@@ -349,8 +350,8 @@ public class Superstructure {
                         m_coral.fastIntake()
                     ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
-                    Commands.print("RUMBLE coming to a controller near you soon...")
-                    // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
+                    Commands.print("RUMBLE coming to a controller near you soon..."),
+                    driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
                 )
             );
 
