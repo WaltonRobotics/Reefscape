@@ -1,5 +1,6 @@
 package frc.robot.autoalign;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -9,10 +10,14 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.subsystems.Swerve;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.Constants.LegacyAutoAlignK;
 
 public class LegacyAutoAlign {
@@ -52,5 +57,36 @@ public class LegacyAutoAlign {
     public static Command moveToPoseUntilInTolerance(Swerve drivetrain, Supplier<Pose2d> destinationPose) {
         return moveToPose(drivetrain, destinationPose)
             .until(() -> AutoAlignUtils.isInTolerance(drivetrain.getState().Pose, destinationPose.get()));
+    }
+
+    // MAX ROTATION TOLERANCE IN RADIANS
+    public static Command moveToPoseUntilInTimeScaledTolerance(
+            Swerve drivetrain, 
+            Supplier<Pose2d> destinationPose, 
+            DoubleSupplier maxToleranceTime, 
+            DoubleSupplier maxLinearTolerance, 
+            DoubleSupplier maxRotationTolerance) {
+        final double[] initialTime = {Double.MAX_VALUE};
+        return Commands.runOnce(() -> {
+            initialTime[0] = Timer.getFPGATimestamp();
+        })
+            .andThen(moveToPose(drivetrain, destinationPose))
+            .until(() -> {
+                double currentTime = Timer.getFPGATimestamp();
+                double deltaTime = currentTime - initialTime[0];
+
+                double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double deltaRotationTolerance = maxRotationTolerance.getAsDouble() - SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
+                
+                double percentageTimeComplete = deltaTime / maxToleranceTime.getAsDouble();
+
+                double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
+                    + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double rotationTolerance = percentageTimeComplete * deltaRotationTolerance
+                    + SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
+                
+                return AutoAlignUtils.isInTolerance(drivetrain.getState().Pose, destinationPose.get(), 
+                    linearTolerance, rotationTolerance);
+            });
     }
 }

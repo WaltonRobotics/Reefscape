@@ -4,6 +4,9 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
@@ -211,15 +214,46 @@ public class AutoAlignUtils {
      * @return true when within tolerances, false otherwise
      */
     public static boolean isInTolerance(Pose2d pose, Pose2d pose2, ChassisSpeeds speeds) {
-        return isInTolerance(pose, pose2)
+        return isInTolerance(pose, pose2, speeds, SharedAutoAlignK.kFieldTranslationTolerance.in(Meters), 
+            SharedAutoAlignK.kFieldRotationTolerance.in(Radians),
+            SharedAutoAlignK.kFinishedVelTolerance);
+    }
+
+    public static boolean isInTolerance(Pose2d pose, 
+            Pose2d pose2, 
+            ChassisSpeeds speeds, 
+            double linearTolerance, 
+            double rotationalTolerance,
+            double velocityTolerance) {
+        return isInTolerance(pose, pose2, linearTolerance, rotationalTolerance)
             && MathUtil.isNear(
-                0.0, 
-                Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond), 
-                MovingAutoAlignK.kFinishedVelTolerance
+                0.0,
+                Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond),
+                velocityTolerance
             );
     }
 
-    public static boolean isInTolerance(SwerveDriveState drivetrainState, Pose2d destPose) {
-        return isInTolerance(drivetrainState.Pose, destPose, drivetrainState.Speeds);
+    public static boolean isInTolerance(Pose2d pose,
+            Pose2d pose2,
+            double linearTolerance,
+            double rotationalTolerance) {
+        final Transform2d diff = pose.minus(pose2);
+        return MathUtil.isNear(
+                0.0, Math.hypot(diff.getX(), diff.getY()), linearTolerance)
+            && MathUtil.isNear(
+                0.0, diff.getRotation().getRadians(), rotationalTolerance);
     }
+
+    // public static BooleanSupplier isInToleranceSupplier(
+    //         Supplier<Pose2d> pose,
+    //         Supplier<Pose2d> pose2,
+    //         Supplier<ChassisSpeeds> speeds,
+    //         DoubleSupplier linearTolerance,
+    //         DoubleSupplier rotationTolerance,
+    //         DoubleSupplier velocityTolerance) {
+    //     return () -> {
+    //         isInTolerance(pose.get(), pose2.get(), speeds.get(), linearTolerance.getAsDouble(), rotationTolerance.getAsDouble()
+    //             velocityTolerance.getAsDouble());
+    //     };
+    // }
 }

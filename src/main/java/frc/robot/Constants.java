@@ -454,6 +454,8 @@ public class Constants {
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6); // value in meters
         public static final Transform2d kIntermediatePoseTransform 
             = new Transform2d(kIntermediatePoseDistance, 0, Rotation2d.kZero);
+
+        public static final double kFinishedVelTolerance = 0.1; // m/s
     }
 
     public static class LegacyAutoAlignK {
@@ -519,8 +521,6 @@ public class Constants {
         public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
             = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
-
-        public static final double kFinishedVelTolerance = 0.1; // m/s
 
         public static final double kMaxThetaVel = 4; // rad/s
         public static final double kMaxThetaAccel = 8; // rad/s^2

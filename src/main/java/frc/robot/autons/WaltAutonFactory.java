@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
@@ -20,7 +22,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import frc.robot.Constants.LegacyAutoAlignK;
 import frc.robot.Constants.RobotK;
+import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -242,8 +246,11 @@ public class WaltAutonFactory {
     }
 
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
-        return LegacyAutoAlign.moveToPoseUntilInTolerance(m_drivetrain,
-            () -> getReefAutoAlignPose(reefLocSup.get()));
+        return LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(m_drivetrain,
+            () -> getReefAutoAlignPose(reefLocSup.get()),
+            () -> 1,
+            () -> 10 * SharedAutoAlignK.kFieldTranslationTolerance.in(Meters),
+            () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians));
     }
 
     public AutoRoutine midAuton() {
