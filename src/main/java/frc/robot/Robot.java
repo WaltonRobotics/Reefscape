@@ -498,8 +498,20 @@ public class Robot extends TimedRobot {
           List.of(HPStation.HP_RIGHT)
         ));
 
-        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid Auton generated"));
         WaltAutonBuilder.nte_midOnePiece.setBoolean(false);
+      }
+
+      if(WaltAutonBuilder.nte_midTown.getBoolean(false)) {
+        waltAutonFactory = Optional.of(autonFactoryFactory(
+          StartingLocs.MID_G,
+          List.of(REEF_G, REEF_D, REEF_E),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Midtown auton generated"));
+        WaltAutonBuilder.nte_midTown.setBoolean(false);        
       }
 
     

@@ -26,6 +26,7 @@ public class WaltAutonBuilder {
     public static GenericEntry nte_rightThreePiece;
     public static GenericEntry nte_leftThreePiece;
     public static GenericEntry nte_midOnePiece;
+    public static GenericEntry nte_midTown;
     // public static GenericEntry nte_midGOnly;
     
     // ---- Initial
@@ -101,7 +102,11 @@ public class WaltAutonBuilder {
                 .add("Mid 1 Piece", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
-        
+
+        nte_midTown = Shuffleboard.getTab("AutonChooser")
+                .add("Midtown", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
     }
 
     // adds the options

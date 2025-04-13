@@ -182,13 +182,16 @@ public class WaltAutonFactory {
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> trajsList = new ArrayList<>();
         try {
             for (int i = 0; i < m_scoreLocs.size(); i++) {
-                String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(m_scoreLocs.get(i), m_hpStations.get(i)));
+                var curScoreLog = m_scoreLocs.get(i);
+                var curHpStation = m_hpStations.get(i);
+                String rToH = ReefToHPTrajs.get(new Pair<ReefLocs, HPStation>(curScoreLog, curHpStation));
+                var rToHTraj = m_routine.trajectory(rToH);
                 trajsList.add(
-                    new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(rToH), Optional.empty()));
+                    new Pair<AutoTrajectory, Optional<ReefLocs>>(rToHTraj, Optional.empty()));
                 System.out.println("Adding RtoH Path: " + rToH);
                 if (i < m_scoreLocs.size() - 1) {
                     var reefLoc = m_scoreLocs.get(i + 1);
-                    String hToR = HPToReefShortTrajs.get(new Pair<HPStation, ReefLocs>(m_hpStations.get(i), reefLoc));
+                    String hToR = HPToReefShortTrajs.get(new Pair<HPStation, ReefLocs>(curHpStation, reefLoc));
                     trajsList.add(
                         new Pair<AutoTrajectory, Optional<ReefLocs>>(m_routine.trajectory(hToR), Optional.of(reefLoc)));
                         System.out.println("Adding HtoR Path: " + hToR + " with score: " + reefLoc);
