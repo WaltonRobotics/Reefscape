@@ -87,11 +87,11 @@ public class Robot extends TimedRobot {
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
-  //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam was removed (now back and better than ever)
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -375,13 +375,13 @@ public class Robot extends TimedRobot {
       trg_deAlgae.and(trg_toL2).and(trg_manipDanger).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L2),
-          superstructure.baseAlgaeRemoval()
+          superstructure.algaeRemoval()
         )
       );
       trg_deAlgae.and(trg_toL3).and(trg_manipDanger).onTrue(
         Commands.parallel(
           elevator.toHeightAlgae(() -> AlgaeHeight.L3),
-          superstructure.baseAlgaeRemoval()
+          superstructure.algaeRemoval()
         )
       );    
 
