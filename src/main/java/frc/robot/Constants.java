@@ -37,6 +37,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
+import com.ctre.phoenix6.signals.AdvancedHallSupportValue;
 import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
 import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -161,6 +162,34 @@ public class Constants {
              .withMotorOutput(new MotorOutputConfigs()
                 .withInverted(InvertedValue.Clockwise_Positive)
                 .withNeutralMode(NeutralModeValue.Brake));
+     }
+
+     public class FunnelK {
+        //motorized intake schtuff
+        public static final String kLogTab = "FunnelSubsys";
+        /* HIGHKEY TEMPORARY          | TODO: change when we assign the canid to actual canid :D 
+        * ALSO APPLIES TO BEAM BREAK | TODO: change when we figure out beambreak channel :D
+        */
+        public static final int kFunnelMotorCANID = 32; 
+        public static final int kBeamBreakChannel = 2;
+    
+        // dont see why the configs would need to be different than what the coral intake has
+        private static final MotorOutputConfigs kMotorOutCfg = new MotorOutputConfigs()
+        .withNeutralMode(NeutralModeValue.Coast);
+        private static final CommutationConfigs kCommutCfg = new CommutationConfigs()
+            .withAdvancedHallSupport(AdvancedHallSupportValue.Enabled)
+            .withMotorArrangement(MotorArrangementValue.NEO550_JST);
+        private static final CurrentLimitsConfigs kCurrLimCfg = new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(30)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(40)
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLowerLimit(20)
+            .withSupplyCurrentLowerTime(1);
+        public static final TalonFXSConfiguration kFunnelConfig = new TalonFXSConfiguration()
+            .withMotorOutput(kMotorOutCfg)
+            .withCommutation(kCommutCfg)
+            .withCurrentLimits(kCurrLimCfg);
      }
  
      public final class FingerK {
@@ -370,14 +399,14 @@ public class Constants {
         public static final String kElevatorForwardsCamName = "EleFrontCam";
         public static final Transform3d kElevatorForwardsCamRoboToCam = new Transform3d(
             Units.inchesToMeters(8.238), Units.inchesToMeters(4.81), Units.inchesToMeters(32), 
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(40), Units.degreesToRadians(-10))
+            new Rotation3d(Units.degreesToRadians(180), Units.degreesToRadians(40), Units.degreesToRadians(-10))
         );
         public static final String kElevatorForwardsCamSimVisualName = "EleForwardsVisionEstimation";
 
         public static final String kLowerRightCamName = "LowerRightCam";
         public static final Transform3d kLowerRightCamRoboToCam = new Transform3d(
-            Units.inchesToMeters(10.943), Units.inchesToMeters(-9.769), Units.inchesToMeters(8.161),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(30))
+            Units.inchesToMeters(9.964), Units.inchesToMeters(-10.499), Units.inchesToMeters(8.442),
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-9.962), Units.degreesToRadians(5))
         );
         public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
     }

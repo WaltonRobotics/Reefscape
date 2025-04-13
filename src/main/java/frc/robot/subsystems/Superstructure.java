@@ -31,6 +31,7 @@ public class Superstructure {
     private final Finger m_finger;
     private final Elevator m_ele;
     private final Optional<Vision> m_cam1;
+    private final Funnel m_funnel;
 
     public final EventLoop stateEventLoop = new EventLoop();
     public State m_state = State.IDLE;
@@ -149,6 +150,7 @@ public class Superstructure {
         Finger finger,
         Elevator ele,
         Optional<Vision> cam1,
+        Funnel funnel,
         Trigger eleToHPReq,
         Trigger L1Req,
         Trigger L2Req,
@@ -169,6 +171,7 @@ public class Superstructure {
         m_finger = finger;
         m_ele = ele;
         m_cam1 = cam1;
+        m_funnel = funnel;
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.trg_nearSetpoint;
@@ -331,7 +334,10 @@ public class Superstructure {
         stateTrg_intaking
             .onTrue(
                 Commands.sequence(
-                    m_coral.fastIntake(),
+                    Commands.parallel(
+                        m_funnel.fast(),
+                        m_coral.fastIntake()
+                    ),
                     Commands.waitUntil(m_coral.trg_topBeamBreak),
                     Commands.print("RUMBLE coming to a controller near you soon...")
                     // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
@@ -353,7 +359,11 @@ public class Superstructure {
             );
         
         stateTrg_intook
-            .onTrue(m_coral.stopCoralMotorCmd().alongWith(Commands.print("in intook the state")));
+            .onTrue(
+                Commands.parallel(
+                    m_funnel.stopCmd(),
+                    m_coral.stopCoralMotorCmd()
+                ).alongWith(Commands.print("in intook the state")));
         
         stateTrg_eleToL1
             .onTrue(
@@ -505,7 +515,10 @@ public class Superstructure {
     /* methods that Actually Do Things */
     public Command resetEverything() {
         return Commands.sequence(
-            m_coral.stopCoralMotorCmd(),
+            Commands.parallel(
+                m_funnel.stopCmd(),
+                m_coral.stopCoralMotorCmd()
+            ),
             Commands.print("in reset everything"),
             m_ele.toHeightCoral(() -> HOME),
             driverRumble(0, kRumbleTimeoutSecs)

@@ -25,6 +25,7 @@ import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Funnel;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
@@ -39,6 +40,7 @@ public class WaltAutonFactory {
     private final Superstructure m_superstructure;
     private final Elevator m_ele;
     private final Swerve m_drivetrain;
+    private final Funnel m_funnel;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -81,6 +83,7 @@ public class WaltAutonFactory {
         AutoFactory autoFactory,
         Superstructure superstructure,
         Swerve drivetrain,
+        Funnel funnel,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
@@ -91,6 +94,7 @@ public class WaltAutonFactory {
         m_superstructure = superstructure;
         m_ele = ele;
         m_drivetrain = drivetrain;
+        m_funnel = funnel;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
@@ -262,6 +266,10 @@ public class WaltAutonFactory {
             firstCmd
         );
 
+        m_routine.active().debounce(0.25).onTrue(
+            m_funnel.ejectFlap().asProxy().withTimeout(0.25)
+        );
+
         // normal cycle logic down here
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> allTheTrajs = trajMaker();
 
@@ -287,7 +295,7 @@ public class WaltAutonFactory {
 
             allTheTrajs.get(allTrajIdx).getFirst().done()
                 .onTrue(Commands.sequence(
-                    Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
+                    Commands.waitUntil(m_funnel.trg_atCurrLim.or(m_superstructure.getTopBeamBreak())),
                     trajCmd,
                     m_drivetrain.stopCmd(),
                     Commands.print("Running Path: " + trajCmd)

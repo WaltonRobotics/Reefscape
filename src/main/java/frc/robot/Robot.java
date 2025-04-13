@@ -80,6 +80,7 @@ public class Robot extends TimedRobot {
   private final Coral coral = new Coral();
   private final Finger finger = new Finger();
   private final Elevator elevator = new Elevator();
+  private final Funnel funnel = new Funnel();
   private final Algae algae;
   private final Superstructure superstructure;
 
@@ -88,11 +89,11 @@ public class Robot extends TimedRobot {
   private final VisionSim visionSim = new VisionSim();
   private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
-  //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam};  // lower right cam removed
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed readded and ready to rumble
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -156,6 +157,7 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.of(eleForwardsCam),
+      funnel,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -177,6 +179,7 @@ public class Robot extends TimedRobot {
       finger,
       elevator,
       Optional.empty(),
+      funnel,
       trg_intakeReq,
       trg_toL1,
       trg_toL2,
@@ -216,7 +219,7 @@ public class Robot extends TimedRobot {
     StartingLocs startLoc, List<ReefLocs> scoreLocs,
     List<EleHeight> heights, List<HPStation> hpStations) {
       return new WaltAutonFactory(
-        elevator, drivetrain.autoFactory, superstructure, drivetrain, 
+        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel,
         startLoc, new ArrayList<>(scoreLocs), new ArrayList<>(heights), new ArrayList<>(hpStations)
       );
   }
@@ -486,9 +489,9 @@ public class Robot extends TimedRobot {
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
         waltAutonFactory = Optional.of(autonFactoryFactory(
           StartingLocs.LEFT, 
-          List.of(REEF_J, REEF_K, REEF_L),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+          List.of(REEF_J, REEF_K, REEF_L, REEF_A),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
 
         // autonName = "Left 3 Piece: ";
