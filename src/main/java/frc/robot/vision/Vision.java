@@ -1,28 +1,15 @@
 package frc.robot.vision;
 
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.robot.Robot;
-import frc.robot.Constants.MovingAutoAlignK;
-import frc.robot.Constants.FieldK;
-import frc.robot.FieldConstants;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.robot.subsystems.Swerve;
-import frc.util.AllianceFlipUtil;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,8 +22,6 @@ import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
-
-import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 
 import static frc.robot.Constants.FieldK.kTagLayout;
 
@@ -101,186 +86,6 @@ public class Vision {
         takeOutputSnapshot();
         System.out.println(m_cameraName + ": BothSnapshot");
     }
-
-    // /**
-    //  * <p>Calculates slightly future pose using constants and combines it with current pose to account somewhat for velocity.
-    //  * <p>See {@link #getMostRealisticScorePose(SwerveDriveState, boolean)}
-    //  * <p>Takes in a current swerve drive state and returns weighted pose from current velociites and position.
-    //  * @param swerveDriveState Current state of the drivetrain
-    //  * @return Velocity weighted pose.
-    //  */
-    // public static Pose2d getVelocityWeightedPose(SwerveDriveState swerveDriveState) {
-    //     Pose2d curPose = swerveDriveState.Pose;
-    //     ChassisSpeeds curChassisSpeeds = swerveDriveState.Speeds;
-    //     double heading = curPose.getRotation().getRadians();
-
-    //     // yay the math should finally be worked out (but TODO check math. implemented teleop drive logging for it)
-    //     double fieldXVel = curChassisSpeeds.vxMetersPerSecond * Math.cos(heading) + curChassisSpeeds.vyMetersPerSecond * Math.sin(Math.PI / 2 + heading);
-    //     double fieldYVel = curChassisSpeeds.vyMetersPerSecond * Math.sin(heading) + curChassisSpeeds.vyMetersPerSecond * Math.cos(Math.PI / 2 + heading);
-    //     Transform2d transformToFuture = new Transform2d(fieldXVel * AutoAlignmentK.kFutureDelta, fieldYVel * AutoAlignmentK.kFutureDelta,
-    //         Rotation2d.fromRadians(curChassisSpeeds.omegaRadiansPerSecond * AutoAlignmentK.kFutureDelta));
-    //     Pose2d futurePoseFieldCalculated = curPose.transformBy(transformToFuture);
-
-    //     // this might cook? math would be more verbose and i trust the wpilib people to optimize their code better than mine
-    //     return curPose.interpolate(futurePoseFieldCalculated, AutoAlignmentK.kFutureWeight);
-    // }
-
-    /**
-     * <p>See {@link #getMostRealisticScorePose(Pose2d, boolean)}
-     * <p>Takes in a current pose and returns the id of the closest reef april tag
-     * @param currentPose a Pose2d for the current position
-     * @return returns empty if it fails for some reason to avoid crashing the robot in the event it fails
-     */
-    public static Optional<Integer> getClosestReefTagId(Pose2d currentPose) {
-        // cache current alliance
-        Optional<Alliance> curAlliance = DriverStation.getAlliance();
-
-        // this WILL get updated. it loops through all april tags later
-        Optional<AprilTag> closestReefAprilTag = Optional.empty();
-        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
-        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
-            // makes sure it is on the correct reef before doing anything
-            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
-                continue;
-            }
-            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
-            Transform2d diff = currentPose.minus(aprilTagPose).plus(new Transform2d(new Translation2d(), Rotation2d.k180deg));
-            // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
-            // should work to throw out poses that have more disimilar rotations
-            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2)
-                + MovingAutoAlignK.kRotationWeight * Math.pow(diff.getRotation().getRadians(), 2));
-            // actually update values if the distance is the smallest
-            if (distance <= minimumDistance) {
-                closestReefAprilTag = Optional.of(aprilTag);
-                minimumDistance = distance;
-            }
-        }
-        if (closestReefAprilTag.isEmpty()) {
-            System.out.println("AUTO ALIGN EMPTY closestReefAprilTag");
-            return Optional.empty();
-        }
-
-        return Optional.of(closestReefAprilTag.get().ID);
-    }
-
-     public static int getMostLikelyReefTagId(SwerveDriveState curState) {
-        // cache current alliance
-        Optional<Alliance> curAlliance = DriverStation.getAlliance();
-        // this all handles looking slightly ahead to the future and predicting future position
-        Pose2d curPose = curState.Pose;
-        ChassisSpeeds fieldRelativeChassisSpeeds = Swerve.getFieldRelativeChassisSpeeds(curState);
-        Transform2d transformToFuture = new Transform2d(
-            fieldRelativeChassisSpeeds.vxMetersPerSecond * MovingAutoAlignK.kFutureDelta, 
-            fieldRelativeChassisSpeeds.vyMetersPerSecond * MovingAutoAlignK.kFutureDelta, 
-            Rotation2d.fromRadians(fieldRelativeChassisSpeeds.omegaRadiansPerSecond * MovingAutoAlignK.kFutureDelta));
-        Pose2d futurePose = curPose.transformBy(transformToFuture);
-
-        // this WILL get updated. it loops through all april tags later
-        Optional<AprilTag> closestReefAprilTag = Optional.empty();
-        double minimumDistance = Double.MAX_VALUE; // meters (nothing will actually be this far away, right?)
-        for (AprilTag aprilTag : FieldK.kTagLayout.getTags()) {
-            // makes sure it is on the correct reef before doing anything
-            if (!isTagIdOnAllianceReef(aprilTag.ID, curAlliance)) {
-                continue;
-            }
-            Pose2d aprilTagPose = aprilTag.pose.toPose2d();
-            Transform2d diff = futurePose.minus(aprilTagPose).plus(new Transform2d(new Translation2d(), Rotation2d.k180deg));
-            // find the distance between x and y coordintaes and throw rotation in radians in there as a 3rd dimension
-            // should work to throw out poses that have more disimilar rotations
-            double distance = Math.sqrt(Math.pow(diff.getX(), 2) + Math.pow(diff.getY(), 2)
-                + MovingAutoAlignK.kRotationWeight * Math.pow(diff.getRotation().getRadians(), 2));
-            // actually update values if the distance is the smallest
-            if (distance <= minimumDistance) {
-                closestReefAprilTag = Optional.of(aprilTag);
-                minimumDistance = distance;
-            }
-        }
-        if (closestReefAprilTag.isEmpty()) {
-            System.out.println("Vision::getClosestReefTagId empty closestReefAprilTag");
-        }
-
-        return closestReefAprilTag.get().ID;
-    }
-
-    public static Pose2d getScorePose(int tagId, boolean rightReef) {
-        ReefLocs correctReefLocation = null;
-        switch (tagId) {
-            case 18:
-                correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-                break;
-            case 17:
-                correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-                break;
-            case 22:
-                correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-                break;
-            case 21:
-                correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-                break;
-            case 20:
-                correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-                break;
-            case 19:
-                correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-                break;
-            case 7:
-                correctReefLocation = rightReef ? ReefLocs.REEF_B : ReefLocs.REEF_A;
-                break;
-            case 8:
-                correctReefLocation = rightReef ? ReefLocs.REEF_D : ReefLocs.REEF_C;
-                break;
-            case 9:
-                correctReefLocation = rightReef ? ReefLocs.REEF_F : ReefLocs.REEF_E;
-                break;
-            case 10:
-                correctReefLocation = rightReef ? ReefLocs.REEF_H : ReefLocs.REEF_G;
-                break;
-            case 11:
-                correctReefLocation = rightReef ? ReefLocs.REEF_J : ReefLocs.REEF_I;
-                break;
-            case 6:
-                correctReefLocation = rightReef ? ReefLocs.REEF_L : ReefLocs.REEF_K;
-                break;
-            default:
-                System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose switch case defaulted");
-                return AllianceFlipUtil.apply(Pose2d.kZero);
-        }
-
-        if (correctReefLocation == null) {
-            System.out.println("AUTO ALIGN [VISION] FAIL: Vision::getReefScorePose correctReefLocation null uncaught");
-            return AllianceFlipUtil.apply(Pose2d.kZero);
-        }
-
-        // handles checking whether flipping should occur
-        Pose2d pose = FieldConstants.kReefRobotLocationPoseMap.get(correctReefLocation);
-        return AllianceFlipUtil.apply(pose);
-    }
-
-    // /**
-    //  * Returns the most realistic scoring position.
-    //  * @param curPose Current position
-    //  * @param rightReef false for left reef, true for right reef
-    //  * @return <p>Returns the scoring position in the form of a Pose2d if no error is encountered.
-    //  * If it encounters an error, it returns empty to avoid crashing the robot in the event of a failure.
-    //  */
-    // public static Optional<Pose2d> getMostRealisticScorePose(Pose2d curPose, boolean rightReef) {
-    //     Optional<Integer> closestReefFaceTagId = getClosestReefTagId(curPose);
-    //     if (closestReefFaceTagId.isEmpty()) {
-    //         return Optional.empty();
-    //     }
-    //     return getScorePose(closestReefFaceTagId.get(), rightReef);
-    // }
-
-    /**
-     * Returns the most realistic scoring position taking into some account velocity
-     * @param swerveDriveState Current drivetrain state
-     * @param rightReef false for left reef, true for right reef
-     * @return <p>Returns the scoring position in the form of a Pose2d if no error is encountered.
-     * If it encounters an error, it returns empty to avoid crashing the robot in the event of a failure.
-     */
-    public static Pose2d getMostRealisticScorePose(SwerveDriveState swerveDriveState, boolean rightReef) {
-        return getScorePose(getMostLikelyReefTagId(swerveDriveState), rightReef);
-    }
     
     /**
      * The latest estimated robot pose on the field from vision data. This may be empty. This should
@@ -328,37 +133,6 @@ public class Vision {
         }
 
         return visionEst;
-    }
-
-    /**
-     * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
-     * @param givenId integer april tag id
-     * @param curAlliance current alliance, if the optional is empty assume blue
-     * @return whether a tag id corresponds to an apriltag on the current alliance reef
-     */
-    private static boolean isTagIdOnAllianceReef(int givenId, Optional<Alliance> curAlliance) {
-        if (curAlliance.isEmpty() || curAlliance.get().equals(Alliance.Blue)) {
-            if (curAlliance.isEmpty()) {
-                System.out.println("VISION WARN: Vision::isTagIdOnAllianceReef default to blue alliance");
-            }
-            
-            // this sets our function to use correct bounds to determine if a given tag is on the correct reef
-            return givenId >= 17 && givenId <= 22;
-        } else {
-            return givenId >= 6 && givenId <= 11;
-        }
-    }
-
-    /**
-     * <p>Returns whether a tag id corresponds to an apriltag on the current alliances reef
-     * <p>If no alliance is available from the driver station, assumes blue
-     * <p>Consider caching the alliance and using {@link #isTagIdOnAllianceReef(int, Optional)}
-     *  to improve performance
-     * @param givenId integer april tag id
-     * @return whether a tag id corresponds to an apriltag on the current alliance reef
-     */
-    private boolean isTagIdOnAllianceReef(int givenId) {
-        return isTagIdOnAllianceReef(givenId, DriverStation.getAlliance());
     }
 
     /**
