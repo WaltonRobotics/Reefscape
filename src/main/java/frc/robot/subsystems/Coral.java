@@ -22,7 +22,7 @@ public class Coral extends SubsystemBase {
     private NeutralOut m_neutralOut = new NeutralOut();
 
     private final double m_slowIntakeSpeed = 3;
-    private final double m_slowScoreSpeed = 2;
+    private final double m_slowScoreSpeed = 4.5;
     private final double m_scoreSpeed = 4.5;
     private final double m_fingerSpeed = 4.7;
 

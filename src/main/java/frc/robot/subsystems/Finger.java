@@ -45,7 +45,7 @@ public class Finger extends SubsystemBase {
     public Finger() {
         m_motor.getConfigurator().apply(kTalonFXSConfig);
 
-        setDefaultCommand(currentSenseHoming().andThen(toIdleCmd()));
+        setDefaultCommand(currentSenseHoming().andThen(inCmd()));
     }
 
     public void setFingerPos(FingerPos fingerPos) {
@@ -64,7 +64,7 @@ public class Finger extends SubsystemBase {
         return runOnce(() -> setFingerPos(FingerPos.L1_HELPER));
     }
 
-    public Command toIdleCmd() {
+    public Command inCmd() {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
     }
 

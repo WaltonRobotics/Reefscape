@@ -435,11 +435,11 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     m_coral.slowScore(),
-                    Commands.waitSeconds(0.1845),
+                    Commands.waitSeconds(0.164),
                     m_ele.toHeightCoral(() -> L2),
                     m_finger.l1HelperCmd(),
                     Commands.waitSeconds(0.18),
-                    m_finger.toIdleCmd()
+                    m_finger.inCmd()
                 )
             );
 
@@ -560,7 +560,7 @@ public class Superstructure {
                 m_finger.algaeDescoreCmd();
                 m_coral.runWheelsAlgaeRemoval();
             }, () -> {
-                m_finger.toIdleCmd();
+                m_finger.inCmd();
                 m_coral.stopCmd();
             }
         );
