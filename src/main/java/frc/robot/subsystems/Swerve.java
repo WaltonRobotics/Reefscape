@@ -524,12 +524,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         // ok, use passed constraints on X controller
         final ProfiledPIDController vxController =
-            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.00, 0.02, xyConstraints.get());
+            new ProfiledPIDController(AutoAlignmentK.kXKP, 0.01, 0.02, xyConstraints.get());
         // use constraints from constants for y controller?
         // why define them with different constraints?? it's literally field relative
         // the difference in x and y dimensions almost definitely do not mean anything to robot movement
         final ProfiledPIDController vyController =
-            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.00, 0.02, xyConstraints.get());
+            new ProfiledPIDController(AutoAlignmentK.kYKP, 0.01, 0.02, xyConstraints.get());
 
         // this is created at trigger binding, not created every time the command is scheduled
         final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
@@ -614,7 +614,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         return MathUtil.isNear(
                 0.0, Math.hypot(diff.getX(), diff.getY()), AutoAlignmentK.kFieldTranslationTolerance)
             && MathUtil.isNear(
-                0.0, diff.getRotation().getRadians(), AutoAlignmentK.kFieldRotationTolerance);
+                0.0, diff.getRotation().getDegrees(), AutoAlignmentK.kFieldRotationTolerance);
+    }
+
+    public static boolean isInTolerance(Pose2d pose, Pose2d pose2, ChassisSpeeds speeds) {
+        return isInTolerance(pose, pose2)
+            && MathUtil.isNear(0.0, Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond), AutoAlignmentK.kFinishedVelTolerance);
     }
 
     public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
