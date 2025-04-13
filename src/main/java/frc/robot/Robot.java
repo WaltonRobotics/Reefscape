@@ -37,8 +37,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.Constants.AutoAlignmentK;
+import frc.robot.Constants.MovingAutoAlignK;
+import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.Constants.VisionK;
+import frc.robot.autoalign.AutoAlignUtils;
+import frc.robot.autoalign.MovingAutoAlign;
 import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
@@ -225,22 +228,11 @@ public class Robot extends TimedRobot {
   }
 
   Command autoAlignCmd(boolean rightReef) {
-    return Commands.defer(() -> {
-      Optional<Pose2d> scorePoseOptional = Vision.getMostRealisticScorePose(drivetrain.getState().Pose, rightReef);
-      if (scorePoseOptional.isEmpty()) {
-        return Commands.none();
-      }
-      Pose2d scorePose = scorePoseOptional.get();
-
-      var initialMove = drivetrain.moveToPose(scorePose.transformBy(new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)), visionSim.getSimDebugField());
-      var closeInMove = drivetrain.moveToPose(scorePose, visionSim.getSimDebugField());
-      return Commands.sequence(
-        initialMove.withTimeout(0.5),
-        Commands.print("intermediate pose"),
-        closeInMove,
-        Commands.print("auto align truly finish")
-      );
-    }, Set.of(drivetrain)); 
+    return MovingAutoAlign.autoAlignWithIntermediateTransformUntilInTolerances(
+      drivetrain, 
+      () -> AutoAlignUtils.getMostLikelyScorePose(drivetrain.getState(), rightReef), 
+      () -> SharedAutoAlignK.kIntermediatePoseTransform
+    );
   }
 
   // checks for finger in unsafe place

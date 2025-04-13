@@ -24,7 +24,6 @@ import choreo.Choreo;
 import choreo.Choreo.TrajectoryLogger;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
-import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
@@ -41,16 +40,12 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -61,7 +56,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import static frc.robot.Constants.AutoAlignmentK.*;
+
+import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -113,9 +109,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final SwerveRequest.SysIdSwerveSteerGains m_steerCharacterization = new SwerveRequest.SysIdSwerveSteerGains();
     private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization = new SwerveRequest.SysIdSwerveRotation();
 
-    private final SwerveRequest.FieldCentric swreq_drive = new SwerveRequest.FieldCentric()
-        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-
     private final SwerveRequest.SwerveDriveBrake swreq_brake = new SwerveRequest.SwerveDriveBrake();
 
     /* wheel radius characterization schtuffs */
@@ -134,13 +127,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     private final DoubleArrayLogger log_wheelDistance = WaltLogger.logDoubleArray("Swerve", "wheelDistance (in)");
 
     private final String kTopicPrefix = "Robot/Swerve/";
+    private static final String kStaticTopicPrefix = "Robot/Swerve/";
 
     StructPublisher<Pose2d> log_choreoActualRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "actualRobotPose", Pose2d.struct).publish();
     StructPublisher<Pose2d> log_choreoDesiredRobotPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "desiredRobotPose", Pose2d.struct).publish();
-    StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
-        .getStructTopic(kTopicPrefix + "autoAlignDestinationPose", Pose2d.struct).publish();
+    static StructPublisher<Pose2d> log_autoAlignDestinationPose = NetworkTableInstance.getDefault()
+        .getStructTopic(kStaticTopicPrefix + "autoAlignDestinationPose", Pose2d.struct).publish();
 
     StructPublisher<Pose2d> log_trajStartPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "activeTrajStart", Pose2d.struct).publish();
@@ -151,11 +145,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 
     private final DoubleLogger log_errorX = WaltLogger.logDouble("Swerve", "x error");
     private final DoubleLogger log_errorY = WaltLogger.logDouble("Swerve", "y error");
-
-    private final DoubleLogger log_autoAlignErrorX = WaltLogger.logDouble("Swerve", "auto align x error");
-    private final DoubleLogger log_autoAlignErrorY = WaltLogger.logDouble("Swerve", "auto align y error");
-    private final DoubleLogger log_autoAlignErrorTheta = WaltLogger.logDouble("Swerve", "auto align theta error");
-
     private final DoubleLogger log_chassisSpeedVXError = WaltLogger.logDouble("Swerve", "vx speed error");
     private final DoubleLogger log_chassisSpeedVYError = WaltLogger.logDouble("Swerve", "vy speed error");
 
@@ -207,9 +196,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         if (trajOpt.isPresent()) {
             var traj = trajOpt.get();
             return Commands.sequence(
-                moveToPose(traj.getInitialPose(shouldMirror).get(), field2d),
+                LegacyAutoAlign.moveToPose(this, () -> traj.getInitialPose(shouldMirror).get()),
                 followTrajectory(traj),
-                moveToPose(scorePose, field2d)
+                LegacyAutoAlign.moveToPose(this, () -> scorePose)
             );
         }
         return Commands.none();
@@ -454,52 +443,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
-    /**
-     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPose Give it a destination to go to
-     * @return Returns a command that loops until it gets near
-     */
-    public Command moveToPose(Pose2d destinationPose) {
-        return moveToPose(destinationPose, null);
+    public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
+        Pose2d pose = swerveDriveState.Pose;
+        ChassisSpeeds robotRelChassisSpeeds = swerveDriveState.Speeds;
+
+        return new ChassisSpeeds(
+                robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getCos()
+                        - robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getCos()
+                        + robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.omegaRadiansPerSecond);
     }
 
-    /**
-     * Given a destintaion pose, it uses PID to move to that pose. Optimized for auto alignment, so short distances and small rotations.
-     * @param destinationPose Give it a destination to go to
-     * @param visionSim visionSim object to get simField from to do sim debugging
-     * @return Returns a command that loops until it gets near
-     */
-    public Command moveToPose(Pose2d destinationPose, Field2d field) {
-        if (field != null) {
-            field.getObject("destinationPose").setPose(destinationPose);
-        }
-        log_autoAlignDestinationPose.accept(destinationPose);
-
-        return Commands.run(
-            () -> {
-                Pose2d curPose = getState().Pose;
-
-                double xSpeed = kAutoAlignXController.calculate(curPose.getX(), destinationPose.getX());
-                double ySpeed = kAutoAlignYController.calculate(curPose.getY(), destinationPose.getY());
-                double thetaSpeed = kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), destinationPose.getRotation().getRadians());
-                xSpeed = MathUtil.clamp(xSpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                ySpeed = MathUtil.clamp(ySpeed, -kMaxXYSpeedAutoalign, kMaxXYSpeedAutoalign);
-                setControl(swreq_drive.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
-
-                log_autoAlignErrorX.accept(destinationPose.getX()-curPose.getX());
-                log_autoAlignErrorY.accept(destinationPose.getY()-curPose.getY());
-                log_autoAlignErrorTheta.accept(destinationPose.getRotation().getRadians()-curPose.getRotation().getRadians());
-            }
-        ).until(nearPose(destinationPose, kTranslationTolerance, kFieldRotationTolerance));
+    public ChassisSpeeds getFieldRelativeChassisSpeeds() {
+        return getFieldRelativeChassisSpeeds(getState());
     }
 
-    private BooleanSupplier nearPose(Pose2d dest, double toleranceMeters, double toleranceDegrees) {
-        return () -> {
-            Pose2d drivetrainPose = getState().Pose;
-            double distance = dest.getTranslation().getDistance(drivetrainPose.getTranslation());
-            return distance <= toleranceMeters && Math.abs(dest.getRotation().minus(drivetrainPose.getRotation()).getDegrees()) < toleranceDegrees;
-        };
-    }
 
     /**
      * Runs the SysId Quasistatic test in the given direction for the routine

@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import frc.robot.Constants.FieldK;
 import frc.robot.Constants.RobotK;
+import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -232,10 +232,8 @@ public class WaltAutonFactory {
     }
 
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
-        return Commands.defer(() -> {
-            Pose2d alignPose = getReefAutoAlignPose(reefLocSup.get());
-            return m_drivetrain.moveToPose(alignPose).withTimeout(0.5).andThen(Commands.print("finish auto align"));
-        }, Set.of(m_drivetrain));
+        return LegacyAutoAlign.moveToPoseUntilInTolerance(m_drivetrain,
+            () -> getReefAutoAlignPose(reefLocSup.get()));
     }
 
     public AutoRoutine generateAuton() {

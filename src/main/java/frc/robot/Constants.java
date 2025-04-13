@@ -1,10 +1,5 @@
 package frc.robot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
@@ -21,19 +16,15 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 
 import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
@@ -53,11 +44,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
-import frc.util.AllianceFlipUtil;
 
 import org.photonvision.simulation.SimCameraProperties;
-
 
 public class Constants {
      /* general */
@@ -452,13 +440,20 @@ public class Constants {
         }
     }
 
-    public static class AutoAlignmentK {
+    public static class SharedAutoAlignK {
+        public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
+        public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
 
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6); // value in meters
+        public static final Transform2d kIntermediatePoseTransform 
+            = new Transform2d(kIntermediatePoseDistance, 0, Rotation2d.kZero);
+    }
+
+    public static class LegacyAutoAlignK {
         public static double kXKP = 7;
         public static double kYKP = 7;
         public static double kThetaKP = 10;
         
-        private static final TrapezoidProfile.Constraints kAutoAlignConstraints = new TrapezoidProfile.Constraints(3, 12);
         public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
         public static final PIDController kAutoAlignYController = new PIDController(kYKP, 0, 0);
         public static final PIDController kAutoAlignThetaController = new PIDController(kThetaKP, 0, 0);
@@ -466,11 +461,6 @@ public class Constants {
         static {
             kAutoAlignThetaController.enableContinuousInput(-Math.PI, Math.PI);
         }
-
-        public static final double kTranslationTolerance = 0.005; // meters
-        public static final double kFieldRotationTolerance = 1; // degrees
-
-        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(4);
 
         // TODO: these will really need tuning
         public static final double kXMaxVelocity = 3; // m/s
@@ -492,8 +482,40 @@ public class Constants {
         public static final double kFutureWeight = 0.2;
         /**<p>Equal to 1 - {@link #kFutureWeight}. Controls weight of the current pose in velocity weighted tag selection */
         public static final double kCurrentWeight = 1 - kFutureWeight;
-        public static final double kFutureDelta = 0.1; // s
+        public static final double kFutureDelta = 0.3; // s
 
         public static final double kMaxXYSpeedAutoalign = 1.5;
+    }
+
+    public static class MovingAutoAlignK {
+        public static double kXKP = 8;
+        public static double kYKP = 8;
+        public static double kThetaKP = 10;
+
+        // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
+
+        // TODO: these will really need tuning
+        // teleop speeds below
+        public static final double kMaxDimensionVel = 1.65; // m/s
+        public static final double kMaxDimensionAccel = 6; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
+        // Auton speeds below
+        public static final double kMaxDimensionVelEleUp = 2; // m/s
+        public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
+            = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
+
+        public static final double kFinishedVelTolerance = 0.1; // m/s
+
+        public static final double kMaxThetaVel = 4; // rad/s
+        public static final double kMaxThetaAccel = 8; // rad/s^2
+        public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
+        
+        /** <p>Arbitrary number to control how much a difference in rotation should affect tag selection. Higher means more weight
+         * <p> 0 means rotation difference has no weight, negative will literally bias it against tags that have more similar rotations */
+        public static final double kRotationWeight = 0.2;
+
+        public static final double kFutureDelta = 0.3; // seconds, TODO: needs tuning
+
     }
 }
