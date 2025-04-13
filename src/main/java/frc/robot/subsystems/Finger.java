@@ -59,13 +59,13 @@ public class Finger extends SubsystemBase {
             () -> setFingerPos(FingerPos.NEAR_HOME)
         );
     }
+        
+    public Command l1HelperCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.L1_HELPER));
+    }
 
     public Command toIdleCmd() {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
-    }
-
-    public Command l1HelpCmd() {
-        return runOnce(() -> setFingerPos(FingerPos.L1_HELPER));
     }
 
     // this is bad but we're like not gonna have a climber so ykw idc #freedom #majorcope #cryinglowk #riprankingpts
@@ -120,7 +120,7 @@ public class Finger extends SubsystemBase {
 
     public enum FingerPos {
         NEAR_HOME(-0.15),
-        L1_HELPER(-0.914), // TODO: test height this is prolly not right
+        L1_HELPER(-0.4), // TODO: test height this is prolly not right
         ALGAE(-0.914),
         IN(-0.294),
         DOWN(-0.95); // TODO: name better (rip climb). also get an actual value for this cuz this ones not it.
