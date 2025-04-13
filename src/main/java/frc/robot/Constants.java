@@ -467,6 +467,7 @@ public class Constants {
         public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
             = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 
+
         public static final double kFinishedVelTolerance = 0.1; // m/s
 
         public static final double kMaxThetaVel = 4; // rad/s
