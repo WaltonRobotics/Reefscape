@@ -592,7 +592,7 @@ public class Robot extends TimedRobot {
     }
     superstructure.forceIdle().schedule();
     algae.toIdleCmd().schedule();
-    finger.toIdleCmd().schedule();
+    finger.inCmd().schedule();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }

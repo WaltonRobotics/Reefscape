@@ -45,7 +45,7 @@ public class Finger extends SubsystemBase {
     public Finger() {
         m_motor.getConfigurator().apply(kTalonFXSConfig);
 
-        setDefaultCommand(currentSenseHoming().andThen(toIdleCmd()));
+        setDefaultCommand(currentSenseHoming().andThen(inCmd()));
     }
 
     public void setFingerPos(FingerPos fingerPos) {
@@ -59,9 +59,20 @@ public class Finger extends SubsystemBase {
             () -> setFingerPos(FingerPos.NEAR_HOME)
         );
     }
+        
+    public Command l1HelperCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.L1_HELPER));
+    }
 
-    public Command toIdleCmd() {
+    public Command inCmd() {
         return runOnce(() -> setFingerPos(FingerPos.NEAR_HOME));
+    }
+
+    // this is bad but we're like not gonna have a climber so ykw idc #freedom #majorcope #cryinglowk #riprankingpts
+    // im still keeping it tho j in case we climb for grits
+    // awh look at me caring abt the team after i graduate im so nice
+    public Command fingerPrepareForClimbCmd() {
+        return runOnce(() -> setFingerPos(FingerPos.DOWN)); // idk if the climb rots r right. we gotta test this
     }
 
     public Command testFingerVoltageControl(DoubleSupplier stick) {
@@ -108,8 +119,11 @@ public class Finger extends SubsystemBase {
     }
 
     public enum FingerPos {
-        NEAR_HOME(-0.1),
-        ALGAE(-0.9);
+        NEAR_HOME(-0.15),
+        L1_HELPER(-0.4), // TODO: test height this is prolly not right
+        ALGAE(-0.914),
+        IN(-0.294),
+        DOWN(-0.95); // TODO: name better (rip climb). also get an actual value for this cuz this ones not it.
 
         public double angleRots;
         private FingerPos(double rots) {

@@ -41,6 +41,7 @@ public class Superstructure {
     private final Trigger trg_isSimulation = new Trigger(Robot::isSimulation);
 
     /* requests */
+    private boolean m_l1Toggle = false;
     /* reqs: auton */
     private boolean m_autonEleToHPReq = false;
     private boolean m_autonEleToL1Req = false;
@@ -54,6 +55,7 @@ public class Superstructure {
     private boolean m_simHasCoral = false;
 
     /* state transitions */
+    private final Trigger trg_l1Toggle = new Trigger(() -> m_l1Toggle);
     /* autoTrgs */
     private final Trigger trg_autonEleToHPReq = new Trigger(() -> m_autonEleToHPReq);
     private final Trigger trg_autonL1Req = new Trigger(() -> m_autonEleToL1Req); 
@@ -139,6 +141,7 @@ public class Superstructure {
     private BooleanLogger log_scoringReq = WaltLogger.logBoolean(kLogTab, "score req");
 
     private BooleanLogger log_hasCoral = WaltLogger.logBoolean(kLogTab, "has coral");
+    private BooleanLogger log_l1Toggle = WaltLogger.logBoolean(kLogTab, "l1 toggle");
     /* sim stuff */
     private BooleanLogger log_simIntook = WaltLogger.logBoolean(kLogTab, "SIM intook");
     private BooleanLogger log_simScored = WaltLogger.logBoolean(kLogTab, "SIM scored");
@@ -387,7 +390,8 @@ public class Superstructure {
             .onTrue(
                 Commands.parallel(
                     m_ele.toHeightCoral(() -> L1),
-                    Commands.runOnce(() -> m_autonEleToL1Req = false)
+                    Commands.runOnce(() -> m_autonEleToL1Req = false),
+                    Commands.runOnce(() -> m_l1Toggle = true)
                 )
             );
 
@@ -421,7 +425,7 @@ public class Superstructure {
                 // driverRumble(kRumbleIntensity, kRumbleTimeoutSecs)
             );
 
-        stateTrg_scoring
+        stateTrg_scoring.and(trg_l1Toggle.negate())
             .onTrue(
                 Commands.sequence(
                     m_coral.score(),
@@ -429,6 +433,23 @@ public class Superstructure {
                     m_coral.stopCmd(),
                     Commands.print("in scoring the state")
                 ).alongWith(takeCam1Snapshots())
+            );
+        
+        stateTrg_scoring.and(trg_l1Toggle)
+            .onTrue(
+                Commands.sequence(
+                    m_coral.slowScore(),
+                    Commands.waitSeconds(0.164),
+                    m_ele.toHeightCoral(() -> L2),
+                    m_finger.l1HelperCmd(),
+                    Commands.waitSeconds(0.18),
+                    m_finger.inCmd()
+                )
+            );
+
+        stateTrg_scored
+            .onTrue(
+                Commands.runOnce(() -> m_l1Toggle = false)
             );
 
         stateTrg_algaeRemovalL2
@@ -534,9 +555,18 @@ public class Superstructure {
     }
 
     public Command algaeRemoval() {
-        return Commands.parallel(
-            m_finger.algaeDescoreCmd(),
-            m_coral.runWheelsAlgaeRemoval()
+        return baseAlgaeRemoval();
+    }
+
+    public Command baseAlgaeRemoval() {
+        return Commands.startEnd(
+            () -> {
+                m_finger.algaeDescoreCmd();
+                m_coral.runWheelsAlgaeRemoval();
+            }, () -> {
+                m_finger.inCmd();
+                m_coral.stopCmd();
+            }
         );
     }
 
@@ -640,6 +670,8 @@ public class Superstructure {
         log_eleToL4Req.accept(trg_teleopL4Req);
 
         log_algaeRemovalButton.accept(trg_dealgaeL2Req.or(trg_dealgaeL3Req));
+
+        log_l1Toggle.accept(trg_l1Toggle);
     }
 
     public void logStateChangeReqs() {
