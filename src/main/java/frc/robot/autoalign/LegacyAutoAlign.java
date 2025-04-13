@@ -78,7 +78,7 @@ public class LegacyAutoAlign {
                 double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
                 double deltaRotationTolerance = maxRotationTolerance.getAsDouble() - SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
                 
-                double percentageTimeComplete = deltaTime / maxToleranceTime.getAsDouble();
+                double percentageTimeComplete = MathUtil.clamp(deltaTime / maxToleranceTime.getAsDouble(), 0, 1);
 
                 double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
                     + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
