@@ -270,7 +270,10 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     Commands.parallel(
                         autoAlignCommand(() -> REEF_G),
-                        m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
+                        Commands.sequence(
+                            m_ele.externalWaitUntilHomed(),
+                            m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
+                        )
                     ),
                     scoreCmd(EleHeight.L4)
                 )
@@ -319,7 +322,10 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     Commands.parallel(
                         autoAlignCommand(() -> m_scoreLocs.get(0)),
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                        Commands.sequence(
+                            m_ele.externalWaitUntilHomed(),
+                            m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                        )
                     ),
                     scoreCmd(m_heights.get(heightCounter++)),
                     allTheTrajs.get(0).getFirst().cmd()

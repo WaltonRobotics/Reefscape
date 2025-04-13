@@ -565,10 +565,7 @@ public class Robot extends TimedRobot {
           superstructure.autonPreloadReq(),
           algae.currentSenseHoming(),
           superstructure.simHasCoralToggle(),
-          Commands.sequence(
-            Commands.waitUntil(() -> elevator.getIsHomed()),
-            chooserCommand
-          )          
+          chooserCommand          
       );
   }
 
