@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -21,6 +22,7 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
@@ -62,6 +64,9 @@ public class Elevator extends SubsystemBase {
     private DynamicMotionMagicVoltage m_climbMMVReq = new DynamicMotionMagicVoltage(0, 0, 0, 0);
     private PositionVoltage m_climbRequest = new PositionVoltage(0).withEnableFOC(true);
 
+    private final StatusSignal<Double> m_referenceSlopeSignal = m_frontMotor.getClosedLoopReferenceSlope();
+    private final StatusSignal<Double> m_closedLoopErrSignal = m_frontMotor.getClosedLoopError();
+
     private double m_desiredHeight = 0; // needs to be logged
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
@@ -69,6 +74,17 @@ public class Elevator extends SubsystemBase {
     private BooleanSupplier m_homingCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 35.0; 
     private BooleanSupplier m_climbCurrSpike = () -> m_frontMotor.getStatorCurrent().getValueAsDouble() > 110.0;
     private BooleanSupplier m_veloIsNearZero = () -> Math.abs(m_frontMotor.getVelocity().getValueAsDouble()) < 0.01;
+    private final BooleanSupplier m_refSlopeZero = () -> m_referenceSlopeSignal.refresh().getValue() == 0;
+    private final BooleanSupplier m_clErrorInRange = () -> 
+        Math.abs(m_closedLoopErrSignal.refresh().getValueAsDouble()) <= kTolerancePulleyRotations;
+    public final Trigger trg_nearSetpointNew = new Trigger(()-> m_refSlopeZero.getAsBoolean() && m_clErrorInRange.getAsBoolean());
+    public final Trigger trg_nearSetpoint = new Trigger(() -> nearSetpoint());
+    public final Trigger remoteAtSetpointTrigger(EventLoop remoteLoop) {
+        return new Trigger(remoteLoop, ()-> m_refSlopeZero.getAsBoolean() && m_clErrorInRange.getAsBoolean());
+    }
+
+
+
     private VoltageOut m_voltageCtrlReq = new VoltageOut(0);
 
     private boolean m_isCoast = false;
@@ -77,7 +93,6 @@ public class Elevator extends SubsystemBase {
         .withWidget(BuiltInWidgets.kToggleSwitch)
         .getEntry();
 
-    final Trigger trg_nearSetpoint = new Trigger(() -> nearSetpoint());
 
 
     private final ElevatorSim m_elevatorSim = new ElevatorSim(
@@ -101,8 +116,12 @@ public class Elevator extends SubsystemBase {
 
     private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition", PubSubOption.sendAll(true));
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
-    private final DoubleLogger log_actualPosition = WaltLogger.logDouble(kLogTab, "actualPosition", PubSubOption.sendAll(true));
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight", PubSubOption.sendAll(true));
+    private final BooleanLogger log_refSlopeZero = WaltLogger.logBoolean(kLogTab, "refSlopeZero", PubSubOption.sendAll(true));
+    private final BooleanLogger log_clErrorInRange = WaltLogger.logBoolean(kLogTab, "clErrorInRange", PubSubOption.sendAll(true));
+    private final BooleanLogger log_eleAtHeightNew = WaltLogger.logBoolean(kLogTab, "atDesiredHeightNew", PubSubOption.sendAll(true));
+
+    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
     private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "motorTemp");
 
     /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
@@ -324,9 +343,12 @@ public class Elevator extends SubsystemBase {
         setCoast(nte_coast.getBoolean(false));
 
         log_eleAtHeight.accept(nearSetpoint());
-        log_actualPosition.accept(getPulleyRotations());
+        log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
         log_eleMotorTemp.accept(m_frontMotor.getDeviceTemp().getValueAsDouble());
         log_elevatorDesiredPosition.accept(m_MMVRequest.Position);
+        log_refSlopeZero.accept(m_refSlopeZero);
+        log_clErrorInRange.accept(m_clErrorInRange);
+        log_eleAtHeightNew.accept(trg_nearSetpointNew);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -32,6 +33,15 @@ public class Coral extends SubsystemBase {
 
     public final Trigger trg_topBeamBreak = new Trigger(() -> !m_topBeamBreak.get());
     public final Trigger trg_botBeamBreak = new Trigger(() -> !m_botBeamBreak.get());
+
+    public final Trigger topBeamBreakRemoteTrigger(EventLoop loop) {
+        return new Trigger(loop, () -> !m_topBeamBreak.get());
+    }
+
+    public final Trigger botBeamBreakRemoteTrigger(EventLoop loop) {
+        return new Trigger(loop, () -> !m_botBeamBreak.get());
+    }
+
 
     private final BooleanLogger log_topBeamBreak = WaltLogger.logBoolean(kLogTab, "topBeamBreak");
     private final BooleanLogger log_botBeamBreak = WaltLogger.logBoolean(kLogTab, "botBeamBreak");

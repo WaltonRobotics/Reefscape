@@ -416,7 +416,7 @@ public class Robot extends TimedRobot {
   public void robotInit(){
     WaltAutonBuilder.configureFirstCycle();
     
-    addPeriodic(() -> superstructure.periodic(), 0.01);
+    // addPeriodic(() -> superstructure.periodic(), 0.01);
 
     SmartDashboard.putData("ReefPoses", FieldConstants.kReefPosesField2d);
   }
@@ -424,6 +424,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
+    superstructure.periodic();
     
     // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
     for (Vision camera : cameras) {
