@@ -101,8 +101,8 @@ public class Elevator extends SubsystemBase {
 
     private final DoubleLogger log_elevatorDesiredPosition = WaltLogger.logDouble(kLogTab, "desiredPosition", PubSubOption.sendAll(true));
     private final DoubleLogger log_elevatorSimPosition = WaltLogger.logDouble(kLogTab, "simPosition");
+    private final DoubleLogger log_actualPosition = WaltLogger.logDouble(kLogTab, "actualPosition", PubSubOption.sendAll(true));
     private final BooleanLogger log_eleAtHeight = WaltLogger.logBoolean(kLogTab, "atDesiredHeight", PubSubOption.sendAll(true));
-    private final DoubleLogger log_elevatorActualMeters = WaltLogger.logDouble(kLogTab, "actualHeightMeters");
     private final DoubleLogger log_eleMotorTemp = WaltLogger.logDouble(kLogTab, "motorTemp");
 
     /* SysId routine for characterizing linear motion. This is used to find PID gains for the elevator. */
@@ -324,7 +324,7 @@ public class Elevator extends SubsystemBase {
         setCoast(nte_coast.getBoolean(false));
 
         log_eleAtHeight.accept(nearSetpoint());
-        log_elevatorActualMeters.accept(getPositionMeters().in(Meters));
+        log_actualPosition.accept(getPulleyRotations());
         log_eleMotorTemp.accept(m_frontMotor.getDeviceTemp().getValueAsDouble());
         log_elevatorDesiredPosition.accept(m_MMVRequest.Position);
     }

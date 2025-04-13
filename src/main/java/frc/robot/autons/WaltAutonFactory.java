@@ -5,8 +5,6 @@ import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
@@ -22,8 +20,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
-
-import frc.robot.Constants.AutoAlignmentK;
 import frc.robot.Constants.RobotK;
 import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.FieldConstants;
@@ -35,7 +31,6 @@ import frc.robot.subsystems.Funnel;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.robot.subsystems.Funnel;
 import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
