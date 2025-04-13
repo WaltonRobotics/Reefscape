@@ -109,7 +109,7 @@ public class Finger extends SubsystemBase {
 
     public enum FingerPos {
         NEAR_HOME(-0.1),
-        ALGAE(-0.66);
+        ALGAE(-0.9);
 
         public double angleRots;
         private FingerPos(double rots) {

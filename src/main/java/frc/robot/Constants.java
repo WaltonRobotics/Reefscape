@@ -353,7 +353,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(3); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(2.9); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -398,8 +398,8 @@ public class Constants {
 
         public static final String kLowerRightCamName = "LowerRightCam";
         public static final Transform3d kLowerRightCamRoboToCam = new Transform3d(
-            Units.inchesToMeters(10.943), Units.inchesToMeters(-9.769), Units.inchesToMeters(8.161),
-            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-10), Units.degreesToRadians(30))
+            Units.inchesToMeters(9.964), Units.inchesToMeters(-10.499), Units.inchesToMeters(8.442),
+            new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(-9.962), Units.degreesToRadians(5))
         );
         public static final String kLowerRightCamSimVisualName = "LowerRightVisionEstimation";
     }
@@ -446,22 +446,30 @@ public class Constants {
     }
 
     public static class AutoAlignmentK {
-        public static double kXKP = 6;
-        public static double kYKP = 6;
+        public static double kXKP = 8;
+        public static double kYKP = 8;
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
-        public static final double kFieldTranslationTolerance = 0.05; // meters
-        public static final double kFieldRotationTolerance = 1; // degrees
+        public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
+        public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
 
         // TODO: these will really need tuning
-        public static final double kMaxDimensionVel = 1.25; // m/s
+        // teleop speeds below
+        public static final double kMaxDimensionVel = 1.65; // m/s
         public static final double kMaxDimensionAccel = 6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
+        // Auton speeds below
+        public static final double kMaxDimensionVelEleUp = 2; // m/s
+        public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
+        public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
+            = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 
-        public static final double kMaxThetaVel = 3; // rad/s
+        public static final double kFinishedVelTolerance = 0.1; // m/s
+
+        public static final double kMaxThetaVel = 4; // rad/s
         public static final double kMaxThetaAccel = 8; // rad/s^2
         public static final TrapezoidProfile.Constraints kThetaConstraints = new TrapezoidProfile.Constraints(kMaxThetaVel, kMaxThetaAccel);
         

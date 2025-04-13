@@ -246,10 +246,9 @@ public class WaltAutonFactory {
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
         Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
 
-        return m_drivetrain.autoAlignWithIntermediatePose(
-                () -> destinationPose,
-                new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero)
-            ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
+        return m_drivetrain.directAutoAlignEleUp(
+            () -> destinationPose
+        ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
     }
 
     public AutoRoutine midAuton() {
@@ -335,15 +334,15 @@ public class WaltAutonFactory {
                 trajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
             }
 
-            // if (RobotBase.isSimulation()) {
-            //     allTheTrajs.get(allTrajIdx).getFirst().done()
-            //         .onTrue(Commands.sequence(
-            //             Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
-            //             trajCmd,
-            //             m_drivetrain.stopCmd(),
-            //             Commands.print("Running Path: " + trajCmd)
-            //     ));
-            // } else {
+            if (RobotBase.isSimulation()) {
+                allTheTrajs.get(allTrajIdx).getFirst().done()
+                    .onTrue(Commands.sequence(
+                        Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
+                        trajCmd,
+                        m_drivetrain.stopCmd(),
+                        Commands.print("Running Path: " + trajCmd)
+                ));
+            } else {
             allTheTrajs.get(allTrajIdx).getFirst().done()
                 .onTrue(Commands.sequence(
                     // Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
@@ -353,7 +352,7 @@ public class WaltAutonFactory {
                     m_drivetrain.stopCmd(),
                     Commands.print("Running Path: " + trajCmd)
             ));
-            //}
+            }
 
             allTrajIdx++;
 
@@ -376,22 +375,22 @@ public class WaltAutonFactory {
                 // afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.3);
             }
 
-            // if (RobotBase.isSimulation()) {
-            //     var pathDoneCmd = Commands.sequence(
-            //         Commands.parallel(
-            //             autoAlign,
-            //             m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
-            //         ),
-            //         Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
-            //         scoreCmd(m_heights.get(heightCounter++)),
-            //         nextTrajCmd,
-            //         m_drivetrain.stopCmd()
-            //     );
+            if (RobotBase.isSimulation()) {
+                var pathDoneCmd = Commands.sequence(
+                    Commands.parallel(
+                        autoAlign,
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                    ),
+                    Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
+                    scoreCmd(m_heights.get(heightCounter++)),
+                    nextTrajCmd,
+                    m_drivetrain.stopCmd()
+                );
 
-            //     afterPathTrg.onTrue(
-            //         pathDoneCmd
-            //     );
-            // } else {
+                afterPathTrg.onTrue(
+                    pathDoneCmd
+                );
+            } else {
                 var pathDoneCmd = Commands.sequence(
                     Commands.parallel(
                         autoAlign,
@@ -406,7 +405,7 @@ public class WaltAutonFactory {
                 afterPathTrg.onTrue(
                     pathDoneCmd
                 );
-            //}
+            }
 
             allTrajIdx++;
         }
