@@ -91,7 +91,7 @@ public class Robot extends TimedRobot {
     VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam was removed (now back and better than ever)
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");

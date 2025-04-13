@@ -612,9 +612,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     public static boolean isInTolerance(Pose2d pose, Pose2d pose2) {
         final Transform2d diff = pose.minus(pose2);
         return MathUtil.isNear(
-                0.0, Math.hypot(diff.getX(), diff.getY()), AutoAlignmentK.kFieldTranslationTolerance)
+                0.0, Math.hypot(diff.getX(), diff.getY()), AutoAlignmentK.kFieldTranslationTolerance.in(Meters))
             && MathUtil.isNear(
-                0.0, diff.getRotation().getDegrees(), AutoAlignmentK.kFieldRotationTolerance);
+                0.0, diff.getRotation().getRadians(), AutoAlignmentK.kFieldRotationTolerance.in(Radians));
     }
 
     public static boolean isInTolerance(Pose2d pose, Pose2d pose2, ChassisSpeeds speeds) {

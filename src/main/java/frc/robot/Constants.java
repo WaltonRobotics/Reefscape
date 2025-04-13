@@ -451,8 +451,8 @@ public class Constants {
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
-        public static final double kFieldTranslationTolerance = 0.025; // meters
-        public static final double kFieldRotationTolerance = 0.5; // degrees
+        public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
+        public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6);
 
