@@ -459,8 +459,8 @@ public class Constants {
     }
 
     public static class LegacyAutoAlignK {
-        public static double kXKP = 7;
-        public static double kYKP = 7;
+        public static double kXKP = 5.5;
+        public static double kYKP = 5.5;
         public static double kThetaKP = 10;
         
         public static final PIDController kAutoAlignXController = new PIDController(kXKP, 0, 0);
@@ -478,7 +478,7 @@ public class Constants {
         public static final TrapezoidProfile.Constraints kXYConstraints = new TrapezoidProfile.Constraints(kMaxDimensionVel, kMaxDimensionAccel);
         // Auton speeds below
         public static final double kMaxDimensionVelEleUp = 2; // m/s
-        public static final double kMaxDimensionAccelEleUp = 3; // m/s^2
+        public static final double kMaxDimensionAccelEleUp = 2.6; // m/s^2
         public static final TrapezoidProfile.Constraints kXYConstraintsAuton 
             = new TrapezoidProfile.Constraints(kMaxDimensionVelEleUp,kMaxDimensionAccelEleUp);
 

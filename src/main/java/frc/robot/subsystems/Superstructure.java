@@ -256,17 +256,15 @@ public class Superstructure {
         (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.2).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
-        (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
-            .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.1).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
-            .onTrue(changeStateCmd(State.INTAKING));
-        (trg_hasCoral.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToHP.debounce(0.1).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.INTAKING, "AutonFrom(EleToHp)"));
+        (stateTrg_intook.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        (trg_hasCoral.and(trg_autonL2Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
+        (stateTrg_intook.and(trg_autonL2Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        (trg_hasCoral.and(trg_autonL3Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
+        (stateTrg_intook.and(trg_autonL3Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
-        (trg_hasCoral.and(trg_autonL4Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
+        (stateTrg_intook.and(trg_autonL4Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt)) 
             .onTrue(changeStateCmd(State.SCORING));
@@ -484,8 +482,7 @@ public class Superstructure {
             );
     }
 
-    /* state change methods */
-    private Command changeStateCmd(State newState) {
+    private Command changeStateCmd(State newState, String message) {
         return Commands.runOnce(() -> {
             if (newState == m_state) {
                 return;
@@ -495,7 +492,11 @@ public class Superstructure {
                     m_ele.resetConfigsAfterClimb();
                 }
             }
-            System.out.println("[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")");
+            String log = "[SUPER] Changing state from (" + m_state.name + ") to (" + newState.name + ")";
+            if (message != "") {
+                log += ", SPECIAL: " + message;
+            }
+            System.out.println(log);
             m_state = newState;
             log_stateIdx.accept(m_state.idx);
             log_stateName.accept(m_state.name);
@@ -504,6 +505,11 @@ public class Superstructure {
                 log_coralScored.accept(coralScored);
             }
         });
+    }
+
+    /* state change methods */
+    private Command changeStateCmd(State newState) {
+        return changeStateCmd(newState, "");
     }
 
     public Command forceIdle() {
