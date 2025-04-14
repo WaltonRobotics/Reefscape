@@ -562,6 +562,7 @@ public class Superstructure {
         return Commands.parallel(
             m_finger.algaeDescoreCmd(),
             m_coral.runWheelsAlgaeRemoval()
+        );
     }
 
     public Trigger getBottomBeamBreak() {

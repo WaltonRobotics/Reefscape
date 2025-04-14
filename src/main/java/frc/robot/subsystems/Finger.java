@@ -119,7 +119,7 @@ public class Finger extends SubsystemBase {
     }
 
     public enum FingerPos {
-        NEAR_HOME(-0.15),
+        NEAR_HOME(-0.1),
         L1_HELPER(-0.4), // TODO: test height this is prolly not right
         ALGAE(-0.914),
         IN(-0.294),
