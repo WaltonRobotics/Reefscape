@@ -489,11 +489,6 @@ public class Superstructure {
         });
     }
 
-    /* state change methods */
-    private Command changeStateCmd(State newState) {
-        return changeStateCmd(newState, "");
-    }
-
     public Command forceIdle() {
         if(
             m_state == State.ELE_TO_CLIMB ||
