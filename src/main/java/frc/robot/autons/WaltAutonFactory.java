@@ -244,7 +244,7 @@ public class WaltAutonFactory {
 
         return m_drivetrain.directAutoAlignEleUp(
             () -> destinationPose
-        ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose)).withTimeout(0.5);
+        ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
     }
 
     public AutoRoutine midAuton() {
