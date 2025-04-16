@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
+import static frc.robot.Constants.kTestingAutonOnCart;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
 
@@ -162,14 +163,6 @@ public class WaltAutonFactory {
         }
     }
 
-    private boolean onlyPreload() {
-        if (m_scoreLocs.size() == 1 && m_heights.size() == 1 && m_hpStations.size() == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private boolean notOtherwiseBrokeyChecker() {
         if(m_scoreLocs.size() != m_heights.size()) {
             return false;
@@ -215,12 +208,11 @@ public class WaltAutonFactory {
 
     }
 
-    private Command scoreCmd(EleHeight eleHeight) {
+    private Command scoreCmd() {
         return Commands.sequence(
             m_superstructure.autonScoreReq(),
-            logTimer("CoralScored", () -> autonTimer),
-            Commands.waitUntil(m_superstructure.getBottomBeamBreak().negate())
-            //Commands.waitUntil(m_superstructure.getSimScored())
+            Commands.waitUntil(m_superstructure.stateTrg_scored),
+            logTimer("CoralScored", () -> autonTimer)
         );
     }
 
@@ -246,8 +238,16 @@ public class WaltAutonFactory {
     }
 
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
+        Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
+        if (kTestingAutonOnCart) {
+            return Commands.sequence(
+                Commands.waitSeconds(0.5),
+                Commands.print("Fake Auto Align!!!"),
+                Commands.runOnce(() -> m_drivetrain.resetPose(destinationPose))
+            );
+        }
         return LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(m_drivetrain,
-            () -> getReefAutoAlignPose(reefLocSup.get()),
+            () -> destinationPose,
             () -> 1,
             () -> 10 * SharedAutoAlignK.kFieldTranslationTolerance.in(Meters),
             () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians));
@@ -274,7 +274,7 @@ public class WaltAutonFactory {
                         autoAlignCommand(() -> REEF_G),
                         m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
                     ),
-                    scoreCmd(EleHeight.L4)
+                    scoreCmd()
                 )
             );
 
@@ -301,9 +301,9 @@ public class WaltAutonFactory {
         System.out.println("Running Initial Path: " + theTraj);
 
         Command firstCmd = firstScoreTraj.cmd().alongWith(Commands.print("FirstScoreTraj->Running"));
-        // if (RobotBase.isSimulation()) {
-            // firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
-        // }
+        if (RobotBase.isSimulation() || kTestingAutonOnCart) {
+            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+        }
 
         m_routine.active().onTrue(
             firstCmd
@@ -321,9 +321,12 @@ public class WaltAutonFactory {
                 Commands.sequence(
                     Commands.parallel(
                         autoAlignCommand(() -> m_scoreLocs.get(0)),
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++)),
+                        Commands.print("FirstScore - PosReq Complete")
                     ),
-                    scoreCmd(m_heights.get(heightCounter++)),
+                    Commands.waitUntil(m_superstructure.stateTrg_scoreReady),
+                    scoreCmd(),
+                    Commands.print("FirstScore - ScoreReq Complete"),
                     allTheTrajs.get(0).getFirst().cmd()
                 )
             );
@@ -381,10 +384,10 @@ public class WaltAutonFactory {
                 var pathDoneCmd = Commands.sequence(
                     Commands.parallel(
                         autoAlign,
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++))
                     ),
                     Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
-                    scoreCmd(m_heights.get(heightCounter++)),
+                    scoreCmd(),
                     nextTrajCmd,
                     m_drivetrain.stopCmd()
                 );
@@ -396,10 +399,10 @@ public class WaltAutonFactory {
                 var pathDoneCmd = Commands.sequence(
                     Commands.parallel(
                         autoAlign,
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter))
+                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++))
                     ),
                     Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    scoreCmd(m_heights.get(heightCounter++)),
+                    scoreCmd(),
                     nextTrajCmd,
                     m_drivetrain.stopCmd()
                 );
