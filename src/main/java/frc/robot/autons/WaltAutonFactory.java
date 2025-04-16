@@ -297,6 +297,10 @@ public class WaltAutonFactory {
             firstCmd
         );
 
+        m_routine.active().debounce(0.25).onTrue(
+            m_funnel.ejectFlap().asProxy().withTimeout(0.25)
+        );
+
         firstScoreTraj.done()   
             .onTrue(
                 Commands.sequence(
@@ -304,7 +308,9 @@ public class WaltAutonFactory {
                         autoAlignCommand(() -> REEF_G),
                         m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
                     ),
-                    scoreCmd()
+                    scoreCmd(),
+                    Commands.waitUntil(m_superstructure.stateTrg_scored),
+                    m_superstructure.forceIdle()
                 )
             );
 
