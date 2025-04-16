@@ -268,6 +268,10 @@ public class WaltAutonFactory {
             firstCmd
         );
 
+        m_routine.active().debounce(0.25).onTrue(
+            m_funnel.ejectFlap().withTimeout(0.25)
+        );
+
         firstScoreTraj.done()   
             .onTrue(
                 Commands.sequence(
