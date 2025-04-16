@@ -50,7 +50,7 @@ public class Constants {
      /* general */
      public static final  boolean kDebugLoggingEnabled = true;
 
-     public static final boolean kTestingAutonOnCart = true;
+     public static final boolean kTestingAutonOnCart = false;
  
      public static final double kRumbleIntensity = 1.0;
      public static final double kRumbleTimeoutSecs = 0.5;
