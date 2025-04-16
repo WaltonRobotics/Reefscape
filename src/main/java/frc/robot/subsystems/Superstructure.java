@@ -86,6 +86,11 @@ public class Superstructure {
     private final Trigger simTransTrg_scored = new Trigger(stateEventLoop, () -> m_simScored);
     /* Frsies Transition Trigs */
     private final Trigger transTrg_eleNearSetpt; // used for any ele mvmt state
+    private final Trigger transTrg_eleNearHP;
+    private final Trigger transTrg_eleNearL1;
+    private final Trigger transTrg_eleNearL2;
+    private final Trigger transTrg_eleNearL3;
+    private final Trigger transTrg_eleNearL4;
     private final Trigger transTrg_topSensor;
     private final Trigger transTrg_botSensor;
 
@@ -181,6 +186,12 @@ public class Superstructure {
         
         /* state change trigs */
         transTrg_eleNearSetpt = m_ele.remoteAtSetpointTrigger(stateEventLoop);
+        transTrg_eleNearHP = m_ele.remoteAtSetpointTrigger(stateEventLoop, EleHeight.HP.rotations);
+        transTrg_eleNearL1 = m_ele.remoteAtSetpointTrigger(stateEventLoop, EleHeight.L1.rotations);
+        transTrg_eleNearL2 = m_ele.remoteAtSetpointTrigger(stateEventLoop, EleHeight.L2.rotations);
+        transTrg_eleNearL3 = m_ele.remoteAtSetpointTrigger(stateEventLoop, EleHeight.L3.rotations);
+        transTrg_eleNearL4 = m_ele.remoteAtSetpointTrigger(stateEventLoop, EleHeight.L4.rotations);
+
         if (!Robot.isSimulation()) {
             transTrg_topSensor = m_coral.topBeamBreakRemoteTrigger(stateEventLoop);
             transTrg_botSensor = m_coral.botBeamBreakRemoteTrigger(stateEventLoop);
@@ -245,10 +256,9 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_inOverride.negate()).and(trg_teleopL4Req).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
-
-        /* TODO: make debouncer time faster */
-        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.08).and(transTrg_eleNearSetpt).and(transTrg_eleNearSetpt))
+        (trg_toScoreHeight.and(trg_inOverride.negate()).debounce(0.08).and(transTrg_eleNearSetpt).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.SCORE_READY));
+    
         (stateTrg_scoreReady.and(trg_inOverride.negate()).and(trg_teleopScoreReq).and(RobotModeTriggers.teleop()).and(transTrg_eleNearSetpt)) 
             .onTrue(changeStateCmd(State.SCORING));
         (stateTrg_scoring.and(trg_inOverride.negate()).and(transTrg_botSensor.negate()).and(transTrg_eleNearSetpt)) 
@@ -256,9 +266,10 @@ public class Superstructure {
         (stateTrg_scored.and(trg_inOverride.negate()).debounce(0.2).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
 
+        // Auton Reqs
         (stateTrg_idle.and(trg_autonEleToHPReq).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.1).and(transTrg_eleNearSetpt).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
+        (stateTrg_eleToHP.debounce(0.1).and(transTrg_eleNearHP).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.INTAKING));
         (trg_hasCoral.and(trg_autonL1Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
@@ -268,6 +279,14 @@ public class Superstructure {
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(trg_autonL4Req).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
+        (stateTrg_eleToL1.debounce(0.08).and(transTrg_eleNearL1).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.SCORE_READY));
+        (stateTrg_eleToL2.debounce(0.08).and(transTrg_eleNearL2).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.SCORE_READY));
+        (stateTrg_eleToL3.debounce(0.08).and(transTrg_eleNearL3).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.SCORE_READY));
+        (stateTrg_eleToL4.debounce(0.08).and(transTrg_eleNearL4).and(RobotModeTriggers.autonomous()))
+            .onTrue(changeStateCmd(State.SCORE_READY));
         (stateTrg_scoreReady.and(trg_autonScoreReq).and(RobotModeTriggers.autonomous()).and(transTrg_eleNearSetpt)) 
             .onTrue(changeStateCmd(State.SCORING));
 

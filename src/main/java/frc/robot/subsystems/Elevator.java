@@ -82,6 +82,9 @@ public class Elevator extends SubsystemBase {
     public final Trigger remoteAtSetpointTrigger(EventLoop remoteLoop) {
         return new Trigger(remoteLoop, ()-> m_refSlopeZero.getAsBoolean() && m_clErrorInRange.getAsBoolean());
     }
+    public final Trigger remoteAtSetpointTrigger(EventLoop remoteLoop, double rotations) {
+        return new Trigger(remoteLoop, ()-> m_refSlopeZero.getAsBoolean() && m_clErrorInRange.getAsBoolean() && nearSetpoint(rotations));
+    }
 
 
 
@@ -191,6 +194,11 @@ public class Elevator extends SubsystemBase {
 
     public boolean nearSetpoint(double tolerancePulleyRotations) {
         double diff = m_MMVRequest.Position - getPulleyRotations();
+        return Math.abs(diff) <= tolerancePulleyRotations;
+    }
+
+    public boolean nearSetpoint(double tolerancePulleyRotations, double heightRots) {
+        double diff = heightRots - getPulleyRotations();
         return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
