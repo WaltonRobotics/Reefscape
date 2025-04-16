@@ -50,6 +50,7 @@ public class WaltAutonFactory {
     private final Elevator m_ele;
     private final Swerve m_drivetrain;
     private final Funnel m_funnel;
+    private final Runnable m_onAutoAlignBeginFunc;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -106,6 +107,7 @@ public class WaltAutonFactory {
         Superstructure superstructure,
         Swerve drivetrain,
         Funnel funnel,
+        Runnable onAutoAlignBeginFunc,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
@@ -117,6 +119,7 @@ public class WaltAutonFactory {
         m_ele = ele;
         m_drivetrain = drivetrain;
         m_funnel = funnel;
+        m_onAutoAlignBeginFunc = onAutoAlignBeginFunc;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
@@ -256,11 +259,13 @@ public class WaltAutonFactory {
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
         Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
 
-        Command aaCmd = LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(m_drivetrain,
+        Command aaCmd = LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(
+            m_drivetrain,
             () -> destinationPose,
             () -> 1,
             () -> 10 * SharedAutoAlignK.kFieldTranslationTolerance.in(Meters),
-            () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians)
+            () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians),
+            m_onAutoAlignBeginFunc
         );
 
         if (kTestingAutonOnCart) {

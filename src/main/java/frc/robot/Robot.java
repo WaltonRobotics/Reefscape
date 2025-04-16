@@ -219,10 +219,6 @@ public class Robot extends TimedRobot {
       this::manipRumble
     );
 
-    // TODO: change back to:
-    // waltAutonFactory = Optional.of(new WaltAutonFactory(elevator, drivetrain.autoFactory, superstructure, drivetrain));
-    // once autochooser is unbrokenified
-    
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
@@ -231,11 +227,17 @@ public class Robot extends TimedRobot {
     // configureTestBindings();
   }
 
+  private final Runnable cameraSnapshotFunc = () -> {
+    for (Vision camera : cameras) {
+      camera.takeBothSnapshots();
+    }
+  };
+
   private WaltAutonFactory autonFactoryFactory(
     StartingLocs startLoc, List<ReefLocs> scoreLocs,
     List<EleHeight> heights, List<HPStation> hpStations) {
       return new WaltAutonFactory(
-        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel, 
+        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel, cameraSnapshotFunc,
         startLoc, new ArrayList<>(scoreLocs), new ArrayList<>(heights), new ArrayList<>(hpStations)
       );
   }
@@ -245,7 +247,7 @@ public class Robot extends TimedRobot {
       drivetrain, 
       () -> AutoAlignUtils.getMostLikelyScorePose(drivetrain.getState(), rightReef), 
       () -> SharedAutoAlignK.kIntermediatePoseTransform
-    );
+    ).alongWith(Commands.runOnce(cameraSnapshotFunc));
   }
 
   // checks for finger in unsafe place

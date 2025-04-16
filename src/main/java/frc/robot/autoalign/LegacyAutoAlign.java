@@ -65,10 +65,12 @@ public class LegacyAutoAlign {
             Supplier<Pose2d> destinationPose, 
             DoubleSupplier maxToleranceTime, 
             DoubleSupplier maxLinearTolerance, 
-            DoubleSupplier maxRotationTolerance) {
+            DoubleSupplier maxRotationTolerance,
+            Runnable onBeginFunc) {
         final double[] initialTime = {Double.MAX_VALUE};
         return Commands.runOnce(() -> {
             initialTime[0] = Timer.getFPGATimestamp();
+            onBeginFunc.run();
         })
             .andThen(moveToPose(drivetrain, destinationPose))
             .until(() -> {
