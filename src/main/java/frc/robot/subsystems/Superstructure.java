@@ -278,13 +278,13 @@ public class Superstructure {
         //     .onTrue(changeStateCmd(State.ELE_TO_HP));
         (stateTrg_eleToHP.and(transTrg_eleNearHP).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.INTAKING));
-        (trg_hasCoral.and(stateTrg_intaking.negate()).and(trg_autonL1Req).and(RobotModeTriggers.autonomous()))
+        (trg_hasCoral.and(stateTrg_intook).and(trg_autonL1Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L1));
-        (trg_hasCoral.and(stateTrg_intaking.negate()).and(trg_autonL2Req).and(RobotModeTriggers.autonomous()))
+        (trg_hasCoral.and(stateTrg_intook).and(trg_autonL2Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L2));
-        (trg_hasCoral.and(stateTrg_intaking.negate()).and(trg_autonL3Req).and(RobotModeTriggers.autonomous()))
+        (trg_hasCoral.and(stateTrg_intook).and(trg_autonL3Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
-        (trg_hasCoral.and(stateTrg_intaking.negate()).and(trg_autonL4Req).and(RobotModeTriggers.autonomous()))
+        (trg_hasCoral.and(stateTrg_intook).and(trg_autonL4Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         (stateTrg_eleToL1.and(transTrg_eleNearL1).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.SCORE_READY));
