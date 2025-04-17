@@ -18,11 +18,16 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.MovingAutoAlignK;
 import frc.robot.subsystems.Swerve;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
 public class MovingAutoAlign {
     private static final String kTopicPrefix = "Robot/MovingAutoAlign/";
     private static final StructPublisher<Pose2d> log_destinationPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "destination pose", Pose2d.struct).publish();
+    private static final DoubleLogger log_errorX = WaltLogger.logDouble(kTopicPrefix, "x error");
+    private static final DoubleLogger log_errorY = WaltLogger.logDouble(kTopicPrefix, "y error");
+    private static final DoubleLogger log_errorRot = WaltLogger.logDouble(kTopicPrefix, "rotation error degrees");
 
     /**
      * <p> Returns a Command that automatically aligns with an intermediate pose and target pose that will finish when it is
@@ -152,6 +157,9 @@ public class MovingAutoAlign {
                 // this is only used for tolerances right here.
                 final Pose2d curPose = swerve.getState().Pose;
                 final Transform2d diff = curPose.minus(cachedTarget[0]);
+                log_errorX.accept(diff.getX());
+                log_errorY.accept(diff.getY());
+                log_errorRot.accept(diff.getRotation().getDegrees());
                 final ChassisSpeeds speeds =
                     // for some reason not using tolerance constatnts?? who knows why
                     MathUtil.isNear(0.0, diff.getX(), Units.inchesToMeters(0.75))

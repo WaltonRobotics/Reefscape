@@ -461,6 +461,8 @@ public class Constants {
     }
 
     public static class LegacyAutoAlignK {
+        public static final String kLogTab = "LegacyAutoAlign";
+
         public static double kXKP = 5.5;
         public static double kYKP = 5.5;
         public static double kThetaKP = 10;
@@ -507,6 +509,8 @@ public class Constants {
     }
 
     public static class MovingAutoAlignK {
+        public static final String kLogTab = "MovingAutoAlign";
+
         public static double kXKP = 8;
         public static double kYKP = 8;
         public static double kThetaKP = 10;

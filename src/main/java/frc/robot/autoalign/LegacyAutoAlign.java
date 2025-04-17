@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.subsystems.Swerve;
+import frc.util.WaltLogger;
+import frc.util.WaltLogger.DoubleLogger;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
@@ -24,6 +26,10 @@ public class LegacyAutoAlign {
     private static final String kTopicPrefix = "Robot/LegacyAutoAlign/";
     private static final StructPublisher<Pose2d> log_destinationPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "destination pose", Pose2d.struct).publish();
+    private static final DoubleLogger log_errorX = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "x error");
+    private static final DoubleLogger log_errorY = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "y error");
+    private static final DoubleLogger log_errorRot = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "rotation error degrees");
+    
 
     private static final SwerveRequest.FieldCentric swreq_driveFieldCentricBlue = new SwerveRequest.FieldCentric()
         .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
@@ -43,8 +49,11 @@ public class LegacyAutoAlign {
                 Pose2d curPose = drivetrain.getState().Pose;
 
                 double xSpeed = LegacyAutoAlignK.kAutoAlignXController.calculate(curPose.getX(), cachedTarget[0].getX());
+                log_errorX.accept(cachedTarget[0].getX() - curPose.getX());
                 double ySpeed = LegacyAutoAlignK.kAutoAlignYController.calculate(curPose.getY(), cachedTarget[0].getY());
+                log_errorY.accept(cachedTarget[0].getY() - curPose.getY());
                 double thetaSpeed = LegacyAutoAlignK.kAutoAlignThetaController.calculate(curPose.getRotation().getRadians(), cachedTarget[0].getRotation().getRadians());
+                log_errorRot.accept(cachedTarget[0].getRotation().getDegrees() - curPose.getRotation().getDegrees());
                 xSpeed = MathUtil.clamp(xSpeed, -LegacyAutoAlignK.kMaxXYSpeedAutoalign, 
                     LegacyAutoAlignK.kMaxXYSpeedAutoalign);
                 ySpeed = MathUtil.clamp(ySpeed, -LegacyAutoAlignK.kMaxXYSpeedAutoalign, 
