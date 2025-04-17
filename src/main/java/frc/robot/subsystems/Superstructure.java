@@ -443,7 +443,7 @@ public class Superstructure {
             .onTrue(
                 Commands.sequence(
                     m_coral.slowScore(),
-                    Commands.waitSeconds(0.164),
+                    Commands.waitSeconds(0.1845),
                     m_ele.toHeightCoral(() -> L2),
                     m_finger.l1HelperCmd(),
                     Commands.waitSeconds(0.18),
