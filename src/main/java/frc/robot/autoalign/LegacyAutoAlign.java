@@ -73,7 +73,8 @@ public class LegacyAutoAlign {
             Swerve drivetrain, 
             Supplier<Pose2d> destinationPose, 
             DoubleSupplier maxToleranceTime, 
-            DoubleSupplier maxLinearTolerance, 
+            DoubleSupplier maxXTolerance,
+            DoubleSupplier maxYTolerance, 
             DoubleSupplier maxRotationTolerance,
             Runnable onBeginFunc) {
         final double[] initialTime = {Double.MAX_VALUE};
@@ -86,18 +87,24 @@ public class LegacyAutoAlign {
                 double currentTime = Timer.getFPGATimestamp();
                 double deltaTime = currentTime - initialTime[0];
 
-                double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                // double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double deltaXTolerance = maxXTolerance.getAsDouble() - SharedAutoAlignK.kReefDistanceTolerance.in(Meters);
+                double deltaYTolerance = maxYTolerance.getAsDouble() - SharedAutoAlignK.kSideToSideTolerance.in(Meters);
                 double deltaRotationTolerance = maxRotationTolerance.getAsDouble() - SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
                 
                 double percentageTimeComplete = MathUtil.clamp(deltaTime / maxToleranceTime.getAsDouble(), 0, 1);
 
-                double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
-                    + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                // double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
+                //     + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double xTolerance = percentageTimeComplete * deltaXTolerance
+                    + SharedAutoAlignK.kReefDistanceTolerance.in(Meters);
+                double yTolerance = percentageTimeComplete * deltaYTolerance
+                    + SharedAutoAlignK.kSideToSideTolerance.in(Meters);
                 double rotationTolerance = percentageTimeComplete * deltaRotationTolerance
                     + SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
                 
-                return AutoAlignUtils.isInTolerance(drivetrain.getState().Pose, destinationPose.get(), 
-                    linearTolerance, rotationTolerance);
+                return AutoAlignUtils.isInTolerancePoseRelative(drivetrain.getState().Pose, destinationPose.get(), 
+                    xTolerance, yTolerance, rotationTolerance);
             });
     }
 }

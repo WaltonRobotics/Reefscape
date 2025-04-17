@@ -1,5 +1,8 @@
 package frc.robot.autoalign;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
+
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -17,6 +20,7 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.MovingAutoAlignK;
+import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.subsystems.Swerve;
 import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleLogger;
@@ -28,6 +32,19 @@ public class MovingAutoAlign {
     private static final DoubleLogger log_errorX = WaltLogger.logDouble(kTopicPrefix, "x error");
     private static final DoubleLogger log_errorY = WaltLogger.logDouble(kTopicPrefix, "y error");
     private static final DoubleLogger log_errorRot = WaltLogger.logDouble(kTopicPrefix, "rotation error degrees");
+
+    // this would really be called autoAlignWithIntermediateTransformUntilInPoseRelativeTolerances
+    // but that would be stupid.
+    // appreciate the concise new name!
+    public static Command superDuperAutoAlign(
+            Swerve drivetrain,
+            Supplier<Pose2d> target,
+            Supplier<Transform2d> intermediateTransfrom) {
+        return moveToPoseUntilInPoseRelativeTolerances(drivetrain, () -> target.get().transformBy(intermediateTransfrom.get()), ChassisSpeeds::new,
+            () -> MovingAutoAlignK.kXYConstraints)
+            .andThen(moveToPoseUntilInPoseRelativeTolerances(drivetrain, target, ChassisSpeeds::new, 
+                () -> MovingAutoAlignK.kXYConstraints));
+    }
 
     /**
      * <p> Returns a Command that automatically aligns with an intermediate pose and target pose that will finish when it is
@@ -82,6 +99,20 @@ public class MovingAutoAlign {
             Supplier<TrapezoidProfile.Constraints> xyConstraints) {
         return moveToPose(swerve, target, speedsModifier, xyConstraints)
             .until(() -> AutoAlignUtils.isInTolerance(swerve.getState().Pose, target.get(), swerve.getState().Speeds));
+    }
+
+    public static Command moveToPoseUntilInPoseRelativeTolerances(
+            Swerve swerve,
+            Supplier<Pose2d> target,
+            Supplier<ChassisSpeeds> speedsModifier,
+            Supplier<TrapezoidProfile.Constraints> xyConstraints) {
+        return moveToPose(swerve, target, speedsModifier, xyConstraints)
+            .until(() -> AutoAlignUtils.isInTolerancePoseRelative(swerve.getState().Pose, 
+                target.get(), 
+                swerve.getState().Speeds,
+                SharedAutoAlignK.kReefDistanceTolerance.in(Meters),
+                SharedAutoAlignK.kSideToSideTolerance.in(Meters), 
+                SharedAutoAlignK.kRotationTolerance.in(Radians)));
     }
 
     /**

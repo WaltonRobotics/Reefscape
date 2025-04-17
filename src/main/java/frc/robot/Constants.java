@@ -357,7 +357,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(2.9); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(3.2); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
@@ -452,6 +452,10 @@ public class Constants {
     public static class SharedAutoAlignK {
         public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
         public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
+
+        public static final Distance kSideToSideTolerance = Meters.of(0.01);
+        public static final Distance kReefDistanceTolerance = Meters.of(0.02);
+        public static final Angle kRotationTolerance = Degrees.of(0.5);
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6); // value in meters
         public static final Transform2d kIntermediatePoseTransform 
