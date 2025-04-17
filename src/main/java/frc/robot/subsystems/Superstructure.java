@@ -285,6 +285,7 @@ public class Superstructure {
         (trg_hasCoral.and(stateTrg_intook).and(trg_autonL3Req).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.ELE_TO_L3));
         (trg_hasCoral.and(stateTrg_intook).and(trg_autonL4Req).and(RobotModeTriggers.autonomous()))
+
             .onTrue(changeStateCmd(State.ELE_TO_L4));
         (stateTrg_eleToL1.and(transTrg_eleNearL1).and(RobotModeTriggers.autonomous()))
             .onTrue(changeStateCmd(State.SCORE_READY));
@@ -472,7 +473,6 @@ public class Superstructure {
             );
     }
 
-    /* state change methods */
     private Command changeStateCmd(State newState) {
         return Commands.runOnce(() -> {
             if (newState == m_state) {

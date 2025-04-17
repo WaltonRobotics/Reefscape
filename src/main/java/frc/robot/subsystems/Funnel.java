@@ -97,4 +97,3 @@ public class Funnel extends SubsystemBase{
         log_accelDrop.accept(accelDropTrig);
     }
 }
-

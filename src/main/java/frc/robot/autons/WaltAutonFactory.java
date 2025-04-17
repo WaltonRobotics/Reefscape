@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.Constants.kTestingAutonOnCart;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.REEF_G;
 import static frc.robot.autons.TrajsAndLocs.Trajectories.*;
@@ -21,19 +23,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import frc.robot.Constants.LegacyAutoAlignK;
 import frc.robot.Constants.RobotK;
+import frc.robot.Constants.SharedAutoAlignK;
+import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.FieldConstants;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Funnel;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Elevator.EleHeight;
-import frc.robot.subsystems.Funnel;
 import frc.util.AllianceFlipUtil;
 import frc.util.Elastic;
 import frc.util.WaltLogger;
+import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
 import frc.util.WaltLogger.StringLogger;
 
@@ -44,6 +50,7 @@ public class WaltAutonFactory {
     private final Elevator m_ele;
     private final Swerve m_drivetrain;
     private final Funnel m_funnel;
+    private final Runnable m_onAutoAlignBeginFunc;
 
     private StartingLocs m_startLoc;
     // all need to have at least 1 thing in them
@@ -54,6 +61,10 @@ public class WaltAutonFactory {
     public Timer autonTimer = new Timer();
     private DoubleLogger log_autonTimer = WaltLogger.logDouble(RobotK.kLogTab, "timer", PubSubOption.sendAll(true));
     private StringLogger log_currentPath = WaltLogger.logString(RobotK.kLogTab, "curPath", PubSubOption.sendAll(true));
+    private final BooleanLogger log_runningAPath = WaltLogger.logBoolean(RobotK.kLogTab, "runningAPath", PubSubOption.sendAll(true));
+    private final BooleanLogger log_runningAutoAlign = WaltLogger.logBoolean(RobotK.kLogTab, "runningAutoAlign", PubSubOption.sendAll(true));
+
+
 
     private static Command printLater(Supplier<String> stringSup) {
 		return Commands.defer(() -> {
@@ -68,6 +79,14 @@ public class WaltAutonFactory {
             return epochName + " at " + timer.get() + " s";
         });
 	}
+
+    private Command loggedPath(Command pathCmd) {
+        return Commands.sequence(
+          Commands.runOnce(() -> log_runningAPath.accept(true)),
+          pathCmd,
+          Commands.runOnce(() -> log_runningAPath.accept(false))
+        );
+    }
 
     private Elastic.Notification leaveStartZoneOnlySadness =
         new Elastic.Notification(
@@ -88,6 +107,7 @@ public class WaltAutonFactory {
         Superstructure superstructure,
         Swerve drivetrain,
         Funnel funnel,
+        Runnable onAutoAlignBeginFunc,
         StartingLocs startLoc,
         ArrayList<ReefLocs> scoreLocs,
         ArrayList<EleHeight> heights,
@@ -99,11 +119,15 @@ public class WaltAutonFactory {
         m_ele = ele;
         m_drivetrain = drivetrain;
         m_funnel = funnel;
+        m_onAutoAlignBeginFunc = onAutoAlignBeginFunc;
 
         m_startLoc = startLoc;
         m_scoreLocs = scoreLocs;
         m_heights = heights;
         m_hpStations = hpStations;
+
+        log_runningAPath.accept(false);
+        log_runningAutoAlign.accept(false);
     }
 
     private String getCycleString(ReefLocs reefLoc, EleHeight height, HPStation hp) {
@@ -234,17 +258,29 @@ public class WaltAutonFactory {
 
     private Command autoAlignCommand(Supplier<ReefLocs> reefLocSup) {
         Pose2d destinationPose = getReefAutoAlignPose(reefLocSup.get());
+
+        Command aaCmd = LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(
+            m_drivetrain,
+            () -> destinationPose,
+            () -> 1,
+            () -> 10 * SharedAutoAlignK.kFieldTranslationTolerance.in(Meters),
+            () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians),
+            m_onAutoAlignBeginFunc
+        );
+
         if (kTestingAutonOnCart) {
-            return Commands.sequence(
+            aaCmd = Commands.sequence(
                 Commands.waitSeconds(0.5),
                 Commands.print("Fake Auto Align!!!"),
                 Commands.runOnce(() -> m_drivetrain.resetPose(destinationPose))
             );
         }
 
-        return m_drivetrain.directAutoAlignEleUp(
-            () -> destinationPose
-        ).until(() -> Swerve.isInTolerance(m_drivetrain.getState().Pose, destinationPose));
+        return Commands.sequence(
+          Commands.runOnce(() -> log_runningAutoAlign.accept(true)),
+          aaCmd,
+          Commands.runOnce(() -> log_runningAutoAlign.accept(false))
+        );
     }
 
     public AutoRoutine midAuton() {
@@ -252,13 +288,17 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Path: " + theTraj);
 
-        Command firstCmd = firstScoreTraj.cmd();
+        Command firstCmd = loggedPath(firstScoreTraj.cmd());
         // if (RobotBase.isSimulation()) {
             // firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
         // }
 
         m_routine.active().onTrue(
             firstCmd
+        );
+
+        m_routine.active().debounce(0.25).onTrue(
+            m_funnel.ejectFlap().asProxy().withTimeout(0.25)
         );
 
         firstScoreTraj.done()   
@@ -268,7 +308,9 @@ public class WaltAutonFactory {
                         autoAlignCommand(() -> REEF_G),
                         m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
                     ),
-                    scoreCmd()
+                    scoreCmd(),
+                    Commands.waitUntil(m_superstructure.stateTrg_scored),
+                    m_superstructure.forceIdle()
                 )
             );
 
@@ -294,9 +336,9 @@ public class WaltAutonFactory {
         AutoTrajectory firstScoreTraj = m_routine.trajectory(theTraj);
         System.out.println("Running Initial Path: " + theTraj);
 
-        Command firstCmd = firstScoreTraj.cmd().alongWith(Commands.print("FirstScoreTraj->Running"));
+        Command firstCmd = loggedPath(firstScoreTraj.cmd());
         if (RobotBase.isSimulation() || kTestingAutonOnCart) {
-            firstCmd = firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd());
+            firstCmd = loggedPath(firstScoreTraj.resetOdometry().andThen(firstScoreTraj.cmd()));
         }
 
         m_routine.active().onTrue(
@@ -313,6 +355,7 @@ public class WaltAutonFactory {
         firstScoreTraj.done()
             .onTrue(
                 Commands.sequence(
+                    m_drivetrain.stopCmd(),
                     Commands.parallel(
                         autoAlignCommand(() -> m_scoreLocs.get(0)),
                         m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++)),
@@ -321,7 +364,7 @@ public class WaltAutonFactory {
                     Commands.waitUntil(m_superstructure.stateTrg_scoreReady),
                     scoreCmd(),
                     Commands.print("FirstScore - ScoreReq Complete"),
-                    allTheTrajs.get(0).getFirst().cmd()
+                    loggedPath(allTheTrajs.get(0).getFirst().cmd())
                 )
             );
 
@@ -330,12 +373,13 @@ public class WaltAutonFactory {
 
             Command trajCmd = Commands.none();
             if ((allTrajIdx + 1) < allTheTrajs.size()) {
-                trajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
+                trajCmd = loggedPath(allTheTrajs.get(allTrajIdx + 1).getFirst().cmd());
             }
 
             if (RobotBase.isSimulation()) {
                 allTheTrajs.get(allTrajIdx).getFirst().done()
                     .onTrue(Commands.sequence(
+                        m_drivetrain.stopCmd(),
                         Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.ELE_TO_HP),
                         trajCmd,
                         m_drivetrain.stopCmd(),
@@ -344,6 +388,7 @@ public class WaltAutonFactory {
             } else {
             allTheTrajs.get(allTrajIdx).getFirst().done()
                 .onTrue(Commands.sequence(
+                    m_drivetrain.stopCmd(),
                     // Commands.waitUntil(m_superstructure.getTopBeamBreak().debounce(0.08)),
                     Commands.waitUntil(m_funnel.trg_atCurrLim.or(m_superstructure.getTopBeamBreak()))
                         .alongWith(Commands.print("funnel detected coral")),
@@ -361,7 +406,7 @@ public class WaltAutonFactory {
 
             Command nextTrajCmd = Commands.none();
             if (allTrajIdx + 1 < allTheTrajs.size()) {
-                nextTrajCmd = allTheTrajs.get(allTrajIdx + 1).getFirst().cmd();
+                nextTrajCmd = loggedPath(allTheTrajs.get(allTrajIdx + 1).getFirst().cmd());
             }
 
             Command autoAlign = Commands.none();

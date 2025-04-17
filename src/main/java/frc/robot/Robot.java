@@ -36,8 +36,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.Constants.AutoAlignmentK;
+import frc.robot.Constants.MovingAutoAlignK;
+import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.Constants.VisionK;
+import frc.robot.autoalign.AutoAlignUtils;
+import frc.robot.autoalign.MovingAutoAlign;
+import frc.robot.autons.AutonChooser;
 import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
@@ -92,7 +96,7 @@ public class Robot extends TimedRobot {
     VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
   // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam was removed (now back and better than ever)
+  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed readded and ready to rumble
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -215,10 +219,6 @@ public class Robot extends TimedRobot {
       this::manipRumble
     );
 
-    // TODO: change back to:
-    // waltAutonFactory = Optional.of(new WaltAutonFactory(elevator, drivetrain.autoFactory, superstructure, drivetrain));
-    // once autochooser is unbrokenified
-    
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
@@ -227,18 +227,27 @@ public class Robot extends TimedRobot {
     // configureTestBindings();
   }
 
+  private final Runnable cameraSnapshotFunc = () -> {
+    for (Vision camera : cameras) {
+      camera.takeBothSnapshots();
+    }
+  };
+
   private WaltAutonFactory autonFactoryFactory(
     StartingLocs startLoc, List<ReefLocs> scoreLocs,
     List<EleHeight> heights, List<HPStation> hpStations) {
       return new WaltAutonFactory(
-        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel, 
+        elevator, drivetrain.autoFactory, superstructure, drivetrain, funnel, cameraSnapshotFunc,
         startLoc, new ArrayList<>(scoreLocs), new ArrayList<>(heights), new ArrayList<>(hpStations)
       );
   }
 
   Command autoAlignCmd(boolean rightReef) {
-    return drivetrain.autoAlignWithIntermediatePose(() -> Vision.getMostRealisticScorePose(drivetrain.getState(), rightReef),
-      new Transform2d(AutoAlignmentK.kIntermediatePoseDistance, 0, Rotation2d.kZero));
+    return MovingAutoAlign.autoAlignWithIntermediateTransformUntilInTolerances(
+      drivetrain, 
+      () -> AutoAlignUtils.getMostLikelyScorePose(drivetrain.getState(), rightReef), 
+      () -> SharedAutoAlignK.kIntermediatePoseTransform
+    ).alongWith(Commands.runOnce(cameraSnapshotFunc));
   }
 
   // checks for finger in unsafe place
