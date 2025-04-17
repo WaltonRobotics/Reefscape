@@ -251,10 +251,15 @@ public class Superstructure {
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.08).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
+        (stateTrg_eleToHP.debounce(0.08).and(transTrg_eleNearHP).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.PRE_INTAKE));
         (stateTrg_preIntaking.and(trg_inOverride.negate().and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop())))
             .onTrue(changeStateCmd(State.INTAKING));
+
+        (stateTrg_preIntaking.and(trg_inOverride.negate().and(transTrg_topSensor)))
+            .onTrue(changeStateCmd(State.SLOW_INTAKE));
+        stateTrg_preIntaking.and(trg_inOverride.negate().and(transTrg_botSensor))
+            .onTrue(changeStateCmd(State.INTOOK));
 
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
@@ -512,6 +517,10 @@ public class Superstructure {
         } else {
             return (changeStateCmd(State.IDLE));
         }
+    }
+
+    public Command forceToIntake() {
+        return changeStateCmd(State.ELE_TO_HP);
     }
 
     public Command forcetoHP() {
