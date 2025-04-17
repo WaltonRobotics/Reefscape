@@ -357,7 +357,7 @@ public class Constants {
         public static final String kLogTab = "SuperStructure";
         // TODO: get a real distance from the reef for this
         public static final double kRobotCenterDistanceFromReef = Units.inchesToMeters(-17);
-        public static final double kRobotScoringOffset = Units.inchesToMeters(2.9); // positive left robot, measured 4/1/2025
+        public static final double kRobotScoringOffset = Units.inchesToMeters(3.1); // positive left robot, measured 4/1/2025
         public static final Transform2d kTransformReefPoseToRobotPosition = new Transform2d(kRobotCenterDistanceFromReef, kRobotScoringOffset, Rotation2d.fromDegrees(0));
      }
 
