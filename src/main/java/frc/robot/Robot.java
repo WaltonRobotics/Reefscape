@@ -471,6 +471,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    if (Superstructure.nte_autonOnCart.getBoolean(false)) {
+      Constants.kTestingAutonOnCart = true;
+    } else {
+      Constants.kTestingAutonOnCart = false;
+    }
+
     if (autonNotMade) {
       // check if the AUTON READY button has been pressed
       readyToMakeAuton = WaltAutonBuilder.nte_autonEntry.getBoolean(false);

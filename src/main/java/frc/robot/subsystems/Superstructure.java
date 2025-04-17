@@ -9,9 +9,12 @@ import java.util.function.DoubleConsumer;
 
 import com.ctre.phoenix6.Utils;
 
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.networktables.PubSubOptions;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -118,6 +121,8 @@ public class Superstructure {
     public final Trigger stateTrg_climbReady = new Trigger(stateEventLoop, () -> m_state == State.CLIMB_READY);
     public final Trigger stateTrg_climbing = new Trigger (stateEventLoop, () -> m_state == State.CLIMBING);
     public final Trigger stateTrg_climbed = new Trigger(stateEventLoop, () -> m_state == State.CLIMBED);
+
+    public static GenericEntry nte_autonOnCart;
 
     /* sm odds & ends */
     private final DoubleConsumer m_driverRumbler;
@@ -228,6 +233,11 @@ public class Superstructure {
         configureStateTransitions();
         configureSimTransitions();
         configureStateActions();
+
+        nte_autonOnCart = Shuffleboard.getTab("AutonChooser")
+                .add("Auton on Cart", false)
+                .withWidget(BuiltInWidgets.kToggleSwitch)
+                .getEntry();
     }
 
     private Command takeCam1Snapshots() {
