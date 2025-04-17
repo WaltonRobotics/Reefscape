@@ -511,8 +511,8 @@ public class Constants {
     public static class MovingAutoAlignK {
         public static final String kLogTab = "MovingAutoAlign";
 
-        public static double kXKP = 8;
-        public static double kYKP = 8;
+        public static double kXKP = 8.5;
+        public static double kYKP = 8.5;
         public static double kThetaKP = 10;
 
         // SUPER COOL AUTO ALIGN :sunglasses: - this should eventually allow you to replace all code using above constants
