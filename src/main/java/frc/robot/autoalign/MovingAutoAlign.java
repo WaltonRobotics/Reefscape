@@ -19,6 +19,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.LegacyAutoAlignK;
 import frc.robot.Constants.MovingAutoAlignK;
 import frc.robot.Constants.SharedAutoAlignK;
 import frc.robot.subsystems.Swerve;
@@ -32,6 +33,10 @@ public class MovingAutoAlign {
     private static final DoubleLogger log_errorX = WaltLogger.logDouble(kTopicPrefix, "x error");
     private static final DoubleLogger log_errorY = WaltLogger.logDouble(kTopicPrefix, "y error");
     private static final DoubleLogger log_errorRot = WaltLogger.logDouble(kTopicPrefix, "rotation error degrees");
+
+    private static final DoubleLogger log_errorXTargetRelative = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "x error target relative");
+    private static final DoubleLogger log_errorYTargetRelative = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "y error target relative");
+    private static final DoubleLogger log_errorRotTargetRelative = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "rot error degrees target relative");
 
     // this would really be called autoAlignWithIntermediateTransformUntilInPoseRelativeTolerances
     // but that would be stupid.
@@ -161,6 +166,10 @@ public class MovingAutoAlign {
 
                 SwerveDriveState curState = swerve.getState();
                 Pose2d curPose = curState.Pose;
+                Pose2d targetRelativePose2d = curPose.relativeTo(cachedTarget[0]);
+                log_errorXTargetRelative.accept(targetRelativePose2d.getX());
+                log_errorYTargetRelative.accept(targetRelativePose2d.getY());
+                log_errorRotTargetRelative.accept(targetRelativePose2d.getRotation().getDegrees());
                 ChassisSpeeds fieldRelativeChassisSpeeds = Swerve.getFieldRelativeChassisSpeeds(curState);
                 // for some reason only do logging in simulation?
                 // very smart of them to cache whether the robot is in simulation though rather than
