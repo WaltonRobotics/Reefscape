@@ -25,9 +25,9 @@ public class MovingAutoAlign {
     private static final String kTopicPrefix = "Robot/MovingAutoAlign/";
     private static final StructPublisher<Pose2d> log_destinationPose = NetworkTableInstance.getDefault()
         .getStructTopic(kTopicPrefix + "destination pose", Pose2d.struct).publish();
-    private static final DoubleLogger log_errorX = WaltLogger.logDouble(kTopicPrefix, "x error");
-    private static final DoubleLogger log_errorY = WaltLogger.logDouble(kTopicPrefix, "y error");
-    private static final DoubleLogger log_errorRot = WaltLogger.logDouble(kTopicPrefix, "rotation error degrees");
+    private static final DoubleLogger log_errorX = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "x error");
+    private static final DoubleLogger log_errorY = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "y error");
+    private static final DoubleLogger log_errorRot = WaltLogger.logDouble(MovingAutoAlignK.kLogTab, "rotation error degrees");
 
     /**
      * <p> Returns a Command that automatically aligns with an intermediate pose and target pose that will finish when it is
@@ -112,12 +112,12 @@ public class MovingAutoAlign {
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         // ok, use passed constraints on X controller
         final ProfiledPIDController vxController =
-            new ProfiledPIDController(MovingAutoAlignK.kXKP, 0.01, 0.02, xyConstraints.get());
+            new ProfiledPIDController(MovingAutoAlignK.kXKP, 0.01, 0.01, xyConstraints.get());
         // use constraints from constants for y controller?
         // why define them with different constraints?? it's literally field relative
         // the difference in x and y dimensions almost definitely do not mean anything to robot movement
         final ProfiledPIDController vyController =
-            new ProfiledPIDController(MovingAutoAlignK.kYKP, 0.01, 0.02, xyConstraints.get());
+            new ProfiledPIDController(MovingAutoAlignK.kYKP, 0.01, 0.01, xyConstraints.get());
 
         // this is created at trigger binding, not created every time the command is scheduled
         final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
