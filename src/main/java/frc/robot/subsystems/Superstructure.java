@@ -463,7 +463,10 @@ public class Superstructure {
 
         stateTrg_scored
             .onTrue(
-                resetTriggers()
+                Commands.parallel(
+                    resetTriggers(),
+                    m_finger.inCmd()
+                )
             );
 
         stateTrg_algaeRemovalL2
