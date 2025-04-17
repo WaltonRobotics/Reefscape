@@ -301,20 +301,31 @@ public class WaltAutonFactory {
             m_funnel.ejectFlap().asProxy().withTimeout(0.25)
         );
 
+        var pathDoneCmd = reefPathDoneCmd(
+            autoAlignCommand(() -> REEF_G),
+            m_superstructure.forceIdle(),
+            EleHeight.L4
+        );
+
         firstScoreTraj.done()   
             .onTrue(
-                Commands.sequence(
-                    Commands.parallel(
-                        autoAlignCommand(() -> REEF_G),
-                        m_superstructure.autonEleToScoringPosReq(EleHeight.L4)
-                    ),
-                    scoreCmd(),
-                    Commands.waitUntil(m_superstructure.stateTrg_scored),
-                    m_superstructure.forceIdle()
-                )
+                pathDoneCmd
             );
 
         return m_routine;
+    }
+
+    private Command reefPathDoneCmd(Command autoAlignCmd, Command followUpCmd, EleHeight scoreHeight) {
+        return Commands.sequence(
+            m_drivetrain.stopCmd(),
+            Commands.parallel(
+                autoAlignCmd,
+                m_superstructure.autonEleToScoringPosReq(scoreHeight)
+            ),
+            Commands.waitUntil(m_superstructure.stateTrg_scoreReady),
+            scoreCmd(),
+            followUpCmd
+        );
     }
 
     public AutoRoutine generateAuton() {
@@ -352,21 +363,15 @@ public class WaltAutonFactory {
         // normal cycle logic down here
         ArrayList<Pair<AutoTrajectory, Optional<ReefLocs>>> allTheTrajs = trajMaker();
 
-        firstScoreTraj.done()
-            .onTrue(
-                Commands.sequence(
-                    m_drivetrain.stopCmd(),
-                    Commands.parallel(
-                        autoAlignCommand(() -> m_scoreLocs.get(0)),
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++)),
-                        Commands.print("FirstScore - PosReq Complete")
-                    ),
-                    Commands.waitUntil(m_superstructure.stateTrg_scoreReady),
-                    scoreCmd(),
-                    Commands.print("FirstScore - ScoreReq Complete"),
-                    loggedPath(allTheTrajs.get(0).getFirst().cmd())
-                )
-            );
+        var firstPathDoneCmd = reefPathDoneCmd(
+            autoAlignCommand(() -> m_scoreLocs.get(0)),
+            loggedPath(allTheTrajs.get(0).getFirst().cmd()),
+            m_heights.get(heightCounter++)
+        );
+        
+        firstScoreTraj.done().onTrue(
+            firstPathDoneCmd
+        );
 
         int allTrajIdx = 0;
         while (allTrajIdx < allTheTrajs.size()) {
@@ -415,41 +420,17 @@ public class WaltAutonFactory {
             var reefLocOpt = allTheTrajs.get(allTrajIdx).getSecond();
             if (reefLocOpt.isPresent()) {
                 autoAlign = autoAlignCommand(() -> reefLocOpt.get());
-                // double trajTime = runningTraj.getRawTrajectory().getTotalTime();
-                // afterPathTrg = runningTraj.atTimeBeforeEnd(trajTime * 0.3);
             }
 
-            if (RobotBase.isSimulation()) {
-                var pathDoneCmd = Commands.sequence(
-                    Commands.parallel(
-                        autoAlign,
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++))
-                    ),
-                    Commands.waitUntil(() -> m_superstructure.m_state == Superstructure.State.SCORED),
-                    scoreCmd(),
-                    nextTrajCmd,
-                    m_drivetrain.stopCmd()
-                );
+            var pathDoneCmd = reefPathDoneCmd(
+                autoAlign,
+                nextTrajCmd,
+                m_heights.get(heightCounter++)
+            );
 
-                afterPathTrg.onTrue(
-                    pathDoneCmd
-                );
-            } else {
-                var pathDoneCmd = Commands.sequence(
-                    Commands.parallel(
-                        autoAlign,
-                        m_superstructure.autonEleToScoringPosReq(m_heights.get(heightCounter++))
-                    ),
-                    Commands.waitUntil(m_superstructure.getBottomBeamBreak()),
-                    scoreCmd(),
-                    nextTrajCmd,
-                    m_drivetrain.stopCmd()
-                );
-
-                afterPathTrg.onTrue(
-                    pathDoneCmd
-                );
-            }
+            afterPathTrg.onTrue(
+                pathDoneCmd
+            );
 
             allTrajIdx++;
         }
