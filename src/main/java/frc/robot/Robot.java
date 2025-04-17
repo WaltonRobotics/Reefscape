@@ -243,7 +243,7 @@ public class Robot extends TimedRobot {
   }
 
   Command autoAlignCmd(boolean rightReef) {
-    return MovingAutoAlign.autoAlignWithIntermediateTransformUntilInTolerances(
+    return MovingAutoAlign.superDuperAutoAlign(
       drivetrain, 
       () -> AutoAlignUtils.getMostLikelyScorePose(drivetrain.getState(), rightReef), 
       () -> SharedAutoAlignK.kIntermediatePoseTransform
