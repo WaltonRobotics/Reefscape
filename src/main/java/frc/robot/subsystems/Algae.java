@@ -289,7 +289,7 @@ public class Algae extends SubsystemBase {
 
     public enum WristPos {
         IDLE(0),
-        STORE(0.08),
+        STORE(0.01),
         GROUND(0.28);
         // PROCESSOR(0.14);
 

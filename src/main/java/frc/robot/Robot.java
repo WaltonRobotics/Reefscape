@@ -609,7 +609,7 @@ public class Robot extends TimedRobot {
     if (waltAutonFactory.isPresent()) {
       Commands.runOnce(() -> waltAutonFactory.get().autonTimer.stop());
     }
-    superstructure.forceIdle().schedule();
+    superstructure.forceToIntake().schedule();
     algae.toIdleCmd().schedule();
     finger.inCmd().schedule();
     if (m_autonomousCommand != null) {

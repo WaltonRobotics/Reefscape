@@ -240,21 +240,26 @@ public class Superstructure {
                 .getEntry();
     }
 
-    private Command takeCam1Snapshots() {
-        return Commands.runOnce(() -> {
-            if (m_cam1.isPresent()) {
-                m_cam1.get().takeBothSnapshots();
-            }
-        });
-    }
+    // private Command takeCam1Snapshots() {
+    //     return Commands.runOnce(() -> {
+    //         if (m_cam1.isPresent()) {
+    //             m_cam1.get().takeBothSnapshots();
+    //         }
+    //     });
+    // }
     
     private void configureStateTransitions() {
         (stateTrg_idle.and(trg_teleopEleToHPReq).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.ELE_TO_HP));
-        (stateTrg_eleToHP.debounce(0.08).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
+        (stateTrg_eleToHP.debounce(0.08).and(transTrg_eleNearHP).and(trg_inOverride.negate()).and(RobotModeTriggers.teleop()))
             .onTrue(changeStateCmd(State.PRE_INTAKE));
         (stateTrg_preIntaking.and(trg_inOverride.negate().and(trg_teleopIntakeReq).and(RobotModeTriggers.teleop())))
             .onTrue(changeStateCmd(State.INTAKING));
+
+        (stateTrg_preIntaking.and(trg_inOverride.negate().and(transTrg_topSensor)))
+            .onTrue(changeStateCmd(State.SLOW_INTAKE));
+        stateTrg_preIntaking.and(trg_inOverride.negate().and(transTrg_botSensor))
+            .onTrue(changeStateCmd(State.INTOOK));
 
         (stateTrg_intaking.and(trg_inOverride.negate()).and(transTrg_topSensor))
             .onTrue(changeStateCmd(State.SLOW_INTAKE));
@@ -397,7 +402,7 @@ public class Superstructure {
                             Commands.waitSeconds(0.05)
                         )
                     )
-                ).alongWith(takeCam1Snapshots())
+                )
             );
         
         stateTrg_intook
@@ -446,7 +451,7 @@ public class Superstructure {
                     m_coral.score(),
                     Commands.waitUntil(m_coral.trg_botBeamBreak.negate()),
                     m_coral.stopCmd()
-                ).alongWith(takeCam1Snapshots())
+                )
             );
         
         stateTrg_scoring.and(trg_l1Toggle)
@@ -512,6 +517,10 @@ public class Superstructure {
         } else {
             return (changeStateCmd(State.IDLE));
         }
+    }
+
+    public Command forceToIntake() {
+        return changeStateCmd(State.ELE_TO_HP);
     }
 
     public Command forcetoHP() {
