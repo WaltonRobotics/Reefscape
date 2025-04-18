@@ -29,6 +29,10 @@ public class LegacyAutoAlign {
     private static final DoubleLogger log_errorX = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "x error");
     private static final DoubleLogger log_errorY = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "y error");
     private static final DoubleLogger log_errorRot = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "rotation error degrees");
+
+    private static final DoubleLogger log_errorXTargetRelative = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "x error target relative");
+    private static final DoubleLogger log_errorYTargetRelative = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "y error target relative");
+    private static final DoubleLogger log_errorRotTargetRelative = WaltLogger.logDouble(LegacyAutoAlignK.kLogTab, "rot error degrees target relative");
     
 
     private static final SwerveRequest.FieldCentric swreq_driveFieldCentricBlue = new SwerveRequest.FieldCentric()
@@ -47,6 +51,7 @@ public class LegacyAutoAlign {
         ).andThen(Commands.run(
             () -> {
                 Pose2d curPose = drivetrain.getState().Pose;
+                Pose2d destRelativePose = curPose.relativeTo(cachedTarget[0]);
 
                 double xSpeed = LegacyAutoAlignK.kAutoAlignXController.calculate(curPose.getX(), cachedTarget[0].getX());
                 log_errorX.accept(cachedTarget[0].getX() - curPose.getX());
@@ -58,6 +63,11 @@ public class LegacyAutoAlign {
                     LegacyAutoAlignK.kMaxXYSpeedAutoalign);
                 ySpeed = MathUtil.clamp(ySpeed, -LegacyAutoAlignK.kMaxXYSpeedAutoalign, 
                     LegacyAutoAlignK.kMaxXYSpeedAutoalign);
+
+                log_errorXTargetRelative.accept(destRelativePose.getX());
+                log_errorYTargetRelative.accept(destRelativePose.getY());
+                log_errorRotTargetRelative.accept(destRelativePose.getRotation().getDegrees());
+                
                 drivetrain.setControl(swreq_driveFieldCentricBlue.withVelocityX(xSpeed).withVelocityY(ySpeed).withRotationalRate(thetaSpeed));
             }, drivetrain
         )).until(() -> AutoAlignUtils.isInTolerance(drivetrain.getState().Pose, destinationPose.get()));
@@ -73,7 +83,8 @@ public class LegacyAutoAlign {
             Swerve drivetrain, 
             Supplier<Pose2d> destinationPose, 
             DoubleSupplier maxToleranceTime, 
-            DoubleSupplier maxLinearTolerance, 
+            DoubleSupplier maxXTolerance,
+            DoubleSupplier maxYTolerance, 
             DoubleSupplier maxRotationTolerance,
             Runnable onBeginFunc) {
         final double[] initialTime = {Double.MAX_VALUE};
@@ -86,18 +97,24 @@ public class LegacyAutoAlign {
                 double currentTime = Timer.getFPGATimestamp();
                 double deltaTime = currentTime - initialTime[0];
 
-                double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                // double deltaLinearTolerance = maxLinearTolerance.getAsDouble() - SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double deltaXTolerance = maxXTolerance.getAsDouble() - SharedAutoAlignK.kReefDistanceTolerance.in(Meters);
+                double deltaYTolerance = maxYTolerance.getAsDouble() - SharedAutoAlignK.kSideToSideTolerance.in(Meters);
                 double deltaRotationTolerance = maxRotationTolerance.getAsDouble() - SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
                 
                 double percentageTimeComplete = MathUtil.clamp(deltaTime / maxToleranceTime.getAsDouble(), 0, 1);
 
-                double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
-                    + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                // double linearTolerance = percentageTimeComplete * deltaLinearTolerance 
+                //     + SharedAutoAlignK.kFieldTranslationTolerance.in(Meters);
+                double xTolerance = percentageTimeComplete * deltaXTolerance
+                    + SharedAutoAlignK.kReefDistanceTolerance.in(Meters);
+                double yTolerance = percentageTimeComplete * deltaYTolerance
+                    + SharedAutoAlignK.kSideToSideTolerance.in(Meters);
                 double rotationTolerance = percentageTimeComplete * deltaRotationTolerance
                     + SharedAutoAlignK.kFieldRotationTolerance.in(Radians);
                 
-                return AutoAlignUtils.isInTolerance(drivetrain.getState().Pose, destinationPose.get(), 
-                    linearTolerance, rotationTolerance);
+                return AutoAlignUtils.isInTolerancePoseRelative(drivetrain.getState().Pose, destinationPose.get(), 
+                    xTolerance, yTolerance, rotationTolerance);
             });
     }
 }

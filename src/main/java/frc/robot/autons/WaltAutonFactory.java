@@ -262,8 +262,9 @@ public class WaltAutonFactory {
         Command aaCmd = LegacyAutoAlign.moveToPoseUntilInTimeScaledTolerance(
             m_drivetrain,
             () -> destinationPose,
-            () -> 1,
-            () -> 10 * SharedAutoAlignK.kFieldTranslationTolerance.in(Meters),
+            () -> 3,
+            () -> 10 * SharedAutoAlignK.kReefDistanceTolerance.in(Meters),
+            () -> 10 * SharedAutoAlignK.kSideToSideTolerance.in(Meters),
             () -> 10 * SharedAutoAlignK.kFieldRotationTolerance.in(Radians),
             m_onAutoAlignBeginFunc
         );

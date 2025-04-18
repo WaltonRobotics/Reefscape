@@ -256,4 +256,19 @@ public class AutoAlignUtils {
     //             velocityTolerance.getAsDouble());
     //     };
     // }
+
+    // rotationTolerance should be in radians for best results
+    public static boolean isInTolerancePoseRelative(Pose2d pose, Pose2d pose2, double xDifferenceTolerance, 
+            double yDifferenceTolerance, double rotationTolerance) {
+        return isInTolerancePoseRelative(pose, pose2, new ChassisSpeeds(), xDifferenceTolerance, yDifferenceTolerance, rotationTolerance);
+    }
+
+    public static boolean isInTolerancePoseRelative(Pose2d pose, Pose2d pose2, ChassisSpeeds speeds, double xDifferenceTolerance, 
+            double yDifferenceTolerance, double rotationTolerance) {
+        final Pose2d relativePose = pose.relativeTo(pose2);
+        return MathUtil.isNear(0.0, relativePose.getX(), xDifferenceTolerance)
+            && MathUtil.isNear(0.0, relativePose.getY(), yDifferenceTolerance)
+            && MathUtil.isNear(0.0, relativePose.getRotation().getRadians(), rotationTolerance)
+            && MathUtil.isNear(0.0, Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond), SharedAutoAlignK.kFinishedVelTolerance);
+    }
 }
