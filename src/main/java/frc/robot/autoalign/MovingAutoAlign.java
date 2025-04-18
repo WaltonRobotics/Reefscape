@@ -3,6 +3,7 @@ package frc.robot.autoalign;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
 import edu.wpi.first.math.MathUtil;
@@ -120,7 +121,8 @@ public class MovingAutoAlign {
             new ProfiledPIDController(MovingAutoAlignK.kYKP, 0.01, 0.01, xyConstraints.get());
 
         // this is created at trigger binding, not created every time the command is scheduled
-        final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();
+        final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds()
+            .withDriveRequestType(DriveRequestType.Velocity);
 
         return Commands.runOnce(
             () -> {                
