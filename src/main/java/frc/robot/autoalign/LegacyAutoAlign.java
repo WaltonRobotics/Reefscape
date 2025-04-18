@@ -3,6 +3,7 @@ package frc.robot.autoalign;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 
@@ -32,7 +33,8 @@ public class LegacyAutoAlign {
     
 
     private static final SwerveRequest.FieldCentric swreq_driveFieldCentricBlue = new SwerveRequest.FieldCentric()
-        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+        .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
+        .withDriveRequestType(DriveRequestType.Velocity);
 
     public static Command moveToPose(Swerve drivetrain, Supplier<Pose2d> destinationPose) {
         final Pose2d[] cachedTarget = {Pose2d.kZero};

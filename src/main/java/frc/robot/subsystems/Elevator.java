@@ -326,6 +326,7 @@ public class Elevator extends SubsystemBase {
     }
 
     private static final double kInch = 0.169;
+    private static final double kEighthInch = kInch / 8;
 
     public enum EleHeight {
         HOME(0.3),
