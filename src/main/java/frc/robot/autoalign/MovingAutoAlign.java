@@ -81,7 +81,8 @@ public class MovingAutoAlign {
             Supplier<ChassisSpeeds> speedsModifier,
             Supplier<TrapezoidProfile.Constraints> xyConstraints) {
         return moveToPose(swerve, target, speedsModifier, xyConstraints)
-            .until(() -> AutoAlignUtils.isInTolerance(swerve.getState().Pose, target.get(), swerve.getState().Speeds));
+            .until(() -> AutoAlignUtils.isInTolerance(swerve.getState().Pose, target.get()))
+            .andThen(swerve.stopCmd());
     }
 
     /**
