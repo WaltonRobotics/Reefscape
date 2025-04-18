@@ -70,6 +70,7 @@ public class Algae extends SubsystemBase {
     private StringLogger log_stateName = WaltLogger.logString(kLogTab, "Algae State name");
     private BooleanLogger log_hasAlgae = WaltLogger.logBoolean(kLogTab, "trgHasAlgae");
     private DoubleLogger log_actualAngle = WaltLogger.logDouble(kLogTab, "Algae angle");
+    private DoubleLogger log_statorCurr = WaltLogger.logDouble(kLogTab, "Algae stator current");
 
     public Algae(
         Trigger groundReq, 
@@ -267,11 +268,12 @@ public class Algae extends SubsystemBase {
         log_stateIdx.accept(m_state.idx);
         log_stateName.accept(m_state.name);
 
-        log_desiredAngleDegs.accept(m_desiredWristRotations);
         log_hasAlgae.accept(trg_hasAlgae);
 
         log_actualAngle.accept(m_wrist.getPosition().getValueAsDouble());
         log_desiredAngleDegs.accept(m_desiredWristRotations);
+
+        log_statorCurr.accept(m_intake.getStatorCurrent().getValueAsDouble());
     }
 
     public enum State {
