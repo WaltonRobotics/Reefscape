@@ -15,7 +15,6 @@ import frc.robot.subsystems.Elevator.EleHeight;
 public class WaltAutonBuilder {
     public static GenericEntry nte_autonEntry;
     public static GenericEntry nte_customAutonReady;
-    public static GenericEntry nte_autonRobotPush;  // button to select if we are pushing another robot b4 starting path
     public static GenericEntry nte_clearAll;
 
     public static GenericEntry nte_autonReadyToGo;  // to let the user know that an auton is loaded
@@ -52,11 +51,6 @@ public class WaltAutonBuilder {
 
         nte_autonEntry = Shuffleboard.getTab("AutonChooser")
                 .add("Make", false)
-                .withWidget(BuiltInWidgets.kToggleSwitch)
-                .getEntry();
-
-        nte_autonRobotPush = Shuffleboard.getTab("AutonChooser")
-                .add("Push another robot?", false)
                 .withWidget(BuiltInWidgets.kToggleSwitch)
                 .getEntry();
 

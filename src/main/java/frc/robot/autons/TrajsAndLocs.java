@@ -158,7 +158,6 @@ public abstract class TrajsAndLocs {
         public static HashMap<Pair<ReefLocs, HPStation>, String> ReefToHPShortTrajs = new HashMap<>();
         public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefTrajs = new HashMap<>();
         public static HashMap<Pair<HPStation, ReefLocs>, String> HPToReefShortTrajs = new HashMap<>();
-        public static HashMap<StartingLocs, String> PushingTrajs = new HashMap<>();
 
         static {
             // fill in maps here

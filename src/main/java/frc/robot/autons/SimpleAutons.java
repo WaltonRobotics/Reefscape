@@ -34,35 +34,6 @@ public class SimpleAutons {
     }
     
 
-    // move these maybe
-    private static final Transform2d partnerPushBlue = new Transform2d(Meters.of(0.4), Meters.of(0), Rotation2d.kZero);
-    private static final Transform2d partnerPushRed = new Transform2d(Meters.of(-0.4), Meters.of(0), Rotation2d.kZero);
-
-    // private static Command pushPartnerNeedsDefer(Swerve swerve) {
-    //     Pose2d startPose = swerve.getState().Pose;
-    //     Transform2d transform = partnerPushBlue;
-    //     var allianceOpt = DriverStation.getAlliance();
-    //     if (allianceOpt.isPresent() && allianceOpt.get().equals(Alliance.Red)) {
-    //         transform = partnerPushRed;
-    //     }
-    //     Pose2d destinationPose = startPose.transformBy(transform);
-
-    //     System.out.println("PUSH_PARTNER Going from " + startPose.toString() + " to " + destinationPose.toString());
-
-    //     return Commands.sequence(
-    //         swerve.moveToPose(destinationPose),
-    //         Commands.print("Moving to dest"),
-    //         Commands.waitUntil(nearPoseXY(swerve, destinationPose, 0.05)),
-    //         Commands.print("Returning to start"),
-    //         swerve.moveToPose(startPose),
-    //         Commands.waitUntil(nearPoseXY(swerve, startPose, 0.05))
-    //     );
-    // }
-
-    // public static Command pushPartner(Swerve swerve) {
-    //     return Commands.defer(() -> pushPartnerNeedsDefer(swerve), Set.of());
-    // }
-
     public AutoRoutine moveForward() {
         AutoRoutine routine = m_autoFactory.newRoutine("drive forward");
 
