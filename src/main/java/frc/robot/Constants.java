@@ -453,7 +453,7 @@ public class Constants {
         public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
         public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
 
-        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6); // value in meters
+        public static final double kIntermediatePoseDistance = -Units.inchesToMeters(8); // value in meters
         public static final Transform2d kIntermediatePoseTransform 
             = new Transform2d(kIntermediatePoseDistance, 0, Rotation2d.kZero);
 
