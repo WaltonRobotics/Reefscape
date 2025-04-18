@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -96,6 +98,7 @@ public class Robot extends TimedRobot {
     VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
   private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
     VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  private final int[] tagsToUse = {6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22};
 
   // this should be updated with all of our cameras
   private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed readded and ready to rumble
@@ -446,6 +449,20 @@ public class Robot extends TimedRobot {
       if (estimatedPoseOptional.isPresent()) {
         EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
         Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+        boolean invalidEstimation = false;
+        // if it isn't multitag
+        if (estimatedRobotPose.strategy != PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR) {
+          // loop through used targets
+          for (PhotonTrackedTarget target : estimatedRobotPose.targetsUsed) {
+            // if any of them are invalid targets set invalidEstimation flag to true
+            if (!isUsedTagId(target.getFiducialId())) { invalidEstimation = true; }
+          }
+        }
+
+        if (invalidEstimation == true) {
+          continue;
+        }
+
         var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
         drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
         lastGotTagMsmtTimer.restart();
@@ -541,6 +558,18 @@ public class Robot extends TimedRobot {
         WaltAutonBuilder.nte_midOnePiece.setBoolean(false);
       }
 
+      if(WaltAutonBuilder.nte_midTown.getBoolean(false)) {
+        waltAutonFactory = Optional.of(autonFactoryFactory(
+          StartingLocs.MID_G,
+          List.of(REEF_G, REEF_D, REEF_E),
+          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4),
+          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+        ));
+
+        Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Mid 3 piece auton generated"));
+        WaltAutonBuilder.nte_midTown.setBoolean(false);
+      }
+
     
       // fail-case (no auton selected) - do nothing (its no longer that now)
       if (readyToMakeAuton && waltAutonFactory.isEmpty()) {
@@ -594,6 +623,15 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
     
+  }
+
+  public boolean isUsedTagId(int tagId) {
+    for (int i = 0; i < tagsToUse.length; i++) {
+      if (tagsToUse[i] == tagId) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Command autonCmdBuilder(Command chooserCommand) {
