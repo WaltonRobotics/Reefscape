@@ -337,7 +337,7 @@ public class Elevator extends SubsystemBase {
         CLIMB_UP(2.08 - (kInch * 2.5)), // good value
         CLIMB_BUMP(CLIMB_UP.rotations + (kInch * 1.5)),
         CLIMB_DOWN(0.0),
-        HP(2.08 - kInch - 0.18 - kEighthInch); //human player station intake height
+        HP(2.08 - kInch - 0.18); //human player station intake height
 
         public final double rotations;
         
