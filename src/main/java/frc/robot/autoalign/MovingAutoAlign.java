@@ -116,12 +116,12 @@ public class MovingAutoAlign {
         headingController.enableContinuousInput(-Math.PI, Math.PI);
         // ok, use passed constraints on X controller
         final ProfiledPIDController vxController =
-            new ProfiledPIDController(MovingAutoAlignK.kXKP, 0.01, 0.015, xyConstraints.get());
+            new ProfiledPIDController(MovingAutoAlignK.kXKP, 0.01, 0.01, xyConstraints.get());
         // use constraints from constants for y controller?
         // why define them with different constraints?? it's literally field relative
         // the difference in x and y dimensions almost definitely do not mean anything to robot movement
         final ProfiledPIDController vyController =
-            new ProfiledPIDController(MovingAutoAlignK.kYKP, 0.01, 0.015, xyConstraints.get());
+            new ProfiledPIDController(MovingAutoAlignK.kYKP, 0.01, 0.01, xyConstraints.get());
 
         // this is created at trigger binding, not created every time the command is scheduled
         final SwerveRequest.ApplyFieldSpeeds swreq_driveFieldSpeeds = new SwerveRequest.ApplyFieldSpeeds();

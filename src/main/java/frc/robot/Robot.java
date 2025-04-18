@@ -46,6 +46,8 @@ import frc.robot.autons.WaltAutonBuilder;
 import frc.robot.autons.TrajsAndLocs.HPStation;
 import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.robot.autons.TrajsAndLocs.StartingLocs;
+
+import static frc.robot.Constants.kTestingAutonOnCart;
 import static frc.robot.autons.TrajsAndLocs.ReefLocs.*;
 
 import frc.robot.autons.WaltAutonFactory;
@@ -483,24 +485,42 @@ public class Robot extends TimedRobot {
 
       // --- PRESET AUTONS
       if (WaltAutonBuilder.nte_rightThreePiece.getBoolean(false)) {
-        waltAutonFactory = Optional.of(autonFactoryFactory(
-          StartingLocs.RIGHT, 
-          List.of(REEF_E, REEF_D, REEF_C, REEF_B), 
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+        if(kTestingAutonOnCart) {
+          waltAutonFactory = Optional.of(autonFactoryFactory(
+            StartingLocs.RIGHT, 
+            List.of(REEF_E, REEF_D, REEF_C, REEF_B), 
+            List.of(EleHeight.L2, EleHeight.L2, EleHeight.L2, EleHeight.L2),
+            List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
         ));
+        } else {
+          waltAutonFactory = Optional.of(autonFactoryFactory(
+            StartingLocs.RIGHT, 
+            List.of(REEF_E, REEF_D, REEF_C, REEF_B), 
+            List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+            List.of(HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT, HPStation.HP_RIGHT)
+        ));
+        }
 
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Right 3 piece auton generated"));
         WaltAutonBuilder.nte_rightThreePiece.setBoolean(false);
       } 
 
       if (WaltAutonBuilder.nte_leftThreePiece.getBoolean(false)) {
-        waltAutonFactory = Optional.of(autonFactoryFactory(
-          StartingLocs.LEFT, 
-          List.of(REEF_J, REEF_K, REEF_L, REEF_A),
-          List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
-          List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+        if(kTestingAutonOnCart) {
+          waltAutonFactory = Optional.of(autonFactoryFactory(
+            StartingLocs.LEFT, 
+            List.of(REEF_J, REEF_K, REEF_L, REEF_A),
+            List.of(EleHeight.L2, EleHeight.L2, EleHeight.L2, EleHeight.L2),
+            List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
         ));
+        } else {
+          waltAutonFactory = Optional.of(autonFactoryFactory(
+            StartingLocs.LEFT, 
+            List.of(REEF_J, REEF_K, REEF_L, REEF_A),
+            List.of(EleHeight.L4, EleHeight.L4, EleHeight.L4, EleHeight.L4),
+            List.of(HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT, HPStation.HP_LEFT)
+        ));
+        }
 
         // autonName = "Left 3 Piece: ";
         Elastic.sendNotification(new Elastic.Notification(NotificationLevel.INFO, "Auton Path DEFINED", "Left 3 piece auton generated"));
