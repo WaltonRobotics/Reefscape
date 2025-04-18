@@ -62,7 +62,11 @@ public class MovingAutoAlign {
             Supplier<Pose2d> target,
             Supplier<Pose2d> intermediate) {
         return moveToPoseUntilInTolerances(drivetrain, intermediate, ChassisSpeeds::new, () -> MovingAutoAlignK.kXYConstraints)
-            .andThen(moveToPoseUntilInTolerances(drivetrain, target, ChassisSpeeds::new, () -> MovingAutoAlignK.kXYConstraints));
+            .andThen(moveToPoseUntilInTolerances(drivetrain, 
+                target, 
+                () -> AutoAlignUtils.getCorrectionSpeeds(drivetrain.getState().Pose, target.get()), 
+                () -> MovingAutoAlignK.kXYConstraints
+            ));
     }
 
     /**
