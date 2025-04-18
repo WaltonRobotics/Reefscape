@@ -450,7 +450,7 @@ public class Constants {
     }
 
     public static class SharedAutoAlignK {
-        public static final Distance kFieldTranslationTolerance = Meters.of(0.025); // meters
+        public static final Distance kFieldTranslationTolerance = Meters.of(0.02); // meters
         public static final Angle kFieldRotationTolerance = Degrees.of(0.5); // degrees
 
         public static final double kIntermediatePoseDistance = -Units.inchesToMeters(6); // value in meters
