@@ -256,4 +256,13 @@ public class AutoAlignUtils {
     //             velocityTolerance.getAsDouble());
     //     };
     // }
+
+    public static ChassisSpeeds getCorrectionSpeeds(Pose2d robotPose, Pose2d destinationPose) {
+        double errorX = destinationPose.getX() - robotPose.getX();
+        double errorY = destinationPose.getY() - robotPose.getY();
+
+        double requiredAngle = Math.atan2(errorY, errorX);
+        return new ChassisSpeeds(Math.cos(requiredAngle) * SharedAutoAlignK.kCorrectionSpeed,
+            Math.sin(requiredAngle) * SharedAutoAlignK.kCorrectionSpeed, 0);
+    }
 }

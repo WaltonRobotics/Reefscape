@@ -458,6 +458,8 @@ public class Constants {
             = new Transform2d(kIntermediatePoseDistance, 0, Rotation2d.kZero);
 
         public static final double kFinishedVelTolerance = 0.1; // m/s
+
+        public static final double kCorrectionSpeed = 0.2; // m/s
     }
 
     public static class LegacyAutoAlignK {
