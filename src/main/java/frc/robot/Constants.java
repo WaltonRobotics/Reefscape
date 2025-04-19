@@ -105,7 +105,7 @@ public class Constants {
          public static final int kIntakeSensorToMechanismRatio = kIntakeGearRatio;
          public static final double kHasAlgaeCurrent = 10; //DUMMY VALUE
          private static final CurrentLimitsConfigs kIntakeCurrentLimitConfigs = new CurrentLimitsConfigs()
-             .withStatorCurrentLimit(110)
+             .withStatorCurrentLimit(150)
              .withSupplyCurrentLimit(50)
              .withStatorCurrentLimitEnable(true);
          private static final FeedbackConfigs kIntakeFeedbackConfigs = new FeedbackConfigs()
