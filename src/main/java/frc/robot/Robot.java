@@ -10,6 +10,8 @@ import java.lang.StackWalker.Option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
+
 import org.photonvision.EstimatedRobotPose;
 
 import com.ctre.phoenix6.swerve.SwerveDrivetrain.SwerveDriveState;
@@ -69,6 +71,7 @@ public class Robot extends TimedRobot {
   private final double kMaxTranslationSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
   private final double kMaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
   private final double kMaxHighAngularRate = RotationsPerSecond.of(1.5).in(RadiansPerSecond);
+  private final double kSlowSpeed = kMaxTranslationSpeed * .1;
   private final Telemetry logger = new Telemetry(kMaxTranslationSpeed);
 
   /* Setting up bindings for necessary control of the swerve drive platform */
@@ -354,18 +357,22 @@ public class Robot extends TimedRobot {
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     // Drivetrain will execute this command periodically
+
+    //define slewrate limiter here
     return drivetrain.applyRequest(() -> {
       var angularRate = driver.leftTrigger().getAsBoolean() ? 
         kMaxHighAngularRate : kMaxAngularRate;
     
-      var driverXVelo = -driver.getLeftY() * kMaxTranslationSpeed;
-      var driverYVelo = -driver.getLeftX() * kMaxTranslationSpeed;
+      boolean slow = elevator.getPulleyRotations() >= (8.451660 + (0.169 / 2));
+      double actualMaxTrSpeed = slow ? kSlowSpeed : kMaxTranslationSpeed;
+      //reset slewratelimiter here
+      var driverXVelo = -driver.getLeftY() * actualMaxTrSpeed;
+      var driverYVelo = -driver.getLeftX() * actualMaxTrSpeed;
       var driverYawRate = -driver.getRightX() * angularRate;
 
       log_stickDesiredFieldX.accept(driverXVelo);
       log_stickDesiredFieldY.accept(driverYVelo);
       log_stickDesiredFieldZRot.accept(driverYawRate);
-        
       return drive
         .withVelocityX(driverXVelo) // Drive forward with Y (forward)
         .withVelocityY(driverYVelo) // Drive left with X (left)
@@ -440,6 +447,7 @@ public class Robot extends TimedRobot {
 
   }
 
+ 
   private void driverRumble(double intensity) {
 		if (!DriverStation.isAutonomous()) {
 			driver.getHID().setRumble(RumbleType.kBothRumble, intensity);
@@ -619,7 +627,9 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+
+  }
 
   @Override
   public void teleopExit() {}

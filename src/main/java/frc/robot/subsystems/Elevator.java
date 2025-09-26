@@ -196,7 +196,7 @@ public class Elevator extends SubsystemBase {
         return Math.abs(diff) <= tolerancePulleyRotations;
     }
 
-    private double getPulleyRotations() {
+    public double getPulleyRotations() {
         return m_rotationsSignal.refresh().getValueAsDouble();
     }
 
