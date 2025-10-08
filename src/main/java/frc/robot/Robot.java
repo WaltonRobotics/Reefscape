@@ -490,6 +490,7 @@ public class Robot extends TimedRobot {
     m_autonomousCommand = autonCmdBuilder(waltAutonFactory.get().generateAuton().cmd());
 
     WaltAutonBuilder.initialize();
+    elevator.initialize();
   }
 
   @Override
@@ -499,6 +500,17 @@ public class Robot extends TimedRobot {
     } else {
       Constants.kTestingAutonOnCart = false;
     }
+
+  
+    if (Elevator.sub_makeCoast.getAsBoolean()) {
+      if (!elevator.m_isCoast) {
+        elevator.setCoast(true);
+      }
+    } else {
+      elevator.setCoast(false);
+    }
+
+    // concern: if ele is set to coast before match starts, does starting 
     
     if (!autonMade) {
       // ALL OF THE COMMENTED OUT ITEMS ARE FOR DEBUGGING THE PUBLISHER BOOLEAN VALUES

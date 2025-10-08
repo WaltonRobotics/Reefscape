@@ -16,6 +16,11 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.BooleanEntry;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.BooleanSubscriber;
+import edu.wpi.first.networktables.BooleanTopic;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.PubSubOption;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Servo;
@@ -62,6 +67,13 @@ public class Elevator extends SubsystemBase {
     private final StatusSignal<Double> m_closedLoopErrSignal = m_frontMotor.getClosedLoopError();
     private final StatusSignal<Angle> m_rotationsSignal = m_frontMotor.getPosition();
 
+    public static NetworkTableInstance nte_inst = NetworkTableInstance.getDefault();
+    public static NetworkTable nte_elevator = nte_inst.getTable("Elevator");
+
+    public static BooleanTopic BT_makeCoast = nte_inst.getBooleanTopic("/Elevator/makeCoast");
+    public static BooleanPublisher pub_makeCoast;
+    public static BooleanSubscriber sub_makeCoast;
+
     private boolean m_isHomed = false;
     private Debouncer m_currentDebouncer = new Debouncer(0.125, DebounceType.kRising);
     private Debouncer m_velocityDebouncer = new Debouncer(0.125, DebounceType.kRising);
@@ -87,7 +99,7 @@ public class Elevator extends SubsystemBase {
 
     private VoltageOut m_voltageCtrlReq = new VoltageOut(0);
 
-    private boolean m_isCoast = false;
+    public boolean m_isCoast = false;
     private BooleanEntry nte_coast = WaltLogger.booleanItem(kLogTab, "isCoast");
 
 
@@ -174,7 +186,7 @@ public class Elevator extends SubsystemBase {
         setDefaultCommand(currentSenseHoming());
     }
 
-    private void setCoast(boolean coast) {
+    public void setCoast(boolean coast) {
         if (m_isCoast != coast) {
             m_isCoast = coast;
             m_frontMotor.setNeutralMode(coast ? NeutralModeValue.Coast : NeutralModeValue.Brake);
@@ -289,6 +301,13 @@ public class Elevator extends SubsystemBase {
     
     public boolean getIsHomed() {
         return m_isHomed;
+    }
+
+    public void initialize() {
+        pub_makeCoast = BT_makeCoast.publish();
+        sub_makeCoast = BT_makeCoast.subscribe(false);
+
+        pub_makeCoast.setDefault(false);
     }
 
     @Override
