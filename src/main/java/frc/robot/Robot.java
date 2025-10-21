@@ -28,6 +28,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -70,6 +71,7 @@ public class Robot extends TimedRobot {
   private final double kMaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
   private final double kMaxHighAngularRate = RotationsPerSecond.of(1.5).in(RadiansPerSecond);
   private final Telemetry logger = new Telemetry(kMaxTranslationSpeed);
+  private final PowerDistribution powerDistribution = new PowerDistribution(0); 
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
