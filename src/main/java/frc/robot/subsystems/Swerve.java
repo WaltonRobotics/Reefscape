@@ -59,7 +59,6 @@ import frc.util.WaltLogger;
 import frc.util.WaltLogger.DoubleArrayLogger;
 import frc.util.WaltLogger.DoubleLogger;
 
-import frc.robot.autoalign.LegacyAutoAlign;
 import frc.robot.generated.TunerConstants;
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -188,21 +187,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
     }
 
 
-    public Command swervePIDTuningSeq(Pose2d scorePose, Field2d field2d) {
-        Optional<Trajectory<SwerveSample>> trajOpt = Choreo.loadTrajectory("Start_Right_E_short");
+    // public Command swervePIDTuningSeq(Pose2d scorePose, Field2d field2d) {
+    //     Optional<Trajectory<SwerveSample>> trajOpt = Choreo.loadTrajectory("Start_Right_E_short");
 
-        boolean shouldMirror = DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red);
+    //     boolean shouldMirror = DriverStation.getAlliance().isPresent() && DriverStation.getAlliance().get().equals(Alliance.Red);
 
-        if (trajOpt.isPresent()) {
-            var traj = trajOpt.get();
-            return Commands.sequence(
-                LegacyAutoAlign.moveToPose(this, () -> traj.getInitialPose(shouldMirror).get()),
-                followTrajectory(traj),
-                LegacyAutoAlign.moveToPose(this, () -> scorePose)
-            );
-        }
-        return Commands.none();
-    }
+    //     if (trajOpt.isPresent()) {
+    //         var traj = trajOpt.get();
+    //         return Commands.sequence(
+    //             LegacyAutoAlign.moveToPose(this, () -> traj.getInitialPose(shouldMirror).get()),
+    //             followTrajectory(traj),
+    //             LegacyAutoAlign.moveToPose(this, () -> scorePose)
+    //         );
+    //     }
+    //     return Commands.none();
+    // }
 
     private void trajLogger(Trajectory<SwerveSample> traj, boolean startOrFinish) {
         log_trajectory.accept(traj.getPoses());

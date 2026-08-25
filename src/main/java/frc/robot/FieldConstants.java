@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import frc.robot.autons.TrajsAndLocs.ReefLocs;
 import frc.util.AllianceFlipUtil;
 
 public final class FieldConstants {
@@ -52,31 +51,31 @@ public final class FieldConstants {
 	private static final Pose2d kReefKPose = getReefPoseFromTag(kWeldedTagLayout.getTagPose(19).get(), true, kReefOffset);
 	private static final Pose2d kReefLPose = getReefPoseFromTag(kWeldedTagLayout.getTagPose(19).get(), false, kReefOffset);
 
-	public static final Map<ReefLocs, Pose2d> kReefRobotLocationPoseMap = Map.ofEntries(
-	Map.entry(ReefLocs.REEF_A, kReefAPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_B, kReefBPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_C, kReefCPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_D, kReefDPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_E, kReefEPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_F, kReefFPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_G, kReefGPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_H, kReefHPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_I, kReefIPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_J, kReefJPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_K, kReefKPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
-	Map.entry(ReefLocs.REEF_L, kReefLPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition))
-);
+// 	public static final Map<ReefLocs, Pose2d> kReefRobotLocationPoseMap = Map.ofEntries(
+	// 	Map.entry(ReefLocs.REEF_A, kReefAPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_B, kReefBPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_C, kReefCPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_D, kReefDPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_E, kReefEPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_F, kReefFPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_G, kReefGPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_H, kReefHPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_I, kReefIPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_J, kReefJPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_K, kReefKPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition)),
+	// 	Map.entry(ReefLocs.REEF_L, kReefLPose.transformBy(Constants.RobotK.kTransformReefPoseToRobotPosition))
+//	);
 
 	public static final Field2d kReefPosesField2d = new Field2d();
 
 	static {
-		// todo: build field2d
-		kReefRobotLocationPoseMap.entrySet().stream().forEach(entry -> {
-			ReefLocs key = entry.getKey();
-			Pose2d value = entry.getValue();
+		// // todo: build field2d
+		// kReefRobotLocationPoseMap.entrySet().stream().forEach(entry -> {
+		// 	ReefLocs key = entry.getKey();
+		// 	Pose2d value = entry.getValue();
 
-			kReefPosesField2d.getObject("BLUE_"+key.toString()).setPose(value);
-			kReefPosesField2d.getObject("RED_"+key.toString()).setPose(AllianceFlipUtil.flip(value));
-		});
+		// 	kReefPosesField2d.getObject("BLUE_"+key.toString()).setPose(value);
+		// 	kReefPosesField2d.getObject("RED_"+key.toString()).setPose(AllianceFlipUtil.flip(value));
+		// });
 	}
 }
