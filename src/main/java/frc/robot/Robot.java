@@ -20,7 +20,7 @@ import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
-import edu.wpi.first.datalog.BooleanLogEntry;
+import edu.wpi.first.util.datalog.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -48,10 +48,10 @@ import frc.util.WaltLogger;
 import frc.util.Elastic.NotificationLevel;
 import frc.util.WaltLogger.BooleanLogger;
 import frc.util.WaltLogger.DoubleLogger;
-import frc.robot.vision.Vision;
-import frc.robot.vision.VisionSim;
+// import frc.robot.vision.Vision;
+// import frc.robot.vision.VisionSim;
 import frc.robot.subsystems.*;
-import frc.robot.subsystems.Algae.State;
+// import frc.robot.subsystems.Algae.State;
 
 public class Robot extends TimedRobot {
 
@@ -71,18 +71,18 @@ public class Robot extends TimedRobot {
   private final CommandXboxController manipulator = new CommandXboxController(1);
 
   public final Swerve drivetrain = TunerConstants.createDrivetrain();
-  private final Algae algae;
+  // private final Algae algae;
 
   private Command m_autonomousCommand;
-  // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
-  private final VisionSim visionSim = new VisionSim();
-  private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
-    VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
-  private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
-    VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
+  // // VisionSim could probably be static or a singleton instead of this reference mess but that's extra work to potentially break something
+  // private final VisionSim visionSim = new VisionSim();
+  // private final Vision eleForwardsCam = new Vision(VisionK.kElevatorForwardsCamName, VisionK.kElevatorForwardsCamSimVisualName,
+  //   VisionK.kElevatorForwardsCamRoboToCam, visionSim, VisionK.kEleForwardCamSimProps);
+  // private final Vision lowerRightCam = new Vision(VisionK.kLowerRightCamName, VisionK.kLowerRightCamSimVisualName,
+  //   VisionK.kLowerRightCamRoboToCam, visionSim, VisionK.kLowerRightCamSimProps);
 
-  // this should be updated with all of our cameras
-  private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed readded and ready to rumble
+  // // this should be updated with all of our cameras
+  // private final Vision[] cameras = {eleForwardsCam, lowerRightCam};  // lower right cam removed readded and ready to rumble
 
   private final DoubleLogger log_stickDesiredFieldX = WaltLogger.logDouble("Swerve", "stick desired teleop x");
   private final DoubleLogger log_stickDesiredFieldY = WaltLogger.logDouble("Swerve", "stick desired teleop y");
@@ -133,9 +133,9 @@ public class Robot extends TimedRobot {
   // autons
   public boolean auton_midOne;
 
-  public void updateStaticField() {
-    Robot.robotField = visionSim.getSimDebugField();
-  }
+  // public void updateStaticField() {
+  //   Robot.robotField = visionSim.getSimDebugField();
+  // }
 
   public Robot() {
     SignalLogger.start();
@@ -143,23 +143,23 @@ public class Robot extends TimedRobot {
 
     drivetrain.registerTelemetry(logger::telemeterize);
 
-    algae = new Algae(
-      trg_algaeIntake, 
-      new Trigger(() -> false), 
-      trg_shootReq, 
-      this::manipRumble
-    );
+    // algae = new Algae(
+    //   trg_algaeIntake, 
+    //   new Trigger(() -> false), 
+    //   trg_shootReq, 
+    //   this::manipRumble
+    // );
 
-    updateStaticField();
+    // updateStaticField();
     configureBindings();
     // configureTestBindings();
   }
 
-  private final Runnable cameraSnapshotFunc = () -> {
-    for (Vision camera : cameras) {
-      camera.takeBothSnapshots();
-    }
-  };
+  // private final Runnable cameraSnapshotFunc = () -> {
+  //   for (Vision camera : cameras) {
+  //     camera.takeBothSnapshots();
+  //   }
+  // };
 
 
   // Command autoAlignCmd(boolean rightReef) {
@@ -172,11 +172,11 @@ public class Robot extends TimedRobot {
 
   // checks for finger in unsafe place
   // no it doesnt lol. it prolly should tho.
-  private Command resetAlgaeCheck() {
-    return Commands.parallel(
-        algae.toIdleCmd()
-      );
-  }
+  // private Command resetAlgaeCheck() {
+  //   return Commands.parallel(
+  //       algae.toIdleCmd()
+  //     );
+  // }
 
   private void configureTestBindings() {
     drivetrain.setDefaultCommand(
@@ -274,11 +274,11 @@ public class Robot extends TimedRobot {
     // ));
     driver.back().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric())); // reset the field-centric heading
 
-    driver.rightBumper().onTrue(
-      Commands.parallel(
-        resetAlgaeCheck()
-      )
-    );
+    // driver.rightBumper().onTrue(
+    //   Commands.parallel(
+    //     resetAlgaeCheck()
+    //   )
+    // );
 
     // trg_leftTeleopAutoAlign.whileTrue(
     //   autoAlignCmd(false)
@@ -287,14 +287,14 @@ public class Robot extends TimedRobot {
     //   autoAlignCmd(true)
     // );
 
-    trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
-      Commands.parallel(
-        algae.currentSenseHoming()
-      )
-    );
+    // trg_manipDanger.and(manipulator.back()).debounce(1).onTrue(
+    //   Commands.parallel(
+    //     algae.currentSenseHoming()
+    //   )
+    // );
 
-    manipulator.y()
-      .onTrue(algae.changeStateCmd(State.HOME));
+    // manipulator.y()
+    //   .onTrue(algae.changeStateCmd(State.HOME));
   }
 
   private void driverRumble(double intensity) {
@@ -321,19 +321,19 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
     
     // loops through each camera and adds its pose estimation to the drivetrain pose estimator if required
-    for (Vision camera : cameras) {
-      Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
-      if (estimatedPoseOptional.isPresent()) {
-        EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
-        Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
-        var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
-        drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
-        lastGotTagMsmtTimer.restart();
-      }
-    }
+    // for (Vision camera : cameras) {
+    //   Optional<EstimatedRobotPose> estimatedPoseOptional = camera.getEstimatedGlobalPose();
+    //   if (estimatedPoseOptional.isPresent()) {
+    //     EstimatedRobotPose estimatedRobotPose = estimatedPoseOptional.get();
+    //     Pose2d estimatedRobotPose2d = estimatedRobotPose.estimatedPose.toPose2d();
+    //     var ctreTime = Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds);
+    //     drivetrain.addVisionMeasurement(estimatedRobotPose2d, ctreTime, camera.getEstimationStdDevs());
+    //     lastGotTagMsmtTimer.restart();
+    //   }
+    // }
 
-    boolean visionSeenPastSec = !lastGotTagMsmtTimer.hasElapsed(1);
-    log_visionSeenPastSecond.accept(visionSeenPastSec);
+    // boolean visionSeenPastSec = !lastGotTagMsmtTimer.hasElapsed(1);
+    // log_visionSeenPastSecond.accept(visionSeenPastSec);
     // double rio6VCurrent = RobotController.getCurrent6V();
     // log_rio6VRailCurrent.accept(rio6VCurrent);
   }
@@ -358,7 +358,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    algae.toIdleCmd().schedule();
+    // CommandScheduler.getInstance().schedule(algae.toIdleCmd());
   }
 
   @Override
@@ -382,7 +382,7 @@ public class Robot extends TimedRobot {
   public void simulationPeriodic() {
     SwerveDriveState robotState = drivetrain.getState();
     Pose2d robotPose = robotState.Pose;
-    visionSim.simulationPeriodic(robotPose);
+    // visionSim.simulationPeriodic(robotPose);
     drivetrain.simulationPeriodic();
 
     // below is debug for swerve simulation. the farthest down one displays the module poses, but it's definitely bugged

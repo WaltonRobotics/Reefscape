@@ -100,10 +100,10 @@ public class Telemetry {
 
         for (int i = 0; i < 4; ++i) {
             m_moduleStatesArray[i*2 + 0] = state.ModuleStates[i].angle.getRadians();
-            m_moduleStatesArray[i*2 + 1] = state.ModuleStates[i].speed;
+            m_moduleStatesArray[i*2 + 1] = state.ModuleStates[i].speedMetersPerSecond;
             m_moduleTargetsArray[i*2 + 0] = state.ModuleTargets[i].angle.getRadians();
-            m_moduleTargetsArray[i*2 + 1] = state.ModuleTargets[i].speed;
-            m_moduleVeloErrorsArray[i] = state.ModuleTargets[i].speed - state.ModuleStates[i].speed;
+            m_moduleTargetsArray[i*2 + 1] = state.ModuleTargets[i].speedMetersPerSecond;
+            m_moduleVeloErrorsArray[i] = state.ModuleTargets[i].speedMetersPerSecond - state.ModuleStates[i].speedMetersPerSecond;
         }
 
         driveVeloErrors.accept(m_moduleVeloErrorsArray);
@@ -122,7 +122,7 @@ public class Telemetry {
         for (int i = 0; i < 4; ++i) {
             m_moduleSpeeds[i].setAngle(state.ModuleStates[i].angle);
             m_moduleDirections[i].setAngle(state.ModuleStates[i].angle);
-            m_moduleSpeeds[i].setLength(state.ModuleStates[i].speed / (2 * MaxSpeed));
+            m_moduleSpeeds[i].setLength(state.ModuleStates[i].speedMetersPerSecond / (2 * MaxSpeed));
 
             SmartDashboard.putData("Module " + i, m_moduleMechanisms[i]);
         }

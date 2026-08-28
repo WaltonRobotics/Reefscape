@@ -416,13 +416,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         var speed = getState().Speeds;
         var targetSpeeds = sample.getChassisSpeeds();
 
-        targetSpeeds.vx += m_pathXController.calculate(
+        targetSpeeds.vxMetersPerSecond += m_pathXController.calculate(
             pose.getX(), sample.x
         );
-        targetSpeeds.vy += m_pathYController.calculate(
+        targetSpeeds.vyMetersPerSecond += m_pathYController.calculate(
             pose.getY(), sample.y
         );
-        targetSpeeds.omega += m_pathThetaController.calculate(
+        targetSpeeds.omegaRadiansPerSecond += m_pathThetaController.calculate(
             pose.getRotation().getRadians(), sample.heading
         );
 
@@ -438,8 +438,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         log_errorX.accept(samplePose.getX() - pose.getX());
         log_errorY.accept(samplePose.getY() - pose.getY());
 
-        log_chassisSpeedVXError.accept(targetSpeeds.vx - speed.vx);
-        log_chassisSpeedVYError.accept(targetSpeeds.vy - speed.vy);
+        log_chassisSpeedVXError.accept(targetSpeeds.vxMetersPerSecond - speed.vxMetersPerSecond);
+        log_chassisSpeedVYError.accept(targetSpeeds.vyMetersPerSecond - speed.vyMetersPerSecond);
     }
 
     public static ChassisSpeeds getFieldRelativeChassisSpeeds(SwerveDriveState swerveDriveState) {
@@ -447,11 +447,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
         ChassisSpeeds robotRelChassisSpeeds = swerveDriveState.Speeds;
 
         return new ChassisSpeeds(
-                robotRelChassisSpeeds.vx * pose.getRotation().getCos()
-                        - robotRelChassisSpeeds.vy * pose.getRotation().getSin(),
-                robotRelChassisSpeeds.vy * pose.getRotation().getCos()
-                        + robotRelChassisSpeeds.vx * pose.getRotation().getSin(),
-                robotRelChassisSpeeds.omega);
+                robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getCos()
+                        - robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.vyMetersPerSecond * pose.getRotation().getCos()
+                        + robotRelChassisSpeeds.vxMetersPerSecond * pose.getRotation().getSin(),
+                robotRelChassisSpeeds.omegaRadiansPerSecond);
     }
 
     public ChassisSpeeds getFieldRelativeChassisSpeeds() {
@@ -516,7 +516,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             averageWheelPosition = 0;
 			for (int i = 0; i < getModules().length; i++) {
 				var pos = getModules()[i].getPosition(true);
-				startWheelPositions[i] = pos.distance * TunerConstants.kDriveRotationsPerMeter;
+				startWheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
 			}
 			m_omegaLimiter.reset(0);
 		});
@@ -531,7 +531,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
 				double[] wheelPositions = new double[4];
 				for (int i = 0; i < getModules().length; i++) {
 					var pos = getModules()[i].getPosition(true);
-					wheelPositions[i] = pos.distance * TunerConstants.kDriveRotationsPerMeter;
+					wheelPositions[i] = pos.distanceMeters * TunerConstants.kDriveRotationsPerMeter;
 					averageWheelPosition += Math.abs(wheelPositions[i] - startWheelPositions[i]);
 				}
 				averageWheelPosition = averageWheelPosition / 4.0;
@@ -596,8 +596,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem {
             var modTarg = swerveState.ModuleTargets[i];
 
             // position
-            var inches = Units.metersToInches(modPos.distance); 
-            var rots =  modPos.distance / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
+            var inches = Units.metersToInches(modPos.distanceMeters); 
+            var rots =  modPos.distanceMeters / Units.inchesToMeters(TunerConstants.kWheelDiameterInches * Math.PI);
             wheelRotations[i] = rots;
             wheelDistance[i] = inches;
         }

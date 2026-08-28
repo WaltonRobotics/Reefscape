@@ -11,7 +11,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.struct.*;
 import edu.wpi.first.networktables.*;
-import edu.wpi.first.datalog.*;
+import edu.wpi.first.util.datalog.*;
 import edu.wpi.first.wpilibj.DataLogManager;
 import frc.robot.Constants;
 
